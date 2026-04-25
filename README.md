@@ -84,7 +84,8 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 - **Apply presets**: One-click apply saved configurations
 - **Save current settings**: Create new preset from current configuration
 - **Edit presets**: Rename or delete existing presets
-~~- **Import/Export**: Share and backup presets in JSON format~~
+
+~~**Import/Export**: Share and backup presets in JSON format~~
 - **Default presets**: Includes "All Corners", "Top Only", "Bottom Only", "Left Only", "Right Only", and "None"
 
 ## Configuration Options
@@ -102,8 +103,10 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 ### Preset Management
 - **Preset list**: View and manage saved configurations
 - **Create new**: Save current settings as preset
-~~- **Import**: Load presets from JSON files~~
-~~- **Export**: Save presets as JSON files~~
+
+~~**Import**: Load presets from JSON files~~
+
+~~**Export**: Save presets as JSON files~~
 
 ### Permissions
 - **Accessibility**: Required for detecting screen elements
