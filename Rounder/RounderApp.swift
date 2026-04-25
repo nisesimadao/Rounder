@@ -19,7 +19,7 @@ struct RounderApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var settingsWindow: NSWindow?
     private var menuBarController = MenuBarController()
@@ -72,6 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.maxSize = NSSize(width: 800, height: 700)
         
         self.settingsWindow = window
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
     }
     
@@ -160,6 +161,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.titlebarSeparatorStyle = .none
         }
         
+        // ウィンドウが閉じられたときにDockから非表示にする
+        window.delegate = self
+        
         self.settingsWindow = window
     }
     
@@ -175,6 +179,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 設定ウィンドウを閉じるときはDockから非表示
         NSApp.setActivationPolicy(.accessory)
         settingsWindow?.orderOut(nil)
+    }
+    
+    // MARK: - NSWindowDelegate
+    
+    func windowWillClose(_ notification: Notification) {
+        // 設定ウィンドウが閉じられたときにDockから非表示に戻す
+        if notification.object as? NSWindow == settingsWindow {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
     
     func updateOverlaySettings(radius: CGFloat, color: NSColor) {

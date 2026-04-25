@@ -18,14 +18,14 @@ class MenuBarController: NSObject {
         
         if let button = statusItem?.button {
             button.title = "R"
-            button.toolTip = "Rounder - 画面コーナー角丸化ツール"
+            button.toolTip = String(localized: "rounder_tooltip")
             
             let menu = NSMenu()
             
             menu.addItem(NSMenuItem.separator())
             
             let settingsItem = NSMenuItem(
-                title: "設定...",
+                title: String(localized: "settings_menu"),
                 action: #selector(showSettings),
                 keyEquivalent: ","
             )
@@ -35,7 +35,7 @@ class MenuBarController: NSObject {
             menu.addItem(NSMenuItem.separator())
             
             let quitItem = NSMenuItem(
-                title: "終了",
+                title: String(localized: "quit_menu"),
                 action: #selector(quitApp),
                 keyEquivalent: "q"
             )

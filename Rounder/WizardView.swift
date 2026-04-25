@@ -19,11 +19,11 @@ struct WizardView: View {
         VStack(spacing: 0) {
             // ヘッダー
             HStack {
-                Text("Rounder セットアップ")
+                Text("rounder_setup_title")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 Spacer()
-                Button("閉じる") {
+                Button(String(localized: "close_button")) {
                     closeWizard()
                 }
                 .keyboardShortcut(.escape)
@@ -91,11 +91,11 @@ struct WizardView: View {
                     .font(.system(size: 80))
                     .foregroundColor(.blue)
                 
-                Text("Rounderへようこそ")
+                Text("welcome_to_rounder")
                     .font(.title)
                     .fontWeight(.semibold)
                 
-                Text("Macの画面コーナーを美しい角丸に変換するユーティリティです。")
+                Text("app_utility_description")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -105,26 +105,26 @@ struct WizardView: View {
             Spacer()
             
             VStack(alignment: .leading, spacing: 15) {
-                Text("主な機能:")
+                Text("main_features")
                     .font(.headline)
                 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("画面コーナーの角丸化")
+                        Text("screen_corner_rounding")
                     }
                     
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("カスタマイズ可能な半径と色")
+                        Text("customizable_radius_color")
                     }
                     
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("バックグラウンドで動作")
+                        Text("run_in_background")
                     }
                 }
             }
@@ -143,11 +143,11 @@ struct WizardView: View {
                     .font(.system(size: 80))
                     .foregroundColor(.orange)
                 
-                Text("権限の要求")
+                Text("permission_request")
                     .font(.title)
                     .fontWeight(.semibold)
                 
-                Text("Rounderが正常に動作するために、以下の権限が必要です:")
+                Text("permissions_required_message")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -157,7 +157,7 @@ struct WizardView: View {
             Spacer()
             
             VStack(alignment: .leading, spacing: 15) {
-                Text("必要な権限:")
+                Text("required_permissions")
                     .font(.headline)
                 
                 VStack(alignment: .leading, spacing: 12) {
@@ -167,10 +167,10 @@ struct WizardView: View {
                             .frame(width: 20)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("画面アクセス")
+                            Text("display_access")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text("オーバーレイを表示して画面コーナーを角丸にします")
+                            Text("overlay_description")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -182,10 +182,12 @@ struct WizardView: View {
                             .frame(width: 20)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("自動起動")
+                            Text("auto_start")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text("ログイン時に自動的に起動します")
+                            Text("auto_start_description")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -196,7 +198,7 @@ struct WizardView: View {
             
             Spacer()
             
-            Text("これらの権限はRounderの動作にのみ使用され、他の目的では使用されません。")
+            Text("permissions_usage_only")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -206,27 +208,27 @@ struct WizardView: View {
     
     private var settingsPage: some View {
         VStack(spacing: 20) {
-            Text("基本設定")
+            Text("basic_settings")
                 .font(.title2)
                 .fontWeight(.semibold)
             
             VStack(alignment: .leading, spacing: 20) {
                 // 有効/無効トグル
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("一般")
+                    Text("general")
                         .font(.headline)
                     
-                    Toggle("角丸を有効にする", isOn: $isEnabled)
+                    Toggle(String(localized: "enable_rounded_corners"), isOn: $isEnabled)
                 }
                 
                 // 角の半径設定
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("外観")
+                    Text("appearance")
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("角の半径")
+                            Text("corner_radius")
                             Spacer()
                             Text("\(Int(cornerRadius))px")
                                 .foregroundColor(.secondary)
@@ -238,15 +240,15 @@ struct WizardView: View {
                     
                     // 色選択
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("角の色")
+                        Text("corner_color")
                         
                         HStack(spacing: 15) {
-                            ColorPicker("カスタム色", selection: $selectedColor)
+                            ColorPicker(String(localized: "custom_color"), selection: $selectedColor)
                                 .labelsHidden()
                                 .frame(width: 50, height: 30)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("クイック選択")
+                                Text("quick_select")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 

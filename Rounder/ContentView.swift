@@ -20,6 +20,15 @@ struct AdvancedSettingsView: View {
     @State private var tempColor: Color = .black
     @State private var tempEnabled: Bool = true
     
+    // バージョン情報
+    private var appVersion: String {
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+           let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            return String(format: String(localized: "version_with_build", defaultValue: "Version %@ (%@)"), version, build)
+        }
+        return String(localized: "version_unknown", defaultValue: "Version Unknown")
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // ヘッダー
@@ -29,13 +38,13 @@ struct AdvancedSettingsView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 24, height: 24)
                 
-                Text("Rounder 設定")
+                Text("rounder_settings")
                     .font(.title2)
                     .fontWeight(.semibold)
                 
                 Spacer()
                 
-                Text("バージョン 1.0.0")
+                Text(appVersion)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -56,21 +65,21 @@ struct AdvancedSettingsView: View {
                     markAsChanged: markAsChanged
                 )
                 .tabItem {
-                    Label("設定", systemImage: "gearshape")
+                    Label("settings_tab", systemImage: "gearshape")
                 }
                 .tag(0)
                 
                 // 権限タブ
                 PermissionsTabView()
                 .tabItem {
-                    Label("権限", systemImage: "lock.shield")
+                    Label("permissions_tab", systemImage: "lock.shield")
                 }
                 .tag(1)
                 
                 // クレジットタブ
                 CreditsTabView()
                 .tabItem {
-                    Label("クレジット", systemImage: "info.circle")
+                    Label("credits_tab", systemImage: "info.circle")
                 }
                 .tag(2)
             }
@@ -78,19 +87,19 @@ struct AdvancedSettingsView: View {
             
             // フッターボタン
             HStack(spacing: 12) {
-                Button("キャンセル") {
+                Button("cancel") {
                     resetToSavedValues()
                     closeSettings()
                 }
                 .keyboardShortcut(.escape)
                 
-                Button("適用") {
+                Button("apply") {
                     applySettings()
                 }
                 .disabled(!hasUnsavedChanges)
                 .keyboardShortcut(.return, modifiers: .command)
                 
-                Button("OK") {
+                Button("ok") {
                     applySettings()
                     closeSettings()
                 }
@@ -99,7 +108,7 @@ struct AdvancedSettingsView: View {
                 
                 Spacer()
                 
-                Button("終了") {
+                Button("exit") {
                     NSApplication.shared.terminate(nil)
                 }
                 .foregroundColor(.red)
@@ -219,10 +228,10 @@ struct SettingsTabView: View {
         VStack(alignment: .leading, spacing: 20) {
             // 有効/無効トグル
             VStack(alignment: .leading, spacing: 8) {
-                Text("一般")
+                Text("general")
                     .font(.headline)
                 
-                Toggle("角丸を有効にする", isOn: $tempEnabled)
+                Toggle("enable_rounded_corners", isOn: $tempEnabled)
                     .onChange(of: tempEnabled) { _, _ in
                         markAsChanged()
                     }
@@ -230,12 +239,12 @@ struct SettingsTabView: View {
             
             // 角の半径設定
             VStack(alignment: .leading, spacing: 12) {
-                Text("外観")
+                Text("appearance")
                     .font(.headline)
                 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("角の半径")
+                        Text("corner_radius")
                         Spacer()
                         Text("\(Int(tempRadius))px")
                             .foregroundColor(.secondary)
@@ -250,10 +259,13 @@ struct SettingsTabView: View {
                 
                 // 色選択
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("角の色")
+                    HStack {
+                        Text("corner_color")
+                        Spacer()
+                    }
                     
                     HStack(spacing: 15) {
-                        ColorPicker("カスタム色", selection: $tempColor)
+                        ColorPicker("", selection: $tempColor)
                             .labelsHidden()
                             .frame(width: 50, height: 30)
                             .onChange(of: tempColor) { _, _ in
@@ -261,7 +273,7 @@ struct SettingsTabView: View {
                             }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("クイック選択")
+                            Text("quick_select")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
@@ -295,7 +307,7 @@ struct SettingsTabView: View {
 struct PermissionsTabView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("権限管理")
+            Text("permission_management")
                 .font(.headline)
             
             VStack(spacing: 16) {
@@ -324,14 +336,14 @@ struct PermissionsTabView: View {
             Divider()
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("権限の再設定")
+                Text("reset_permissions")
                     .font(.headline)
                 
-                Text("権限に問題がある場合、システム環境設定から再度許可することができます。")
+                Text("permission_regrant_instructions")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Button("システム環境設定を開く") {
+                Button(String(localized: "open_system_preferences")) {
                     NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security")!)
                 }
                 .buttonStyle(.bordered)
@@ -412,12 +424,12 @@ enum PermissionStatus {
 struct CreditsTabView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("クレジット")
+            Text("credits")
                 .font(.headline)
             
             VStack(alignment: .leading, spacing: 16) {
                 CreditSection(
-                    title: "開発",
+                    title: String(localized: "developer"),
                     items: [
                         "Nisesimadao - 開発者",
                         "SwiftUI & AppKit 実装"
@@ -434,7 +446,7 @@ struct CreditsTabView: View {
                 )
                 
                 CreditSection(
-                    title: "ライセンス",
+                    title: String(localized: "license"),
                     items: [
                         "MIT License",
                         "オープンソースプロジェクト"
@@ -445,14 +457,14 @@ struct CreditsTabView: View {
             Divider()
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("サポート")
+                Text("support")
                     .font(.headline)
                 
-                Text("問題報告や機能要望はGitHubで受け付けています。")
+                Text("github_issues_description")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Button("GitHubを開く") {
+                Button(String(localized: "open_github")) {
                     if let url = URL(string: "https://github.com/nisesimadao/rounder") {
                         NSWorkspace.shared.open(url)
                     }

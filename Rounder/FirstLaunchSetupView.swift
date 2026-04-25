@@ -14,6 +14,15 @@ struct FirstLaunchSetupView: View {
     @State private var automationGranted: Bool = false
     @State private var setupComplete: Bool = false
     
+    // バージョン情報
+    private var appVersion: String {
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+           let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            return String(format: String(localized: "version_with_build", defaultValue: "Version %@ (%@)"), version, build)
+        }
+        return String(localized: "version_unknown", defaultValue: "Version Unknown")
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // ヘッダー
@@ -25,11 +34,11 @@ struct FirstLaunchSetupView: View {
                         .frame(width: 40, height: 40)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Rounderへようこそ")
+                        Text("welcome_to_rounder")
                             .font(.title)
                             .fontWeight(.bold)
                         
-                        Text("macOSの画面コーナーを美しく角丸化")
+                        Text("app_description")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -70,7 +79,7 @@ struct FirstLaunchSetupView: View {
             // フッターボタン
             HStack(spacing: 12) {
                 if selectedTab > 0 {
-                    Button("戻る") {
+                    Button("back") {
                         selectedTab -= 1
                     }
                     .keyboardShortcut(.leftArrow)
@@ -79,14 +88,14 @@ struct FirstLaunchSetupView: View {
                 Spacer()
                 
                 if selectedTab < 2 {
-                    Button("次へ") {
+                    Button("next") {
                         selectedTab += 1
                     }
                     .keyboardShortcut(.rightArrow)
                     .buttonStyle(.borderedProminent)
                     .disabled(selectedTab == 0 && !allPermissionsGranted())
                 } else {
-                    Button("Rounderを開始") {
+                    Button("start_rounder") {
                         completeSetup()
                     }
                     .keyboardShortcut(.return)
@@ -125,31 +134,31 @@ struct PermissionsSetupView: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Text("必要な権限")
+            Text("required_permissions")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding(.top, 20)
             
             VStack(spacing: 16) {
                 PermissionRow(
-                    title: "アクセシビリティ権限",
-                    description: "画面の角を検出してオーバーレイを表示するために必要です",
+                    title: "accessibility_permission",
+                    description: "accessibility_description",
                     icon: "accessibility",
                     isGranted: $accessibilityGranted,
                     action: { requestAccessibilityPermission() }
                 )
                 
                 PermissionRow(
-                    title: "画面録画権限",
-                    description: "スクリーンセーバーレベルでオーバーレイを表示するために必要です",
+                    title: "screen_permission",
+                    description: "screen_description",
                     icon: "display",
                     isGranted: $screenGranted,
                     action: { requestScreenPermission() }
                 )
                 
                 PermissionRow(
-                    title: "自動化権限",
-                    description: "システムイベントを監視して画面変更に対応するために必要です",
+                    title: "automation_permission",
+                    description: "automation_description",
                     icon: "gear.badge",
                     isGranted: $automationGranted,
                     action: { requestAutomationPermission() }
@@ -234,7 +243,7 @@ struct InitialSettingsView: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Text("初期設定")
+            Text("basic_settings")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding(.top, 20)
@@ -242,7 +251,7 @@ struct InitialSettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // 角の半径設定
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("角の半径")
+                    Text("corner_radius")
                         .font(.headline)
                     
                     HStack {
@@ -255,11 +264,11 @@ struct InitialSettingsView: View {
                 
                 // 色選択
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("角の色")
+                    Text("corner_color")
                         .font(.headline)
                     
                     HStack(spacing: 12) {
-                        ColorPicker("カスタム色", selection: $selectedColor)
+                        ColorPicker(String(localized: "custom_color"), selection: $selectedColor)
                             .labelsHidden()
                             .frame(width: 50, height: 30)
                         
@@ -282,10 +291,10 @@ struct InitialSettingsView: View {
                 
                 // 説明
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("設定について")
+                    Text("about_settings")
                         .font(.headline)
                     
-                    Text("これらの設定は後からいつでも変更できます。メニューバーのRounderアイコンから設定画面を開いてください。")
+                    Text("settings_change_instructions")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)
@@ -326,7 +335,7 @@ struct SetupCompleteView: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Text("セットアップ完了")
+            Text("setup_complete")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding(.top, 20)
@@ -337,22 +346,22 @@ struct SetupCompleteView: View {
                     .foregroundColor(.green)
                 
                 VStack(spacing: 12) {
-                    Text("準備が完了しました！")
+                    Text("setup_complete_message")
                         .font(.title3)
                         .fontWeight(.medium)
                     
-                    Text("Rounderは画面の角に美しい角丸オーバーレイを表示します。")
+                    Text("rounder_description")
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                 }
                 
                 VStack(alignment: .leading, spacing: 12) {
-                    Toggle("セットアップを完了してRounderを開始", isOn: $isChecked)
+                    Toggle(String(localized: "complete_setup_start_rounder"), isOn: $isChecked)
                         .onChange(of: isChecked) { _, _ in
                             setupComplete = isChecked
                         }
                     
-                    Text("チェックを入れると、Rounderがバックグラウンドで起動し、メニューバーにアイコンが表示されます。")
+                    Text("background_operation_description")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)

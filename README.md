@@ -1,115 +1,117 @@
 # <img src="Rounder/ICON.png" width="40" vertical-align="middle" /> Rounder
 
-macOSの画面の角を美しく角丸化するツール。
+A tool that beautifully rounds the corners of your macOS screen.
 
-Notch導入以前のMacBookや外部モニターの直線的な角を、ソフトウェア制御のオーバーレイによってモダンな角丸に見せます。バックグラウンドで動作し、システムの動作に干渉しません。
+It uses a software-controlled overlay to give modern rounded corners to older MacBooks (pre-notch) and external monitors that still have sharp edges. It runs quietly in the background and does not interfere with normal system behavior.
 
-## プロジェクト構成
+[日本語版READMEはこちら](./README_jp.md)
+
+> Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect.
+
+## Project Structure
 
 ```
 Rounder/
 ├── Rounder/
-│   ├── RounderApp.swift           # メインアプリケーションエントリ
-│   ├── CornerOverlayWindow.swift  # 角丸オーバーレイウィンドウ
-│   ├── ContentView.swift          # 高度な設定画面
-│   ├── FirstLaunchSetupView.swift # 初回起動セットアップ
-│   ├── MenuBarController.swift   # メニューバー制御
-│   └── ScreenMonitor.swift        # 画面変更監視
-├── Rounder.xcodeproj            # Xcodeプロジェクト
-├── Rounder 開発仕様書.md          # 開発仕様書
-└── README.md                     # このファイル
+│   ├── RounderApp.swift           # Main application entry point
+│   ├── CornerOverlayWindow.swift  # Rounded corner overlay window
+│   ├── ContentView.swift          # Advanced settings UI
+│   ├── FirstLaunchSetupView.swift # First launch setup flow
+│   ├── MenuBarController.swift    # Menu bar control
+│   └── ScreenMonitor.swift        # Screen change monitoring
+├── Rounder.xcodeproj              # Xcode project
+├── Rounder 開発仕様書.md           # Development specification
+└── README.md                      # This file
 ```
 
-## 特徴
+## Features
 
-- **美しい角丸**: macOSのネイティブな角丸を再現
-- **バックグラウンド動作**: 常駐アプリとしてメニューバーから操作
-- **リアルタイム設定**: 角の半径や色を即座に反映
-- **マルチディスプレイ対応**: すべての接続ディスプレイに適用
-- **権限管理**: 必要なシステム権限を安全に要求
-- **初回セットアップ**: ユーザーフレンドリーな導入体験
+- **Background operation**: Runs as a menu bar app
+- **Real-time configuration**: Instantly adjust corner radius and color
+- **Simple interface**: Intuitive settings screen
+- **Lightweight and stable**: Runs smoothly in the background
 
-## システム要件
+## System Requirements
 
-- macOS 11.0 (Big Sur) 以降
-- Apple Silicon (M1/M2/M3) または Intel Mac
-- アクセシビリティ権限が必要
+- macOS 14.6 (Sonoma) or later
+- Apple Silicon (M1/M2/M3) or Intel Mac
+- Accessibility permission required
 
-## インストール
+## Installation
 
-### ビルド済みアプリ（推奨）
+### Prebuilt App (Recommended)
 
-1. [Releases](https://github.com/nisesimadao/rounder/releases) から最新版をダウンロード
-2. アプリケーションフォルダに移動
-3. 初回起動時に権限を許可
+1. Download the latest version from [Releases](https://github.com/nisesimadao/rounder/releases)
+2. Move it to your Applications folder
+3. Grant permissions on first launch
 
-### ソースからビルド
+### Build from Source
 
 ```bash
-# Xcodeでプロジェクトを開く
+# Open the project in Xcode
 open Rounder.xcodeproj
 
-# またはコマンドラインでビルド
+# Or build from the command line
 xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release build
 ```
 
-## 使い方
+## Usage
 
-### 初回起動
+### First Launch
 
-1. アプリを起動するとセットアップウィザードが表示
-2. 必要な権限（アクセシビリティ、画面録画）を許可
-3. 角の半径と色を設定
-4. 「Rounderを開始」で完了
+1. Launch the app to open the setup wizard
+2. Grant required permissions (Accessibility, Screen Recording)
+3. Set corner radius and color
+4. Click "Start Rounder" to finish
 
-### 通常使用
+### Daily Use
 
-- **メニューバー**: Rounderアイコンから設定画面を開く
-- **設定変更**: 角の半径（0-40px）と色をリアルタイムで調整
-- **有効/無効**: 角丸効果のオン/オフを切り替え
-- **終了**: アプリを完全に終了
+- **Menu bar**: Open settings from the Rounder icon
+- **Adjust settings**: Change corner radius (0–40px) and color in real time
+- **Enable/disable**: Toggle rounded corner effect on or off
+- **Quit**: Fully exit the app
 
-## 設定オプション
+## Configuration Options
 
-### 一般設定
-- **角の半径**: 0〜40ピクセルで調整可能
-- **角の色**: カラーピッカーまたはプリセットから選択
-- **有効化**: 角丸効果のオン/オフ
+### General Settings
+- **Corner radius**: Adjustable from 0 to 40 pixels
+- **Corner color**: Choose via color picker or presets
+- **Enable**: Toggle the rounded corner effect
 
-### 権限管理
-- **アクセシビリティ権限**: 画面要素の検出に必要
-- **画面録画権限**: スクリーンセーバーレベルでの表示に必要
-- **自動化権限**: システムイベント監視に必要
+### Permissions
+- **Accessibility**: Required for detecting screen elements
+- **Screen Recording**: Required for overlay rendering at screen-saver level
+- **Automation**: Required for monitoring system events
 
-## 技術仕様
+## Technical Details
 
-### コア技術
-- **SwiftUI + AppKit**: モダンなmacOSネイティブアプリ
-- **Core Graphics**: 高性能なオーバーレイ描画
-- **NSWindow.Level.screenSaver**: メニューバーより上のレイヤーで表示
-- **UserDefaults**: 設定の永続化
+### Core Technologies
+- **SwiftUI + AppKit**: Modern native macOS app
+- **Core Graphics**: High-performance overlay rendering
+- **NSWindow.Level.screenSaver**: Displays above menu bar layer
+- **UserDefaults**: Persistent settings storage
 
-### パフォーマンス
-- **低負荷**: CPU使用率は最小限
-- **メモリ効率**: 必要最小限のメモリ使用
-- **リアルタイム反映**: 設定変更の即時適用
+### Performance
+- **Low overhead**: Minimal CPU usage
+- **Memory efficient**: Uses only necessary resources
+- **Real-time updates**: Changes apply instantly
 
-## トラブルシューティング
+## Troubleshooting
 
-### よくある問題
+### Common Issues
 
-**Q: 角丸が表示されない**
-- A: アクセシビリティ権限が許可されているか確認してください
+**Q: Rounded corners are not visible**  
+A: Make sure Accessibility permission is granted
 
-**Q: 設定変更が反映されない**
-- A: 「適用」ボタンを押すか、アプリを再起動してください
+**Q: Settings changes are not applied**  
+A: Click "Apply" or restart the app
 
-**Q: メニューバーにアイコンがない**
-- A: アプリがバックグラウンドで実行されているか確認してください
+**Q: No menu bar icon appears**  
+A: Ensure the app is running in the background
 
-### 権限の再設定
+### Reset Permissions
 
 ```bash
-# システム環境設定を直接開く
+# Open System Settings directly
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
 ```
