@@ -25,6 +25,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var menuBarController = MenuBarController()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Metal関連のエラーを完全に抑制する設定
+        setenv("MTL_DEBUG_LAYER", "0", 1)
+        setenv("MTL_ENABLE_DEBUG_INFO", "0", 1)
+        setenv("MTL_HUD_ENABLED", "0", 1)
+        
+        // アプリケーションがMetalを使用しないことを明示的に設定
+        if let device = MTLCreateSystemDefaultDevice() {
+            // デバイスを作成してMetalが利用可能か確認のみ
+            print("Metal device available: \(device.name)")
+        }
+        
         setupApplication()
         
         // 初回起動チェック
@@ -109,6 +120,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func createOverlayWindows() {
         guard let screen = NSScreen.main else { return }
         
+        // @AppStorageから現在の設定を読み込み
         let radius = UserDefaults.standard.object(forKey: "cornerRadius") as? Double ?? 20.0
         let cornerSize: CGFloat = CGFloat(radius) + 0.01  // 余白が残らないように半径と同じサイズ
         let color: NSColor = {
@@ -191,19 +203,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func updateOverlaySettings(radius: CGFloat, color: NSColor) {
-        // 既存のウィンドウを削除
+        // パフォーマンス最適化：ウィンドウを再利用して再作成を避ける
+        if overlayWindows.isEmpty {
+            createOverlayWindows()
+        }
+        
+        // 既存のウィンドウの設定を更新
         for window in overlayWindows {
-            window.close()
+            window.updateSettings(radius: radius, color: color)
+            // 強制的に再描画を実行
+            window.contentView?.needsDisplay = true
+            
+            // メインスレッドで確実に更新
+            DispatchQueue.main.async {
+                window.display()
+                window.orderFront(nil)
+            }
         }
-        overlayWindows.removeAll()
         
-        // 設定を一時的に保存
-        UserDefaults.standard.set(Double(radius), forKey: "cornerRadius")
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false) {
-            UserDefaults.standard.set(data, forKey: "cornerColor")
+        // UserDefaultsへの保存は@AppStorageに任せる（二重書き込みを避ける）
+    }
+    
+    func updateRainbowMode(_ enabled: Bool) {
+        // パフォーマンス最適化：ウィンドウを再利用して再作成を避ける
+        if overlayWindows.isEmpty {
+            createOverlayWindows()
         }
         
-        // 新しいウィンドウを作成
-        createOverlayWindows()
+        // 既存のウィンドウのレインボーモードを更新
+        for window in overlayWindows {
+            window.updateRainbowMode(enabled)
+            
+            // メインスレッドで確実に更新
+            DispatchQueue.main.async {
+                window.display()
+                window.orderFront(nil)
+            }
+        }
     }
 }

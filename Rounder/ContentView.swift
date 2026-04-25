@@ -10,8 +10,9 @@ import SwiftUI
 struct AdvancedSettingsView: View {
     @AppStorage("cornerRadius") private var cornerRadius: Double = 20.0
     @AppStorage("cornerColor") private var cornerColorData: Data = Data()
+    @AppStorage("isEnabled") private var isEnabled: Bool = true
+    @AppStorage("rainbowMode") private var rainbowMode: Bool = false
     @State private var selectedColor: Color = .black
-    @State private var isEnabled: Bool = true
     @State private var hasUnsavedChanges: Bool = false
     @State private var selectedTab: Int = 0
     
@@ -19,6 +20,7 @@ struct AdvancedSettingsView: View {
     @State private var tempRadius: Double = 20.0
     @State private var tempColor: Color = .black
     @State private var tempEnabled: Bool = true
+    @State private var tempRainbowMode: Bool = false
     
     // バージョン情報
     private var appVersion: String {
@@ -61,6 +63,7 @@ struct AdvancedSettingsView: View {
                     tempRadius: $tempRadius,
                     tempColor: $tempColor,
                     tempEnabled: $tempEnabled,
+                    tempRainbowMode: $tempRainbowMode,
                     hasUnsavedChanges: $hasUnsavedChanges,
                     markAsChanged: markAsChanged
                 )
@@ -121,44 +124,160 @@ struct AdvancedSettingsView: View {
             loadSavedColor()
             resetToSavedValues()
         }
+        .onChange(of: cornerRadius) { _, newValue in
+            selectedColor = loadColorFromData(cornerColorData)
+            tempRadius = newValue
+        }
+        .onChange(of: cornerColorData) { _, newData in
+            selectedColor = loadColorFromData(newData)
+            tempColor = selectedColor
+        }
+        .onChange(of: isEnabled) { _, newValue in
+            tempEnabled = newValue
+        }
+        .onChange(of: rainbowMode) { _, newValue in
+            tempRainbowMode = newValue
+        }
     }
     
     // MARK: - 設定管理
     private func markAsChanged() {
-        hasUnsavedChanges = true
+        // 現在の一時値と保存値を比較
+        let radiusChanged = tempRadius != cornerRadius
+        let colorChanged = !colorsEqual(tempColor, selectedColor)
+        let enabledChanged = tempEnabled != isEnabled
+        let rainbowModeChanged = tempRainbowMode != rainbowMode
+        
+        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || rainbowModeChanged
+    }
+    
+    private func colorsEqual(_ color1: Color, _ color2: Color) -> Bool {
+        let nsColor1 = NSColor(color1)
+        let nsColor2 = NSColor(color2)
+        return nsColor1.isEqual(nsColor2)
     }
     
     private func applySettings() {
-        // 一時的な値を保存
-        cornerRadius = tempRadius
-        selectedColor = tempColor
-        isEnabled = tempEnabled
+        print("Applying settings...")
         
-        // 色を保存
-        let nsColor = NSColor(selectedColor)
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
-            cornerColorData = data
+        // @AppStorageを直接更新
+        cornerRadius = tempRadius
+        isEnabled = tempEnabled
+        rainbowMode = tempRainbowMode
+        
+        // 色を保存（レインボーモードがオンの場合は保存しない）
+        if !tempRainbowMode {
+            let nsColor = NSColor(tempColor)
+            if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
+                cornerColorData = data
+            }
+        }
+        
+        // レインボーモードの即時適用（エラーが発生しても続行）
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            print("Updating rainbow mode...")
+            appDelegate.updateRainbowMode(tempRainbowMode)
+        } else {
+            print("Warning: Could not get AppDelegate for rainbow mode update")
         }
         
         // アプリを再起動して設定を反映
+        print("Starting restart process...")
         restartApplication()
         
         hasUnsavedChanges = false
     }
     
     private func restartApplication() {
-        let task = Process()
-        task.launchPath = "/usr/bin/open"
-        task.arguments = [Bundle.main.bundlePath]
-        task.launch()
+        // アプリのバンドルパスを取得
+        let bundlePath = Bundle.main.bundlePath
+        print("Bundle path: \(bundlePath)")
         
-        NSApplication.shared.terminate(nil)
+        // NSTaskを使用して新しいインスタンスとして再起動
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", bundlePath] // -n で新しいインスタンスとして開く
+        
+        print("Starting restart task...")
+        
+        // バックグラウンドで実行し、アプリを終了
+        DispatchQueue.global().async {
+            do {
+                print("Executing restart task...")
+                try task.run()
+                print("Task executed successfully")
+                
+                // タスクが開始されたらアプリを終了
+                DispatchQueue.main.async {
+                    print("Terminating application...")
+                    NSApplication.shared.terminate(nil)
+                }
+            } catch {
+                print("Failed to restart application: \(error)")
+                
+                // フォールバック：シェルスクリプト方式
+                print("Trying fallback method...")
+                self.restartWithShellScript()
+            }
+        }
+    }
+    
+    private func restartWithShellScript() {
+        // フォールバックとしてシェルスクリプト方式を使用
+        let bundlePath = Bundle.main.bundlePath
+        let shellScript = """
+        #!/bin/bash
+        sleep 0.5
+        open "\(bundlePath)"
+        exit 0
+        """
+        
+        let tempDir = FileManager.default.temporaryDirectory
+        let scriptFile = tempDir.appendingPathComponent("restart_rounder.sh")
+        
+        do {
+            try shellScript.write(to: scriptFile, atomically: true, encoding: .utf8)
+            
+            // 実行権限を付与
+            let chmodProcess = Process()
+            chmodProcess.launchPath = "/bin/chmod"
+            chmodProcess.arguments = ["+x", scriptFile.path]
+            chmodProcess.launch()
+            chmodProcess.waitUntilExit()
+            
+            // シェルスクリプトを実行
+            let scriptProcess = Process()
+            scriptProcess.launchPath = scriptFile.path
+            scriptProcess.arguments = []
+            
+            DispatchQueue.global().async {
+                do {
+                    try scriptProcess.run()
+                    
+                    DispatchQueue.main.async {
+                        NSApplication.shared.terminate(nil)
+                    }
+                } catch {
+                    print("Shell script restart failed: \(error)")
+                    DispatchQueue.main.async {
+                        NSApplication.shared.terminate(nil)
+                    }
+                }
+            }
+            
+        } catch {
+            print("Failed to create restart script: \(error)")
+            DispatchQueue.main.async {
+                NSApplication.shared.terminate(nil)
+            }
+        }
     }
     
     private func resetToSavedValues() {
         tempRadius = cornerRadius
         tempColor = selectedColor
         tempEnabled = isEnabled
+        tempRainbowMode = rainbowMode
         hasUnsavedChanges = false
     }
     
@@ -170,32 +289,11 @@ struct AdvancedSettingsView: View {
     }
     
     // MARK: - オーバーレイ操作
-    private func updateOverlaySettings() {
-        guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
-        
-        let nsColor = NSColor(selectedColor)
-        appDelegate.updateOverlaySettings(radius: CGFloat(cornerRadius), color: nsColor)
-    }
-    
     private func updateOverlaySettingsWithTempValues() {
         guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
         
         let nsColor = NSColor(tempColor)
         appDelegate.updateOverlaySettings(radius: CGFloat(tempRadius), color: nsColor)
-    }
-    
-    private func updateOverlayVisibility() {
-        guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
-        
-        for window in appDelegate.overlayWindows {
-            window.orderOut(nil)
-        }
-        
-        if tempEnabled {
-            for window in appDelegate.overlayWindows {
-                window.orderFront(nil)
-            }
-        }
     }
     
     private func saveColor(_ color: Color) {
@@ -206,12 +304,15 @@ struct AdvancedSettingsView: View {
     }
     
     private func loadSavedColor() {
-        guard !cornerColorData.isEmpty,
-              let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: cornerColorData) else {
-            return
+        selectedColor = loadColorFromData(cornerColorData)
+    }
+    
+    private func loadColorFromData(_ data: Data) -> Color {
+        guard !data.isEmpty,
+              let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: data) else {
+            return .black
         }
-        
-        selectedColor = Color(nsColor)
+        return Color(nsColor)
     }
 }
 
@@ -221,6 +322,7 @@ struct SettingsTabView: View {
     @Binding var tempRadius: Double
     @Binding var tempColor: Color
     @Binding var tempEnabled: Bool
+    @Binding var tempRainbowMode: Bool
     @Binding var hasUnsavedChanges: Bool
     let markAsChanged: () -> Void
     
@@ -246,9 +348,34 @@ struct SettingsTabView: View {
                     HStack {
                         Text("corner_radius")
                         Spacer()
-                        Text("\(Int(tempRadius))px")
-                            .foregroundColor(.secondary)
-                            .font(.caption)
+                        HStack(spacing: 4) {
+                            TextField("半径", value: $tempRadius, format: .number.precision(.fractionLength(1)))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 60)
+                                .multilineTextAlignment(.trailing)
+                                .onSubmit {
+                                    // Enterキーで入力確定時に範囲チェック
+                                    if tempRadius < 0 {
+                                        tempRadius = 0
+                                    } else if tempRadius > 40 {
+                                        tempRadius = 40
+                                    }
+                                    markAsChanged()
+                                }
+                                .onChange(of: tempRadius) { _, _ in
+                                    // 値の範囲を制限
+                                    if tempRadius < 0 {
+                                        tempRadius = 0
+                                    } else if tempRadius > 40 {
+                                        tempRadius = 40
+                                    }
+                                    markAsChanged()
+                                }
+                            
+                            Text("px")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
                     }
                     
                     Slider(value: $tempRadius, in: 0...40, step: 1)
@@ -264,34 +391,53 @@ struct SettingsTabView: View {
                         Spacer()
                     }
                     
-                    HStack(spacing: 15) {
-                        ColorPicker("", selection: $tempColor)
-                            .labelsHidden()
-                            .frame(width: 50, height: 30)
-                            .onChange(of: tempColor) { _, _ in
-                                markAsChanged()
-                            }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("quick_select")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        // レインボーモードトグル
+                        VStack(alignment: .leading, spacing: 8) {
+                            Toggle(String(localized: "rainbow_mode"), isOn: $tempRainbowMode)
+                                .onChange(of: tempRainbowMode) { _, _ in
+                                    markAsChanged()
+                                }
                             
-                            HStack(spacing: 8) {
-                                ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
-                                    Button(action: {
-                                        tempColor = color
+                            if tempRainbowMode {
+                                Text(String(localized: "rainbow_mode_description"))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        // 通常の色選択（レインボーモードがオフの場合のみ表示）
+                        if !tempRainbowMode {
+                            HStack(spacing: 15) {
+                                ColorPicker("", selection: $tempColor)
+                                    .labelsHidden()
+                                    .frame(width: 50, height: 30)
+                                    .onChange(of: tempColor) { _, _ in
                                         markAsChanged()
-                                    }) {
-                                        Circle()
-                                            .fill(color)
-                                            .frame(width: 24, height: 24)
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(Color.primary, lineWidth: tempColor == color ? 2 : 0)
-                                            )
                                     }
-                                    .buttonStyle(PlainButtonStyle())
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("quick_select")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    
+                                    HStack(spacing: 8) {
+                                        ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
+                                            Button(action: {
+                                                tempColor = color
+                                                markAsChanged()
+                                            }) {
+                                                Circle()
+                                                    .fill(color)
+                                                    .frame(width: 24, height: 24)
+                                                    .overlay(
+                                                        Circle()
+                                                            .stroke(Color.primary, lineWidth: tempColor == color ? 2 : 0)
+                                                    )
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+                                    }
                                 }
                             }
                         }

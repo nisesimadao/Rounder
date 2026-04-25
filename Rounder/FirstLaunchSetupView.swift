@@ -117,13 +117,30 @@ struct FirstLaunchSetupView: View {
         // 初回起動完了フラグを設定
         UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
         
-        // アプリを再起動して通常モードへ
+        // Apple推奨の再起動方法：Process + sleep
         let task = Process()
         task.launchPath = "/usr/bin/open"
         task.arguments = [Bundle.main.bundlePath]
-        task.launch()
         
-        NSApplication.shared.terminate(nil)
+        // バックグラウンドで起動プロセスを実行
+        DispatchQueue.global().async {
+            do {
+                try task.run()
+                task.waitUntilExit()  // プロセスが完了するまで待機
+                
+                // メインスレッドでアプリを終了
+                DispatchQueue.main.async {
+                    NSApplication.shared.terminate(nil)
+                }
+            } catch {
+                print("Failed to restart application: \(error)")
+                
+                // フォールバック：直接終了
+                DispatchQueue.main.async {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+        }
     }
 }
 

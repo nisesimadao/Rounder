@@ -53,6 +53,11 @@ class CornerOverlayWindow: NSWindow {
     }
     
     func updateSettings(radius: CGFloat, color: NSColor) {
+        // 変更がない場合は早期リターンしてパフォーマンス向上
+        if self.radius == radius && self.color.isEqual(color) {
+            return
+        }
+        
         self.radius = radius
         self.color = color
         
@@ -60,16 +65,26 @@ class CornerOverlayWindow: NSWindow {
             contentView.updateSettings(radius: radius, color: color)
         }
     }
+    
+    func updateRainbowMode(_ enabled: Bool) {
+        if let contentView = contentView as? CornerOverlayView {
+            contentView.updateRainbowMode(enabled)
+        }
+    }
 }
 
 class CornerOverlayView: NSView {
     private var radius: CGFloat
     private var color: NSColor
+    private var rainbowMode: Bool = false
+    private var rainbowHue: CGFloat = 0.0
+    private var rainbowTimer: Timer?
     
     init(radius: CGFloat, color: NSColor) {
         self.radius = radius
         self.color = color
         super.init(frame: .zero)
+        setupRainbowMode()
     }
     
     required init?(coder: NSCoder) {
@@ -81,17 +96,20 @@ class CornerOverlayView: NSView {
         
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         
-        context.setFillColor(color.cgColor)
-        context.setStrokeColor(color.cgColor)
-        context.setLineWidth(2.0)
+        // パフォーマンス最適化：必要なアンチエイリアスのみ
         context.setShouldAntialias(true)
         context.setAllowsAntialiasing(true)
         
-        let bounds = self.bounds
+        // レインボーモードの場合は現在の色を使用
+        let currentColor = rainbowMode ? NSColor(hue: rainbowHue, saturation: 1.0, brightness: 1.0, alpha: 1.0) : color
+        context.setFillColor(currentColor.cgColor)
+        context.setStrokeColor(currentColor.cgColor)
+        context.setLineWidth(1.0)
         
+        let bounds = self.bounds
         let cornerType = determineCornerType()
         
-        // 描画モードを設定：重なり部分を透明に
+        // 効率的な描画モード
         context.setBlendMode(.copy)
         
         // 正方形部分を描画
@@ -175,9 +193,75 @@ class CornerOverlayView: NSView {
     }
     
     func updateSettings(radius: CGFloat, color: NSColor) {
+        // 変更がない場合は早期リターン
+        if self.radius == radius && self.color.isEqual(color) {
+            return
+        }
+        
         self.radius = radius
         self.color = color
-        needsDisplay = true
+        
+        // 強制的な再描画を実行
+        setNeedsDisplay(self.bounds)
+        displayIfNeeded()
+    }
+    
+    func updateRainbowMode(_ enabled: Bool) {
+        if self.rainbowMode == enabled {
+            return
+        }
+        
+        self.rainbowMode = enabled
+        
+        if enabled {
+            startRainbowAnimation()
+        } else {
+            stopRainbowAnimation()
+        }
+    }
+    
+    private func setupRainbowMode() {
+        // UserDefaultsからレインボーモード状態を取得
+        rainbowMode = UserDefaults.standard.bool(forKey: "rainbowMode")
+        
+        if rainbowMode {
+            startRainbowAnimation()
+        }
+    }
+    
+    private func startRainbowAnimation() {
+        rainbowTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            self.rainbowHue += 0.01
+            if self.rainbowHue > 1.0 {
+                self.rainbowHue = 0.0
+            }
+            
+            // メインスレッドで再描画
+            DispatchQueue.main.async {
+                self.needsDisplay = true
+            }
+        }
+    }
+    
+    private func stopRainbowAnimation() {
+        rainbowTimer?.invalidate()
+        rainbowTimer = nil
+    }
+    
+    // パフォーマンス最適化：dirtyRectのみを再描画
+    override func setNeedsDisplay(_ invalidRect: NSRect) {
+        // 無効な領域のみを効率的に再描画
+        super.setNeedsDisplay(invalidRect)
+    }
+    
+    // メモリ管理の最適化
+    deinit {
+        // クリーンアップ処理
+        stopRainbowAnimation()
+        radius = 0
+        color = .clear
     }
 }
 

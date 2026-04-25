@@ -4,5 +4,22 @@
 <dict>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<!-- Metal関連のエラーを抑制する設定 -->
+	<key>MTL_ENABLE_DEBUG_INFO</key>
+	<false/>
+	<key>MTL_HUD_ENABLED</key>
+	<false/>
+	<key>MetalAPIValidation</key>
+	<false/>
+	
+	<!-- アプリ再起動機能のための設定 -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSUIElement</key>
+	<false/>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>アプリの再起動と設定適用に必要です</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>アプリの再起動と設定適用に必要です</string>
 </dict>
 </plist>
