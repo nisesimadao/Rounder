@@ -18,11 +18,12 @@ Rounder/
 │   ├── RounderApp.swift           # Main application entry point
 │   ├── CornerOverlayWindow.swift  # Rounded corner overlay window
 │   ├── ContentView.swift          # Advanced settings UI
+│   ├── PresetsTabView.swift       # Preset management UI
+│   ├── PresetManager.swift        # Preset data management
 │   ├── FirstLaunchSetupView.swift # First launch setup flow
 │   ├── MenuBarController.swift    # Menu bar control
 │   └── ScreenMonitor.swift        # Screen change monitoring
 ├── Rounder.xcodeproj              # Xcode project
-├── Rounder 開発仕様書.md           # Development specification
 └── README.md                      # This file
 ```
 
@@ -30,6 +31,10 @@ Rounder/
 
 - **Background operation**: Runs as a menu bar app
 - **Real-time configuration**: Instantly adjust corner radius and color
+- **Individual corner control**: Toggle each corner independently
+- **Preset functionality**: Save and switch between favorite settings
+- **Import/Export**: Share and backup presets
+- **Super Duper Gaming Mode**: Special mode with animated effects
 - **Simple interface**: Intuitive settings screen
 - **Lightweight and stable**: Runs smoothly in the background
 
@@ -70,15 +75,35 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 
 - **Menu bar**: Open settings from the Rounder icon
 - **Adjust settings**: Change corner radius (0–40px) and color in real time
+- **Individual corners**: Toggle each corner independently (2x2 grid layout)
 - **Enable/disable**: Toggle rounded corner effect on or off
 - **Quit**: Fully exit the app
+
+### Preset Features
+
+- **Apply presets**: One-click apply saved configurations
+- **Save current settings**: Create new preset from current configuration
+- **Edit presets**: Rename or delete existing presets
+- **Import/Export**: Share and backup presets in JSON format
+- **Default presets**: Includes "All Corners", "Top Only", "Bottom Only", "Left Only", "Right Only", and "None"
 
 ## Configuration Options
 
 ### General Settings
 - **Corner radius**: Adjustable from 0 to 40 pixels
 - **Corner color**: Choose via color picker or presets
+- **Corner visibility**: Toggle each corner independently (2x2 grid layout)
 - **Enable**: Toggle the rounded corner effect
+
+### Super Duper Gaming Mode
+- **Enable**: Rainbow animation effects
+- **Speed control**: Adjust animation speed from 0.1x to 5.0x
+
+### Preset Management
+- **Preset list**: View and manage saved configurations
+- **Create new**: Save current settings as preset
+- **Import**: Load presets from JSON files
+- **Export**: Save presets as JSON files
 
 ### Permissions
 - **Accessibility**: Required for detecting screen elements

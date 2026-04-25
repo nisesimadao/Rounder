@@ -14,10 +14,14 @@ class MenuBarController: NSObject {
     func setupMenuBar(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
         
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem?.button {
-            button.title = "R"
+            if let icon = NSImage(named: "StatusIcon") {
+                icon.size = NSSize(width: 16, height: 16)
+                icon.isTemplate = true
+                button.image = icon
+            }
             button.toolTip = String(localized: "rounder_tooltip")
             
             let menu = NSMenu()

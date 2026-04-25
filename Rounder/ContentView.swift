@@ -6,12 +6,50 @@
 //
 
 import SwiftUI
+import AppKit
+
+// レインボーカラーの修飾子
+struct RainbowEffect: ViewModifier {
+    @State private var hue: Double = 0.0
+    
+    func body(content: Content) -> some View {
+        content
+            .foregroundColor(Color(hue: hue, saturation: 0.8, brightness: 0.8))
+            .onAppear {
+                withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                    hue = 1.0
+                }
+            }
+    }
+}
+
+extension View {
+    func rainbow() -> some View {
+        self.modifier(RainbowEffect())
+    }
+    
+    func applyIf<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        Group {
+            if condition {
+                transform(self)
+            } else {
+                self
+            }
+        }
+    }
+}
 
 struct AdvancedSettingsView: View {
     @AppStorage("cornerRadius") private var cornerRadius: Double = 20.0
     @AppStorage("cornerColor") private var cornerColorData: Data = Data()
     @AppStorage("isEnabled") private var isEnabled: Bool = true
-    @AppStorage("rainbowMode") private var rainbowMode: Bool = false
+    @AppStorage("superGamingMode") private var savedSuperGamingMode: Bool = false
+    @AppStorage("gamingSpeed") private var savedGamingSpeed: Double = 1.0
+    @AppStorage("glowIntensity") private var savedGlowIntensity: Double = 1.0
+    @AppStorage("topLeftEnabled") private var savedTopLeftEnabled: Bool = true
+    @AppStorage("topRightEnabled") private var savedTopRightEnabled: Bool = true
+    @AppStorage("bottomLeftEnabled") private var savedBottomLeftEnabled: Bool = true
+    @AppStorage("bottomRightEnabled") private var savedBottomRightEnabled: Bool = true
     @State private var selectedColor: Color = .black
     @State private var hasUnsavedChanges: Bool = false
     @State private var selectedTab: Int = 0
@@ -20,7 +58,17 @@ struct AdvancedSettingsView: View {
     @State private var tempRadius: Double = 20.0
     @State private var tempColor: Color = .black
     @State private var tempEnabled: Bool = true
-    @State private var tempRainbowMode: Bool = false
+    
+    // 四つの角の切り欠き設定
+    @State private var tempTopLeftEnabled: Bool = true
+    @State private var tempTopRightEnabled: Bool = true
+    @State private var tempBottomLeftEnabled: Bool = true
+    @State private var tempBottomRightEnabled: Bool = true
+    
+    // すーぱーげーみんぐもーど設定
+    @State private var superGamingMode: Bool = false
+    @State private var gamingSpeed: Double = 1.0
+    @State private var glowIntensity: Double = 1.0
     
     // バージョン情報
     private var appVersion: String {
@@ -63,28 +111,41 @@ struct AdvancedSettingsView: View {
                     tempRadius: $tempRadius,
                     tempColor: $tempColor,
                     tempEnabled: $tempEnabled,
-                    tempRainbowMode: $tempRainbowMode,
+                    tempTopLeftEnabled: $tempTopLeftEnabled,
+                    tempTopRightEnabled: $tempTopRightEnabled,
+                    tempBottomLeftEnabled: $tempBottomLeftEnabled,
+                    tempBottomRightEnabled: $tempBottomRightEnabled,
                     hasUnsavedChanges: $hasUnsavedChanges,
+                    superGamingMode: $superGamingMode,
+                    gamingSpeed: $gamingSpeed,
+                    glowIntensity: $glowIntensity,
                     markAsChanged: markAsChanged
                 )
                 .tabItem {
-                    Label("settings_tab", systemImage: "gearshape")
+                    Label("settings_tab", systemImage: "slider.horizontal.3")
                 }
                 .tag(0)
+                
+                // プリセットタブ
+                PresetsTabView()
+                .tabItem {
+                    Label("presets_tab", systemImage: "bookmark.square")
+                }
+                .tag(1)
                 
                 // 権限タブ
                 PermissionsTabView()
                 .tabItem {
                     Label("permissions_tab", systemImage: "lock.shield")
                 }
-                .tag(1)
+                .tag(2)
                 
                 // クレジットタブ
                 CreditsTabView()
                 .tabItem {
                     Label("credits_tab", systemImage: "info.circle")
                 }
-                .tag(2)
+                .tag(3)
             }
             .padding()
             
@@ -119,7 +180,7 @@ struct AdvancedSettingsView: View {
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 600, height: 600)
+        .frame(minWidth: 500, idealWidth: 600, maxWidth: .infinity, minHeight: 450, idealHeight: 650, maxHeight: .infinity)
         .onAppear {
             loadSavedColor()
             resetToSavedValues()
@@ -135,9 +196,6 @@ struct AdvancedSettingsView: View {
         .onChange(of: isEnabled) { _, newValue in
             tempEnabled = newValue
         }
-        .onChange(of: rainbowMode) { _, newValue in
-            tempRainbowMode = newValue
-        }
     }
     
     // MARK: - 設定管理
@@ -146,9 +204,15 @@ struct AdvancedSettingsView: View {
         let radiusChanged = tempRadius != cornerRadius
         let colorChanged = !colorsEqual(tempColor, selectedColor)
         let enabledChanged = tempEnabled != isEnabled
-        let rainbowModeChanged = tempRainbowMode != rainbowMode
+        let gamingModeChanged = superGamingMode != savedSuperGamingMode
+        let gamingSpeedChanged = gamingSpeed != savedGamingSpeed
+        let glowIntensityChanged = glowIntensity != savedGlowIntensity
+        let topLeftChanged = tempTopLeftEnabled != savedTopLeftEnabled
+        let topRightChanged = tempTopRightEnabled != savedTopRightEnabled
+        let bottomLeftChanged = tempBottomLeftEnabled != savedBottomLeftEnabled
+        let bottomRightChanged = tempBottomRightEnabled != savedBottomRightEnabled
         
-        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || rainbowModeChanged
+        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged
     }
     
     private func colorsEqual(_ color1: Color, _ color2: Color) -> Bool {
@@ -158,31 +222,36 @@ struct AdvancedSettingsView: View {
     }
     
     private func applySettings() {
-        print("Applying settings...")
-        
         // @AppStorageを直接更新
         cornerRadius = tempRadius
         isEnabled = tempEnabled
-        rainbowMode = tempRainbowMode
+        savedSuperGamingMode = superGamingMode
+        savedGamingSpeed = gamingSpeed
+        savedGlowIntensity = glowIntensity
+        savedTopLeftEnabled = tempTopLeftEnabled
+        savedTopRightEnabled = tempTopRightEnabled
+        savedBottomLeftEnabled = tempBottomLeftEnabled
+        savedBottomRightEnabled = tempBottomRightEnabled
         
-        // 色を保存（レインボーモードがオンの場合は保存しない）
-        if !tempRainbowMode {
-            let nsColor = NSColor(tempColor)
-            if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
-                cornerColorData = data
-            }
+        // 色を保存
+        let nsColor = NSColor(tempColor)
+        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
+            cornerColorData = data
         }
         
-        // レインボーモードの即時適用（エラーが発生しても続行）
+        // 即時適用：AppDelegateに設定変更を通知
         if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            print("Updating rainbow mode...")
-            appDelegate.updateRainbowMode(tempRainbowMode)
-        } else {
-            print("Warning: Could not get AppDelegate for rainbow mode update")
+            appDelegate.updateOverlaySettings(radius: CGFloat(cornerRadius), color: NSColor(tempColor))
+            appDelegate.updateGamingMode(enabled: superGamingMode, speed: gamingSpeed, glowIntensity: glowIntensity)
+            appDelegate.updateCornerVisibility(
+                topLeft: tempTopLeftEnabled,
+                topRight: tempTopRightEnabled,
+                bottomLeft: tempBottomLeftEnabled,
+                bottomRight: tempBottomRightEnabled
+            )
         }
         
         // アプリを再起動して設定を反映
-        print("Starting restart process...")
         restartApplication()
         
         hasUnsavedChanges = false
@@ -191,32 +260,25 @@ struct AdvancedSettingsView: View {
     private func restartApplication() {
         // アプリのバンドルパスを取得
         let bundlePath = Bundle.main.bundlePath
-        print("Bundle path: \(bundlePath)")
         
         // NSTaskを使用して新しいインスタンスとして再起動
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         task.arguments = ["-n", bundlePath] // -n で新しいインスタンスとして開く
         
-        print("Starting restart task...")
-        
         // バックグラウンドで実行し、アプリを終了
         DispatchQueue.global().async {
             do {
-                print("Executing restart task...")
                 try task.run()
-                print("Task executed successfully")
                 
                 // タスクが開始されたらアプリを終了
                 DispatchQueue.main.async {
-                    print("Terminating application...")
                     NSApplication.shared.terminate(nil)
                 }
             } catch {
                 print("Failed to restart application: \(error)")
                 
                 // フォールバック：シェルスクリプト方式
-                print("Trying fallback method...")
                 self.restartWithShellScript()
             }
         }
@@ -277,7 +339,13 @@ struct AdvancedSettingsView: View {
         tempRadius = cornerRadius
         tempColor = selectedColor
         tempEnabled = isEnabled
-        tempRainbowMode = rainbowMode
+        tempTopLeftEnabled = savedTopLeftEnabled
+        tempTopRightEnabled = savedTopRightEnabled
+        tempBottomLeftEnabled = savedBottomLeftEnabled
+        tempBottomRightEnabled = savedBottomRightEnabled
+        superGamingMode = savedSuperGamingMode
+        gamingSpeed = savedGamingSpeed
+        glowIntensity = savedGlowIntensity
         hasUnsavedChanges = false
     }
     
@@ -285,21 +353,6 @@ struct AdvancedSettingsView: View {
         // 設定ウィンドウを閉じるときはDockから非表示に戻す
         if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
             appDelegate.hideSettings()
-        }
-    }
-    
-    // MARK: - オーバーレイ操作
-    private func updateOverlaySettingsWithTempValues() {
-        guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
-        
-        let nsColor = NSColor(tempColor)
-        appDelegate.updateOverlaySettings(radius: CGFloat(tempRadius), color: nsColor)
-    }
-    
-    private func saveColor(_ color: Color) {
-        let nsColor = NSColor(color)
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
-            cornerColorData = data
         }
     }
     
@@ -322,8 +375,14 @@ struct SettingsTabView: View {
     @Binding var tempRadius: Double
     @Binding var tempColor: Color
     @Binding var tempEnabled: Bool
-    @Binding var tempRainbowMode: Bool
+    @Binding var tempTopLeftEnabled: Bool
+    @Binding var tempTopRightEnabled: Bool
+    @Binding var tempBottomLeftEnabled: Bool
+    @Binding var tempBottomRightEnabled: Bool
     @Binding var hasUnsavedChanges: Bool
+    @Binding var superGamingMode: Bool
+    @Binding var gamingSpeed: Double
+    @Binding var glowIntensity: Double
     let markAsChanged: () -> Void
     
     var body: some View {
@@ -344,37 +403,30 @@ struct SettingsTabView: View {
                 Text("appearance")
                     .font(.headline)
                 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("corner_radius")
                         Spacer()
                         HStack(spacing: 4) {
-                            TextField("半径", value: $tempRadius, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .multilineTextAlignment(.trailing)
-                                .onSubmit {
-                                    // Enterキーで入力確定時に範囲チェック
-                                    if tempRadius < 0 {
-                                        tempRadius = 0
-                                    } else if tempRadius > 40 {
-                                        tempRadius = 40
+                            TextField("0", value: $tempRadius, format: .number)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(width: 50)
+                                .multilineTextAlignment(.center)
+                                .font(.system(.body, design: .monospaced))
+                                .onChange(of: tempRadius) { _, newValue in
+                                    // 負の数値を禁止し、範囲を制限
+                                    let clampedValue = max(0, min(40, newValue))
+                                    if clampedValue != newValue {
+                                        tempRadius = clampedValue
+                                    } else {
+                                        markAsChanged()
                                     }
-                                    markAsChanged()
-                                }
-                                .onChange(of: tempRadius) { _, _ in
-                                    // 値の範囲を制限
-                                    if tempRadius < 0 {
-                                        tempRadius = 0
-                                    } else if tempRadius > 40 {
-                                        tempRadius = 40
-                                    }
-                                    markAsChanged()
                                 }
                             
                             Text("px")
                                 .foregroundColor(.secondary)
                                 .font(.caption)
+                                .padding(.leading, 2)
                         }
                     }
                     
@@ -382,6 +434,57 @@ struct SettingsTabView: View {
                         .onChange(of: tempRadius) { _, _ in
                             markAsChanged()
                         }
+                    
+                    // 範囲のヒント
+                    HStack {
+                        Text("0px")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("40px")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, -4)
+                }
+                
+                // 四つの角の切り欠き設定
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("corner_visibility")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    VStack(spacing: 8) {
+                        // 上段
+                        HStack(spacing: 20) {
+                            Toggle("top_left_corner", isOn: $tempTopLeftEnabled)
+                                .onChange(of: tempTopLeftEnabled) { _, _ in
+                                    markAsChanged()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Toggle("top_right_corner", isOn: $tempTopRightEnabled)
+                                .onChange(of: tempTopRightEnabled) { _, _ in
+                                    markAsChanged()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                        // 下段
+                        HStack(spacing: 20) {
+                            Toggle("bottom_left_corner", isOn: $tempBottomLeftEnabled)
+                                .onChange(of: tempBottomLeftEnabled) { _, _ in
+                                    markAsChanged()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Toggle("bottom_right_corner", isOn: $tempBottomRightEnabled)
+                                .onChange(of: tempBottomRightEnabled) { _, _ in
+                                    markAsChanged()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
                 }
                 
                 // 色選択
@@ -391,55 +494,147 @@ struct SettingsTabView: View {
                         Spacer()
                     }
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        // レインボーモードトグル
-                        VStack(alignment: .leading, spacing: 8) {
-                            Toggle(String(localized: "rainbow_mode"), isOn: $tempRainbowMode)
-                                .onChange(of: tempRainbowMode) { _, _ in
-                                    markAsChanged()
-                                }
+                    HStack(spacing: 15) {
+                        ColorPicker("", selection: $tempColor)
+                            .labelsHidden()
+                            .frame(width: 50, height: 30)
+                            .onChange(of: tempColor) { _, _ in
+                                markAsChanged()
+                            }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("quick_select")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                             
-                            if tempRainbowMode {
-                                Text(String(localized: "rainbow_mode_description"))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                            HStack(spacing: 8) {
+                                ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
+                                    Button(action: {
+                                        tempColor = color
+                                        markAsChanged()
+                                    }) {
+                                        Circle()
+                                            .fill(color)
+                                            .frame(width: 24, height: 24)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.primary, lineWidth: tempColor == color ? 2 : 0)
+                                            )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
                             }
                         }
+                    }
+                    
+                    // すーぱーげーみんぐもーど
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("super_gaming_mode", isOn: $superGamingMode)
+                            .font(.custom(Locale.current.languageCode == "ja" ? "Hiragino Maru Gothic ProN" : "Comic Sans MS", size: 16))
+                            .fontWeight(.bold)
+                            .applyIf(superGamingMode) { view in
+                                view.modifier(RainbowEffect())
+                            }
+                            .onChange(of: superGamingMode) { _, _ in
+                                markAsChanged()
+                            }
                         
-                        // 通常の色選択（レインボーモードがオフの場合のみ表示）
-                        if !tempRainbowMode {
-                            HStack(spacing: 15) {
-                                ColorPicker("", selection: $tempColor)
-                                    .labelsHidden()
-                                    .frame(width: 50, height: 30)
-                                    .onChange(of: tempColor) { _, _ in
+                        if superGamingMode {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("gaming_speed")
+                                        .font(.custom(Locale.current.languageCode == "ja" ? "Hiragino Maru Gothic ProN" : "Comic Sans MS", size: 14))
+                                        .foregroundColor(.orange)
+                                    Spacer()
+                                    HStack(spacing: 4) {
+                                        TextField("1.0", value: $gamingSpeed, format: .number.precision(.fractionLength(1)))
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .frame(width: 50)
+                                            .multilineTextAlignment(.center)
+                                            .font(.custom(Locale.current.languageCode == "ja" ? "Hiragino Maru Gothic ProN" : "Comic Sans MS", size: 12))
+                                            .onChange(of: gamingSpeed) { _, newValue in
+                                                let clampedValue = max(0.1, min(5.0, newValue))
+                                                if clampedValue != newValue {
+                                                    gamingSpeed = clampedValue
+                                                } else {
+                                                    markAsChanged()
+                                                }
+                                            }
+                                        
+                                        Text("x")
+                                            .foregroundColor(.secondary)
+                                            .font(.caption)
+                                    }
+                                }
+                                
+                                Slider(value: $gamingSpeed, in: 0.1...5.0, step: 0.1)
+                                    .accentColor(.orange)
+                                    .onChange(of: gamingSpeed) { _, _ in
                                         markAsChanged()
                                     }
                                 
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("quick_select")
-                                        .font(.caption)
+                                // 範囲のヒント
+                                HStack {
+                                    Text("0.1x")
+                                        .font(.caption2)
                                         .foregroundColor(.secondary)
-                                    
-                                    HStack(spacing: 8) {
-                                        ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
-                                            Button(action: {
-                                                tempColor = color
-                                                markAsChanged()
-                                            }) {
-                                                Circle()
-                                                    .fill(color)
-                                                    .frame(width: 24, height: 24)
-                                                    .overlay(
-                                                        Circle()
-                                                            .stroke(Color.primary, lineWidth: tempColor == color ? 2 : 0)
-                                                    )
-                                            }
-                                            .buttonStyle(PlainButtonStyle())
+                                    Spacer()
+                                    Text("5.0x")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.top, -4)
+                                
+                                // 発光強度設定
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("glow_intensity")
+                                            .font(.custom(Locale.current.languageCode == "ja" ? "Hiragino Maru Gothic ProN" : "Comic Sans MS", size: 14))
+                                            .foregroundColor(.cyan)
+                                        Spacer()
+                                        HStack(spacing: 4) {
+                                            TextField("1.0", value: $glowIntensity, format: .number.precision(.fractionLength(1)))
+                                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                                .frame(width: 50)
+                                                .multilineTextAlignment(.center)
+                                                .font(.custom(Locale.current.languageCode == "ja" ? "Hiragino Maru Gothic ProN" : "Comic Sans MS", size: 12))
+                                                .onChange(of: glowIntensity) { _, newValue in
+                                                    let clampedValue = max(0.1, min(3.0, newValue))
+                                                    if clampedValue != newValue {
+                                                        glowIntensity = clampedValue
+                                                    } else {
+                                                        markAsChanged()
+                                                    }
+                                                }
+                                            
+                                            Text("x")
+                                                .foregroundColor(.secondary)
+                                                .font(.caption)
                                         }
                                     }
+                                    
+                                    Slider(value: $glowIntensity, in: 0.1...3.0, step: 0.1)
+                                        .accentColor(.cyan)
+                                        .onChange(of: glowIntensity) { _, _ in
+                                            markAsChanged()
+                                        }
+                                    
+                                    // 範囲のヒント
+                                    HStack {
+                                        Text("0.1x")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("3.0x")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.top, -4)
                                 }
                             }
+                            .padding(.leading, 16)
+                            .transition(.opacity.combined(with: .scale))
+                            .animation(.easeInOut(duration: 0.3), value: superGamingMode)
                         }
                     }
                 }

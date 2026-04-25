@@ -7,6 +7,7 @@
 
 import Cocoa
 import SwiftUI
+import QuartzCore
 
 @main
 struct RounderApp: App {
@@ -25,17 +26,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var menuBarController = MenuBarController()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Metal関連のエラーを完全に抑制する設定
-        setenv("MTL_DEBUG_LAYER", "0", 1)
-        setenv("MTL_ENABLE_DEBUG_INFO", "0", 1)
-        setenv("MTL_HUD_ENABLED", "0", 1)
-        
-        // アプリケーションがMetalを使用しないことを明示的に設定
-        if let device = MTLCreateSystemDefaultDevice() {
-            // デバイスを作成してMetalが利用可能か確認のみ
-            print("Metal device available: \(device.name)")
-        }
-        
         setupApplication()
         
         // 初回起動チェック
@@ -80,7 +70,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 500, height: 450)
-        window.maxSize = NSSize(width: 800, height: 700)
         
         self.settingsWindow = window
         window.delegate = self
@@ -120,6 +109,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func createOverlayWindows() {
         guard let screen = NSScreen.main else { return }
         
+        // 既存のウィンドウをクリア
+        overlayWindows.removeAll()
+        
         // @AppStorageから現在の設定を読み込み
         let radius = UserDefaults.standard.object(forKey: "cornerRadius") as? Double ?? 20.0
         let cornerSize: CGFloat = CGFloat(radius) + 0.01  // 余白が残らないように半径と同じサイズ
@@ -131,17 +123,73 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return nsColor
         }()
         
-        let frame = screen.frame
-        let corners = [
-            CGPoint(x: frame.minX, y: frame.maxY - cornerSize),
-            CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize),
-            CGPoint(x: frame.minX, y: frame.minY),
-            CGPoint(x: frame.maxX - cornerSize, y: frame.minY)
-        ]
+        // スーパーゲーミングモード設定を読み込み
+        let superGamingMode = UserDefaults.standard.bool(forKey: "superGamingMode")
+        let gamingSpeed = UserDefaults.standard.object(forKey: "gamingSpeed") as? Double ?? 1.0
+        let glowIntensity = UserDefaults.standard.object(forKey: "glowIntensity") as? Double ?? 1.0
         
-        for corner in corners {
-            let window = CornerOverlayWindow(corner: corner, size: cornerSize, radius: CGFloat(radius), color: color)
-            overlayWindows.append(window)
+        // 四つの角の表示設定を読み込み
+        let topLeftEnabled = UserDefaults.standard.bool(forKey: "topLeftEnabled")
+        let topRightEnabled = UserDefaults.standard.bool(forKey: "topRightEnabled")
+        let bottomLeftEnabled = UserDefaults.standard.bool(forKey: "bottomLeftEnabled")
+        let bottomRightEnabled = UserDefaults.standard.bool(forKey: "bottomRightEnabled")
+        
+        let frame = screen.frame
+        
+        // 左上
+        if topLeftEnabled {
+            let topLeftWindow = CornerOverlayWindow(
+                corner: CGPoint(x: frame.minX, y: frame.maxY - cornerSize),
+                size: cornerSize,
+                radius: CGFloat(radius),
+                color: color
+            )
+            overlayWindows.append(topLeftWindow)
+            if superGamingMode {
+                topLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            }
+        }
+        
+        // 右上
+        if topRightEnabled {
+            let topRightWindow = CornerOverlayWindow(
+                corner: CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize),
+                size: cornerSize,
+                radius: CGFloat(radius),
+                color: color
+            )
+            overlayWindows.append(topRightWindow)
+            if superGamingMode {
+                topRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            }
+        }
+        
+        // 左下
+        if bottomLeftEnabled {
+            let bottomLeftWindow = CornerOverlayWindow(
+                corner: CGPoint(x: frame.minX, y: frame.minY),
+                size: cornerSize,
+                radius: CGFloat(radius),
+                color: color
+            )
+            overlayWindows.append(bottomLeftWindow)
+            if superGamingMode {
+                bottomLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            }
+        }
+        
+        // 右下
+        if bottomRightEnabled {
+            let bottomRightWindow = CornerOverlayWindow(
+                corner: CGPoint(x: frame.maxX - cornerSize, y: frame.minY),
+                size: cornerSize,
+                radius: CGFloat(radius),
+                color: color
+            )
+            overlayWindows.append(bottomRightWindow)
+            if superGamingMode {
+                bottomRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            }
         }
     }
     
@@ -165,8 +213,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.center()
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 420, height: 400)
-        window.maxSize = NSSize(width: 1000, height: 1000)
+        window.minSize = NSSize(width: 500, height: 450)
         
         // モダンなウィンドウ外観に設定
         if #available(macOS 11.0, *) {
@@ -176,7 +223,50 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // ウィンドウが閉じられたときにDockから非表示にする
         window.delegate = self
         
+        // コンテンツサイズに応じてウィンドウを自動リサイズ
+        window.setContentSize(hostingController.view.intrinsicContentSize)
+        
+        // SwiftUIのビューが変更されたときにウィンドウサイズを更新
+        NotificationCenter.default.addObserver(
+            forName: NSView.frameDidChangeNotification,
+            object: hostingController.view,
+            queue: .main
+        ) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.updateWindowSizeToFitContent(window: window, view: hostingController.view)
+            }
+        }
+        
+                
         self.settingsWindow = window
+    }
+    
+    private func updateWindowSizeToFitContent(window: NSWindow, view: NSView) {
+        // SwiftUIビューの実際の必要サイズを計算
+        let fittingSize = view.fittingSize
+        
+        // 最小サイズ制約を考慮
+        let targetWidth = max(fittingSize.width + 40, window.minSize.width) // 余白を追加
+        let targetHeight = max(fittingSize.height + 40, window.minSize.height)
+        
+        let currentFrame = window.frame
+        
+        // サイズが実際に変更されている場合のみ更新
+        if abs(currentFrame.size.width - targetWidth) > 1 || abs(currentFrame.size.height - targetHeight) > 1 {
+            let newFrame = NSRect(
+                x: currentFrame.origin.x,
+                y: currentFrame.origin.y - (targetHeight - currentFrame.size.height),
+                width: targetWidth,
+                height: targetHeight
+            )
+            
+            // 美しいアニメーション付きでウィンドウサイズを変更
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.25
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                window.animator().setFrame(newFrame, display: true)
+            })
+        }
     }
     
     func showSettings() {
@@ -224,21 +314,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // UserDefaultsへの保存は@AppStorageに任せる（二重書き込みを避ける）
     }
     
-    func updateRainbowMode(_ enabled: Bool) {
-        // パフォーマンス最適化：ウィンドウを再利用して再作成を避ける
-        if overlayWindows.isEmpty {
-            createOverlayWindows()
-        }
-        
-        // 既存のウィンドウのレインボーモードを更新
-        for window in overlayWindows {
-            window.updateRainbowMode(enabled)
-            
-            // メインスレッドで確実に更新
-            DispatchQueue.main.async {
-                window.display()
-                window.orderFront(nil)
+    func updateGamingMode(enabled: Bool, speed: Double, glowIntensity: Double) {
+        // パフォーマンス最適化：バックグラウンドスレッドで順次更新
+        DispatchQueue.global(qos: .userInteractive).async {
+            for window in self.overlayWindows {
+                DispatchQueue.main.async {
+                    window.setGamingMode(enabled, speed: speed, glowIntensity: glowIntensity)
+                }
+                // 少し待機してUIスレッドの負荷を分散
+                Thread.sleep(forTimeInterval: 0.001)
             }
         }
+    }
+    
+    func updateCornerVisibility(topLeft: Bool, topRight: Bool, bottomLeft: Bool, bottomRight: Bool) {
+        // 設定を保存
+        UserDefaults.standard.set(topLeft, forKey: "topLeftEnabled")
+        UserDefaults.standard.set(topRight, forKey: "topRightEnabled")
+        UserDefaults.standard.set(bottomLeft, forKey: "bottomLeftEnabled")
+        UserDefaults.standard.set(bottomRight, forKey: "bottomRightEnabled")
+        
+        // すべてのウィンドウを一度削除して再作成
+        for window in overlayWindows {
+            window.orderOut(nil)
+            window.close()
+        }
+        overlayWindows.removeAll()
+        
+        // 新しい設定でウィンドウを再作成
+        createOverlayWindows()
     }
 }
