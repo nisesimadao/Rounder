@@ -4,6 +4,8 @@ A tool that beautifully rounds the corners of your macOS screen.
 
 It uses a software-controlled overlay to give modern rounded corners to older MacBooks (pre-notch) and external monitors that still have sharp edges. It runs quietly in the background and does not interfere with normal system behavior.
 
+<img src="Rounder/SCREENSHOT.png" alt="Screenshot" />
+
 [日本語版READMEはこちら](./README_jp.md)
 
 > Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect.

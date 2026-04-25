@@ -6,6 +6,8 @@ Notch導入以前のMacBookや外部モニターの直線的な角を、ソフ�
 
 [English README](./README.md)
 
+<img src="Rounder/SCREENSHOT.png" alt="Screenshot" />
+
 > 注意: Notch搭載のMacの内蔵ディスプレイは、画面自体が物理的に角丸形状になっているため、本アプリの効果はありません。
 
 ## プロジェクト構成
