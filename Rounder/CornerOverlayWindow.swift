@@ -364,8 +364,14 @@ class CornerOverlayView: NSView {
     }
     
     private func determineCornerType() -> CornerType {
-        let screenFrame = NSScreen.main?.frame ?? .zero
-        let windowFrame = self.window?.frame ?? .zero
+        // ウィンドウが属するスクリーンを取得
+        guard let window = self.window,
+              let screen = window.screen else {
+            return .topRight
+        }
+        
+        let screenFrame = screen.frame
+        let windowFrame = window.frame
         
         // 左下と左上の判定を入れ替える
         if windowFrame.minX <= screenFrame.minX + 1 && windowFrame.maxY >= screenFrame.maxY - 1 {

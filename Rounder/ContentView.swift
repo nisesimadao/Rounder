@@ -251,7 +251,7 @@ struct AdvancedSettingsView: View {
             )
         }
         
-        // アプリを再起動して設定を反映
+        // アプリを再起動して設定を反映（再起動は必須）
         restartApplication()
         
         hasUnsavedChanges = false

@@ -35,6 +35,7 @@ Rounder/
 - **Preset functionality**: Save and switch between favorite settings
 - **Import/Export**: Share and backup presets
 - **Super Duper Gaming Mode**: Special mode with animated effects
+- **Multi-monitor support**: Automatically applies rounded corners to all connected displays
 - **Simple interface**: Intuitive settings screen
 - **Lightweight and stable**: Runs smoothly in the background
 

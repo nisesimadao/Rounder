@@ -107,10 +107,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func createOverlayWindows() {
-        guard let screen = NSScreen.main else { return }
-        
         // 既存のウィンドウをクリア
         overlayWindows.removeAll()
+        
+        // すべてのスクリーンを取得
+        let screens = NSScreen.screens
+        guard !screens.isEmpty else { return }
         
         // @AppStorageから現在の設定を読み込み
         let radius = UserDefaults.standard.object(forKey: "cornerRadius") as? Double ?? 20.0
@@ -134,61 +136,64 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let bottomLeftEnabled = UserDefaults.standard.bool(forKey: "bottomLeftEnabled")
         let bottomRightEnabled = UserDefaults.standard.bool(forKey: "bottomRightEnabled")
         
-        let frame = screen.frame
-        
-        // 左上
-        if topLeftEnabled {
-            let topLeftWindow = CornerOverlayWindow(
-                corner: CGPoint(x: frame.minX, y: frame.maxY - cornerSize),
-                size: cornerSize,
-                radius: CGFloat(radius),
-                color: color
-            )
-            overlayWindows.append(topLeftWindow)
-            if superGamingMode {
-                topLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+        // 各スクリーンに対してオーバーレイを作成
+        for screen in screens {
+            let frame = screen.frame
+            
+            // 左上
+            if topLeftEnabled {
+                let topLeftWindow = CornerOverlayWindow(
+                    corner: CGPoint(x: frame.minX, y: frame.maxY - cornerSize),
+                    size: cornerSize,
+                    radius: CGFloat(radius),
+                    color: color
+                )
+                overlayWindows.append(topLeftWindow)
+                if superGamingMode {
+                    topLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+                }
             }
-        }
-        
-        // 右上
-        if topRightEnabled {
-            let topRightWindow = CornerOverlayWindow(
-                corner: CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize),
-                size: cornerSize,
-                radius: CGFloat(radius),
-                color: color
-            )
-            overlayWindows.append(topRightWindow)
-            if superGamingMode {
-                topRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            
+            // 右上
+            if topRightEnabled {
+                let topRightWindow = CornerOverlayWindow(
+                    corner: CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize),
+                    size: cornerSize,
+                    radius: CGFloat(radius),
+                    color: color
+                )
+                overlayWindows.append(topRightWindow)
+                if superGamingMode {
+                    topRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+                }
             }
-        }
-        
-        // 左下
-        if bottomLeftEnabled {
-            let bottomLeftWindow = CornerOverlayWindow(
-                corner: CGPoint(x: frame.minX, y: frame.minY),
-                size: cornerSize,
-                radius: CGFloat(radius),
-                color: color
-            )
-            overlayWindows.append(bottomLeftWindow)
-            if superGamingMode {
-                bottomLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            
+            // 左下
+            if bottomLeftEnabled {
+                let bottomLeftWindow = CornerOverlayWindow(
+                    corner: CGPoint(x: frame.minX, y: frame.minY),
+                    size: cornerSize,
+                    radius: CGFloat(radius),
+                    color: color
+                )
+                overlayWindows.append(bottomLeftWindow)
+                if superGamingMode {
+                    bottomLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+                }
             }
-        }
-        
-        // 右下
-        if bottomRightEnabled {
-            let bottomRightWindow = CornerOverlayWindow(
-                corner: CGPoint(x: frame.maxX - cornerSize, y: frame.minY),
-                size: cornerSize,
-                radius: CGFloat(radius),
-                color: color
-            )
-            overlayWindows.append(bottomRightWindow)
-            if superGamingMode {
-                bottomRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+            
+            // 右下
+            if bottomRightEnabled {
+                let bottomRightWindow = CornerOverlayWindow(
+                    corner: CGPoint(x: frame.maxX - cornerSize, y: frame.minY),
+                    size: cornerSize,
+                    radius: CGFloat(radius),
+                    color: color
+                )
+                overlayWindows.append(bottomRightWindow)
+                if superGamingMode {
+                    bottomRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+                }
             }
         }
     }
@@ -343,5 +348,83 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // 新しい設定でウィンドウを再作成
         createOverlayWindows()
+    }
+    
+    func restartApplication() {
+        // アプリのバンドルパスを取得
+        let bundlePath = Bundle.main.bundlePath
+        
+        // NSTaskを使用して新しいインスタンスとして再起動
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", bundlePath] // -n で新しいインスタンスとして開く
+        
+        // バックグラウンドで実行し、アプリを終了
+        DispatchQueue.global().async {
+            do {
+                try task.run()
+                
+                // タスクが開始されたらアプリを終了
+                DispatchQueue.main.async {
+                    NSApplication.shared.terminate(nil)
+                }
+            } catch {
+                print("Failed to restart application: \(error)")
+                
+                // フォールバック：シェルスクリプト方式
+                self.restartWithShellScript()
+            }
+        }
+    }
+    
+    private func restartWithShellScript() {
+        // フォールバックとしてシェルスクリプト方式を使用
+        let bundlePath = Bundle.main.bundlePath
+        let shellScript = """
+        #!/bin/bash
+        sleep 0.5
+        open "\(bundlePath)"
+        exit 0
+        """
+        
+        let tempDir = FileManager.default.temporaryDirectory
+        let scriptFile = tempDir.appendingPathComponent("restart_rounder.sh")
+        
+        do {
+            try shellScript.write(to: scriptFile, atomically: true, encoding: .utf8)
+            
+            // 実行権限を付与
+            let chmodProcess = Process()
+            chmodProcess.launchPath = "/bin/chmod"
+            chmodProcess.arguments = ["+x", scriptFile.path]
+            chmodProcess.launch()
+            chmodProcess.waitUntilExit()
+            
+            // シェルスクリプトを実行
+            let scriptProcess = Process()
+            scriptProcess.launchPath = scriptFile.path
+            scriptProcess.arguments = []
+            
+            DispatchQueue.global().async {
+                do {
+                    try scriptProcess.run()
+                    
+                    DispatchQueue.main.async {
+                        NSApplication.shared.terminate(nil)
+                    }
+                } catch {
+                    print("Shell script restart failed: \(error)")
+                    DispatchQueue.main.async {
+                        NSApplication.shared.terminate(nil)
+                    }
+                }
+            }
+            
+        } catch {
+            print("Failed to create restart script: \(error)")
+            DispatchQueue.main.async {
+                NSApplication.shared.terminate(nil)
+            }
+        }
     }
 }
