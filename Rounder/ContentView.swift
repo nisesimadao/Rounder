@@ -54,6 +54,10 @@ struct AdvancedSettingsView: View {
     @State private var hasUnsavedChanges: Bool = false
     @State private var selectedTab: Int = 0
     
+    // モニター選択設定
+    @State private var availableDisplays: [DisplayInfo] = []
+    @State private var selectedDisplays: Set<CGDirectDisplayID> = []
+    
     // 一時的な設定値
     @State private var tempRadius: Double = 20.0
     @State private var tempColor: Color = .black
@@ -119,7 +123,10 @@ struct AdvancedSettingsView: View {
                     superGamingMode: $superGamingMode,
                     gamingSpeed: $gamingSpeed,
                     glowIntensity: $glowIntensity,
-                    markAsChanged: markAsChanged
+                    availableDisplays: $availableDisplays,
+                    selectedDisplays: $selectedDisplays,
+                    markAsChanged: markAsChanged,
+                    refreshDisplayList: refreshDisplayList
                 )
                 .tabItem {
                     Label("settings_tab", systemImage: "slider.horizontal.3")
@@ -184,6 +191,7 @@ struct AdvancedSettingsView: View {
         .onAppear {
             loadSavedColor()
             resetToSavedValues()
+            loadDisplaySettings()
         }
         .onChange(of: cornerRadius) { _, newValue in
             selectedColor = loadColorFromData(cornerColorData)
@@ -212,7 +220,12 @@ struct AdvancedSettingsView: View {
         let bottomLeftChanged = tempBottomLeftEnabled != savedBottomLeftEnabled
         let bottomRightChanged = tempBottomRightEnabled != savedBottomRightEnabled
         
-        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged
+        // モニター選択の変更をチェック
+        let savedDisplayIDs = Set(UserDefaults.standard.array(forKey: "selectedDisplayIDs") as? [UInt32] ?? [])
+        let currentDisplayIDs = Set(selectedDisplays.map { UInt32($0) })
+        let displaySelectionChanged = savedDisplayIDs != currentDisplayIDs
+        
+        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
     }
     
     private func colorsEqual(_ color1: Color, _ color2: Color) -> Bool {
@@ -249,7 +262,11 @@ struct AdvancedSettingsView: View {
                 bottomLeft: tempBottomLeftEnabled,
                 bottomRight: tempBottomRightEnabled
             )
+            appDelegate.updateSelectedDisplays(Array(selectedDisplays))
         }
+        
+        // ディスプレイ設定を保存
+        saveDisplaySettings()
         
         // アプリを再起動して設定を反映（再起動は必須）
         restartApplication()
@@ -367,6 +384,42 @@ struct AdvancedSettingsView: View {
         }
         return Color(nsColor)
     }
+    
+    private func loadDisplaySettings() {
+        // 利用可能なディスプレイを取得
+        availableDisplays = NSScreen.getAllDisplayInfo()
+        
+        // 保存された選択ディスプレイを読み込み
+        if let selectedDisplayIDs = UserDefaults.standard.array(forKey: "selectedDisplayIDs") as? [UInt32] {
+            selectedDisplays = Set(selectedDisplayIDs.map { CGDirectDisplayID($0) })
+        } else {
+            // デフォルトですべてのディスプレイを選択し、保存する
+            selectedDisplays = Set(availableDisplays.map { $0.displayID })
+            let defaultDisplayIDs = Array(selectedDisplays).map { UInt32($0) }
+            UserDefaults.standard.set(defaultDisplayIDs, forKey: "selectedDisplayIDs")
+        }
+    }
+    
+    private func saveDisplaySettings() {
+        // 選択されたディスプレイIDを保存（プリセットには含まれない）
+        let selectedDisplayIDs = Array(selectedDisplays).map { UInt32($0) }
+        UserDefaults.standard.set(selectedDisplayIDs, forKey: "selectedDisplayIDs")
+    }
+    
+    private func refreshDisplayList() {
+        // 現在選択されているディスプレイIDを保存
+        let previouslySelectedIDs = selectedDisplays
+        
+        // ディスプレイリストを更新
+        availableDisplays = NSScreen.getAllDisplayInfo()
+        
+        // 以前選択されていたディスプレイがまだ存在する場合は選択を維持
+        selectedDisplays = Set(availableDisplays.compactMap { display in
+            previouslySelectedIDs.contains(display.displayID) ? display.displayID : nil
+        })
+        
+        markAsChanged()
+    }
 }
 
 // MARK: - タブビューコンポーネント
@@ -383,7 +436,10 @@ struct SettingsTabView: View {
     @Binding var superGamingMode: Bool
     @Binding var gamingSpeed: Double
     @Binding var glowIntensity: Double
+    @Binding var availableDisplays: [DisplayInfo]
+    @Binding var selectedDisplays: Set<CGDirectDisplayID>
     let markAsChanged: () -> Void
+    let refreshDisplayList: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -396,6 +452,65 @@ struct SettingsTabView: View {
                     .onChange(of: tempEnabled) { _, _ in
                         markAsChanged()
                     }
+            }
+            
+            // モニター選択
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("monitor_selection")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button("refresh_monitors") {
+                        refreshDisplayList()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("select_monitors_description")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    ForEach(availableDisplays) { display in
+                        Toggle(isOn: Binding(
+                            get: { selectedDisplays.contains(display.displayID) },
+                            set: { isSelected in
+                                if isSelected {
+                                    selectedDisplays.insert(display.displayID)
+                                } else {
+                                    selectedDisplays.remove(display.displayID)
+                                }
+                                markAsChanged()
+                            }
+                        )) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(display.name)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    Text("\(Int(display.resolution.width))×\(Int(display.resolution.height))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                if display.isMain {
+                                    Text("main_display")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.2))
+                                        .foregroundColor(.blue)
+                                        .cornerRadius(4)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
             // 角の半径設定

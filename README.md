@@ -35,7 +35,8 @@ Rounder/
 - **Preset functionality**: Save and switch between favorite settings
 - **Import/Export**: Share and backup presets
 - **Super Duper Gaming Mode**: Special mode with animated effects
-- **Multi-monitor support**: Automatically applies rounded corners to all connected displays
+- **Multi-monitor support**: Select which monitors to apply rounded corners to
+- **Monitor refresh**: Manually refresh monitor list in settings
 - **Simple interface**: Intuitive settings screen
 - **Lightweight and stable**: Runs smoothly in the background
 
@@ -96,6 +97,8 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 - **Corner color**: Choose via color picker or presets
 - **Corner visibility**: Toggle each corner independently (2x2 grid layout)
 - **Enable**: Toggle the rounded corner effect
+- **Monitor selection**: Choose which monitors to apply rounded corners to (saved independently from presets)
+- **Refresh monitors**: Manually refresh the monitor list after connecting/disconnecting displays
 
 ### Super Duper Gaming Mode
 - **Enable**: Rainbow animation effects

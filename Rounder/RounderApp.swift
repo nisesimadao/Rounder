@@ -24,8 +24,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var settingsWindow: NSWindow?
     private var menuBarController = MenuBarController()
+    private var selectedDisplayIDs: [CGDirectDisplayID] = []
+    private let maxInstances = 3  // 最大インスタンス数
+    
+    private func preventMultipleInstances() -> Bool {
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? ""
+        let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+        
+        // 実行中のインスタンス数が最大数を超えている場合は終了
+        if runningApps.count > maxInstances {
+            // 既存のインスタンスを前面に持ってくる
+            if let oldestApp = runningApps.first {
+                oldestApp.activate(options: [.activateIgnoringOtherApps])
+            }
+            
+            // このインスタンスを終了
+            NSApplication.shared.terminate(nil)
+            return true
+        }
+        
+        return false
+    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // 多重起動を防止
+        if preventMultipleInstances() {
+            return
+        }
+        
         setupApplication()
         
         // 初回起動チェック
@@ -110,6 +136,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 既存のウィンドウをクリア
         overlayWindows.removeAll()
         
+        // 選択されたディスプレイIDを読み込み
+        loadSelectedDisplays()
+        
         // すべてのスクリーンを取得
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
@@ -136,8 +165,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let bottomLeftEnabled = UserDefaults.standard.bool(forKey: "bottomLeftEnabled")
         let bottomRightEnabled = UserDefaults.standard.bool(forKey: "bottomRightEnabled")
         
-        // 各スクリーンに対してオーバーレイを作成
+        // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
+            // このスクリーンのディスプレイIDを取得
+            guard let displayID = screen.displayID else { continue }
+            
+            // 選択されたディスプレイかチェック
+            if !selectedDisplayIDs.contains(displayID) {
+                continue
+            }
+            
             let frame = screen.frame
             
             // 左上
@@ -279,6 +316,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         
+        // 設定画面を開いている間は画面変更監視を停止
+        ScreenMonitor.shared.stopMonitoring()
+        
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
     
@@ -294,6 +334,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 設定ウィンドウが閉じられたときにDockから非表示に戻す
         if notification.object as? NSWindow == settingsWindow {
             NSApp.setActivationPolicy(.accessory)
+            // 画面変更監視を再開
+            ScreenMonitor.shared.startMonitoring(appDelegate: self)
         }
     }
     
@@ -348,6 +390,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // 新しい設定でウィンドウを再作成
         createOverlayWindows()
+    }
+    
+    func updateSelectedDisplays(_ displayIDs: [CGDirectDisplayID]) {
+        selectedDisplayIDs = displayIDs
+    }
+    
+    private func loadSelectedDisplays() {
+        if let savedDisplayIDs = UserDefaults.standard.array(forKey: "selectedDisplayIDs") as? [UInt32] {
+            selectedDisplayIDs = savedDisplayIDs.map { CGDirectDisplayID($0) }
+        } else {
+            // デフォルトですべてのディスプレイを選択
+            selectedDisplayIDs = NSScreen.screens.compactMap { $0.displayID }
+        }
     }
     
     func restartApplication() {
