@@ -61,10 +61,10 @@ class ScreenMonitor: NSObject {
     private func handleScreenParametersChanged() {
         guard let appDelegate = appDelegate else { return }
         
-        appDelegate.overlayWindows.removeAll()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            appDelegate.createOverlayWindows()
+        // マルチモニター対応：スクリーン構成が変更されたためアプリを再起動
+        // 解像度や配置、枚数が変わったときは再起動が必要
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            appDelegate.restartApplication()
         }
     }
     
