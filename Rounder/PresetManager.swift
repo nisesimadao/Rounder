@@ -11,6 +11,15 @@ import Cocoa
 import Combine
 import UniformTypeIdentifiers
 
+// MARK: - Constants
+struct PresetManagerConstants {
+    static let defaultCornerRadius: Double = 20.0
+    static let defaultGamingSpeed: Double = 1.0
+    static let defaultGlowIntensity: Double = 1.0
+    static let defaultCornerCutoutStyle: CornerCutoutStyle = .rounded
+    static let presetsKey = "cornerPresets"
+}
+
 // プリセットデータ構造
 struct CornerPreset: Codable, Identifiable {
     let id: UUID
@@ -24,17 +33,19 @@ struct CornerPreset: Codable, Identifiable {
     var superGamingMode: Bool
     var gamingSpeed: Double
     var glowIntensity: Double
+    var cornerCutoutStyle: CornerCutoutStyle
     
     init(name: String,
          topLeftEnabled: Bool = true,
          topRightEnabled: Bool = true,
          bottomLeftEnabled: Bool = true,
          bottomRightEnabled: Bool = true,
-         cornerRadius: Double = 20.0,
+         cornerRadius: Double = PresetManagerConstants.defaultCornerRadius,
          cornerColor: NSColor = .black,
          superGamingMode: Bool = false,
-         gamingSpeed: Double = 1.0,
-         glowIntensity: Double = 1.0) {
+         gamingSpeed: Double = PresetManagerConstants.defaultGamingSpeed,
+         glowIntensity: Double = PresetManagerConstants.defaultGlowIntensity,
+         cornerCutoutStyle: CornerCutoutStyle = PresetManagerConstants.defaultCornerCutoutStyle) {
         self.id = UUID()
         self.name = name
         self.topLeftEnabled = topLeftEnabled
@@ -42,10 +53,66 @@ struct CornerPreset: Codable, Identifiable {
         self.bottomLeftEnabled = bottomLeftEnabled
         self.bottomRightEnabled = bottomRightEnabled
         self.cornerRadius = cornerRadius
-        self.cornerColor = try! NSKeyedArchiver.archivedData(withRootObject: cornerColor, requiringSecureCoding: false)
+        
+        do {
+            self.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: cornerColor, requiringSecureCoding: false)
+        } catch {
+            print("Failed to archive corner color: \(error)")
+            self.cornerColor = Data()
+        }
+        
         self.superGamingMode = superGamingMode
         self.gamingSpeed = gamingSpeed
         self.glowIntensity = glowIntensity
+        self.cornerCutoutStyle = cornerCutoutStyle
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case topLeftEnabled
+        case topRightEnabled
+        case bottomLeftEnabled
+        case bottomRightEnabled
+        case cornerRadius
+        case cornerColor
+        case superGamingMode
+        case gamingSpeed
+        case glowIntensity
+        case cornerCutoutStyle
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        topLeftEnabled = try container.decode(Bool.self, forKey: .topLeftEnabled)
+        topRightEnabled = try container.decode(Bool.self, forKey: .topRightEnabled)
+        bottomLeftEnabled = try container.decode(Bool.self, forKey: .bottomLeftEnabled)
+        bottomRightEnabled = try container.decode(Bool.self, forKey: .bottomRightEnabled)
+        cornerRadius = try container.decode(Double.self, forKey: .cornerRadius)
+        cornerColor = try container.decode(Data.self, forKey: .cornerColor)
+        superGamingMode = try container.decode(Bool.self, forKey: .superGamingMode)
+        gamingSpeed = try container.decode(Double.self, forKey: .gamingSpeed)
+        glowIntensity = try container.decode(Double.self, forKey: .glowIntensity)
+        cornerCutoutStyle = try container.decodeIfPresent(CornerCutoutStyle.self, forKey: .cornerCutoutStyle) ?? .rounded
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(topLeftEnabled, forKey: .topLeftEnabled)
+        try container.encode(topRightEnabled, forKey: .topRightEnabled)
+        try container.encode(bottomLeftEnabled, forKey: .bottomLeftEnabled)
+        try container.encode(bottomRightEnabled, forKey: .bottomRightEnabled)
+        try container.encode(cornerRadius, forKey: .cornerRadius)
+        try container.encode(cornerColor, forKey: .cornerColor)
+        try container.encode(superGamingMode, forKey: .superGamingMode)
+        try container.encode(gamingSpeed, forKey: .gamingSpeed)
+        try container.encode(glowIntensity, forKey: .glowIntensity)
+        try container.encode(cornerCutoutStyle, forKey: .cornerCutoutStyle)
     }
     
     // 色をNSColorとして取得
@@ -66,7 +133,7 @@ struct CornerPreset: Codable, Identifiable {
 class PresetManager: ObservableObject {
     @Published var presets: [CornerPreset] = []
     
-    private let presetsKey = "cornerPresets"
+    private let presetsKey = PresetManagerConstants.presetsKey
     
     init() {
         loadPresets()
@@ -77,12 +144,12 @@ class PresetManager: ObservableObject {
     private func createDefaultPresetsIfNeeded() {
         if presets.isEmpty {
             let defaultPresets = [
-                CornerPreset(name: "すべての角", topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: true, bottomRightEnabled: true),
-                CornerPreset(name: "上のみ", topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: false),
-                CornerPreset(name: "下のみ", topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: true),
-                CornerPreset(name: "左のみ", topLeftEnabled: true, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: false),
-                CornerPreset(name: "右のみ", topLeftEnabled: false, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: true),
-                CornerPreset(name: "なし", topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: false, bottomRightEnabled: false)
+                CornerPreset(name: String(localized: "preset_all_corners"), topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: true, bottomRightEnabled: true),
+                CornerPreset(name: String(localized: "preset_top_only"), topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: false),
+                CornerPreset(name: String(localized: "preset_bottom_only"), topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: true),
+                CornerPreset(name: String(localized: "preset_left_only"), topLeftEnabled: true, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: false),
+                CornerPreset(name: String(localized: "preset_right_only"), topLeftEnabled: false, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: true),
+                CornerPreset(name: String(localized: "preset_none"), topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: false, bottomRightEnabled: false)
             ]
             
             presets.append(contentsOf: defaultPresets)
@@ -127,40 +194,37 @@ class PresetManager: ObservableObject {
     
     // プリセットの適用
     func applyPreset(_ preset: CornerPreset) {
-        UserDefaults.standard.set(preset.topLeftEnabled, forKey: "topLeftEnabled")
-        UserDefaults.standard.set(preset.topRightEnabled, forKey: "topRightEnabled")
-        UserDefaults.standard.set(preset.bottomLeftEnabled, forKey: "bottomLeftEnabled")
-        UserDefaults.standard.set(preset.bottomRightEnabled, forKey: "bottomRightEnabled")
-        UserDefaults.standard.set(preset.cornerRadius, forKey: "cornerRadius")
-        UserDefaults.standard.set(preset.cornerColor, forKey: "cornerColor")
-        UserDefaults.standard.set(preset.superGamingMode, forKey: "superGamingMode")
-        UserDefaults.standard.set(preset.gamingSpeed, forKey: "gamingSpeed")
-        UserDefaults.standard.set(preset.glowIntensity, forKey: "glowIntensity")
+        UserDefaults.standard.set(preset.topLeftEnabled, forKey: UserDefaultsKeys.topLeftEnabled)
+        UserDefaults.standard.set(preset.topRightEnabled, forKey: UserDefaultsKeys.topRightEnabled)
+        UserDefaults.standard.set(preset.bottomLeftEnabled, forKey: UserDefaultsKeys.bottomLeftEnabled)
+        UserDefaults.standard.set(preset.bottomRightEnabled, forKey: UserDefaultsKeys.bottomRightEnabled)
+        UserDefaults.standard.set(preset.cornerRadius, forKey: UserDefaultsKeys.cornerRadius)
+        UserDefaults.standard.set(preset.cornerColor, forKey: UserDefaultsKeys.cornerColor)
+        UserDefaults.standard.set(preset.superGamingMode, forKey: UserDefaultsKeys.superGamingMode)
+        UserDefaults.standard.set(preset.gamingSpeed, forKey: UserDefaultsKeys.gamingSpeed)
+        UserDefaults.standard.set(preset.glowIntensity, forKey: UserDefaultsKeys.glowIntensity)
+        UserDefaults.standard.set(preset.cornerCutoutStyle.rawValue, forKey: UserDefaultsKeys.cornerCutoutStyle)
         
         // AppDelegateに通知して設定を反映
         if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            appDelegate.updateOverlaySettings(radius: CGFloat(preset.cornerRadius), color: preset.cornerNSColor)
-            appDelegate.updateCornerVisibility(
-                topLeft: preset.topLeftEnabled,
-                topRight: preset.topRightEnabled,
-                bottomLeft: preset.bottomLeftEnabled,
-                bottomRight: preset.bottomRightEnabled
-            )
-            appDelegate.updateGamingMode(enabled: preset.superGamingMode, speed: preset.gamingSpeed, glowIntensity: preset.glowIntensity)
+            appDelegate.recreateOverlayWindows()
         }
     }
     
     // 現在の設定からプリセットを作成
     func createPresetFromCurrentSettings(name: String) -> CornerPreset {
-        let topLeftEnabled = UserDefaults.standard.bool(forKey: "topLeftEnabled")
-        let topRightEnabled = UserDefaults.standard.bool(forKey: "topRightEnabled")
-        let bottomLeftEnabled = UserDefaults.standard.bool(forKey: "bottomLeftEnabled")
-        let bottomRightEnabled = UserDefaults.standard.bool(forKey: "bottomRightEnabled")
-        let cornerRadius = UserDefaults.standard.object(forKey: "cornerRadius") as? Double ?? 20.0
-        let cornerColorData = UserDefaults.standard.data(forKey: "cornerColor") ?? Data()
-        let superGamingMode = UserDefaults.standard.bool(forKey: "superGamingMode")
-        let gamingSpeed = UserDefaults.standard.object(forKey: "gamingSpeed") as? Double ?? 1.0
-        let glowIntensity = UserDefaults.standard.object(forKey: "glowIntensity") as? Double ?? 1.0
+        let topLeftEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.topLeftEnabled, defaultValue: true)
+        let topRightEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.topRightEnabled, defaultValue: true)
+        let bottomLeftEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.bottomLeftEnabled, defaultValue: true)
+        let bottomRightEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.bottomRightEnabled, defaultValue: true)
+        let cornerRadius = UserDefaults.standard.object(forKey: UserDefaultsKeys.cornerRadius) as? Double ?? RounderAppConstants.defaultCornerRadius
+        let cornerColorData = UserDefaults.standard.data(forKey: UserDefaultsKeys.cornerColor) ?? Data()
+        let superGamingMode = UserDefaults.standard.bool(forKey: UserDefaultsKeys.superGamingMode)
+        let gamingSpeed = UserDefaults.standard.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed
+        let glowIntensity = UserDefaults.standard.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity
+        let cornerCutoutStyle = CornerCutoutStyle(
+            rawValue: UserDefaults.standard.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
+        ) ?? .rounded
         
         let preset = CornerPreset(
             name: name,
@@ -172,7 +236,8 @@ class PresetManager: ObservableObject {
             cornerColor: NSColor(from: cornerColorData) ?? .black,
             superGamingMode: superGamingMode,
             gamingSpeed: gamingSpeed,
-            glowIntensity: glowIntensity
+            glowIntensity: glowIntensity,
+            cornerCutoutStyle: cornerCutoutStyle
         )
         
         return preset

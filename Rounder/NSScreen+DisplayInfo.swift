@@ -77,7 +77,7 @@ struct DisplayInfo: Identifiable, Hashable {
     var description: String {
         let width = Int(resolution.width)
         let height = Int(resolution.height)
-        let mainText = isMain ? " (メイン)" : ""
+        let mainText = isMain ? String(localized: "main_display_suffix") : ""
         return "\(name) - \(width)x\(height)\(mainText)"
     }
 }

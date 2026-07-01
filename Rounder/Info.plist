@@ -12,14 +12,11 @@
 	<key>MetalAPIValidation</key>
 	<false/>
 	
-	<!-- アプリ再起動機能のための設定 -->
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<!-- メニューバー常駐アプリ：Dockアイコンを出さずアクセサリとして起動する
+	     （設定/初期セットアップを開くときだけ実行時に .regular へ切り替える） -->
 	<key>LSUIElement</key>
-	<false/>
-	<key>NSSystemAdministrationUsageDescription</key>
-	<string>アプリの再起動と設定適用に必要です</string>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>アプリの再起動と設定適用に必要です</string>
+	<true/>
 </dict>
 </plist>

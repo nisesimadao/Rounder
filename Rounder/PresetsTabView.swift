@@ -9,6 +9,13 @@ import SwiftUI
 import Foundation
 import UniformTypeIdentifiers
 
+// MARK: - Constants
+struct PresetsTabViewConstants {
+    static let mainSpacing: CGFloat = 20
+    static let headerSpacing: CGFloat = 4
+    static let buttonSpacing: CGFloat = 8
+}
+
 struct PresetsTabView: View {
     @StateObject private var presetManager = PresetManager()
     @State private var showingAddPresetSheet = false
@@ -23,15 +30,15 @@ struct PresetsTabView: View {
     @State private var selectedPresets: Set<UUID> = []
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: PresetsTabViewConstants.mainSpacing) {
             // ヘッダー部分
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: PresetsTabViewConstants.headerSpacing) {
                     Text("presets")
                         .font(.headline)
                     
                     if selectionMode {
-                        HStack(spacing: 8) {
+                        HStack(spacing: PresetsTabViewConstants.buttonSpacing) {
                             Text(String(format: String(localized: "%lld selected"), selectedPresets.count))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -250,6 +257,10 @@ struct PresetRowView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+
+                Text(String(format: String(localized: "shape_detail"), preset.cornerCutoutStyle.localizedDisplayName))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 
                 if preset.superGamingMode {
                     Text("super_gaming_mode")
@@ -337,6 +348,5 @@ struct AddPresetSheet: View {
         .frame(width: 400, height: 200)
     }
 }
-
 
 

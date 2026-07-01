@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+// MARK: - Constants
+struct EditPresetTabViewConstants {
+    static let windowWidth = CGFloat(600)
+    static let windowHeight = CGFloat(500)
+}
+
 struct EditPresetTabView: View {
     @Binding var preset: CornerPreset
     @State private var tempName: String
@@ -16,6 +22,7 @@ struct EditPresetTabView: View {
     @State private var tempTopRightEnabled: Bool
     @State private var tempBottomLeftEnabled: Bool
     @State private var tempBottomRightEnabled: Bool
+    @State private var tempCutoutStyle: CornerCutoutStyle
     @State private var tempSuperGamingMode: Bool
     @State private var tempGamingSpeed: Double
     @State private var hasUnsavedChanges: Bool = false
@@ -38,6 +45,7 @@ struct EditPresetTabView: View {
         self._tempTopRightEnabled = State(initialValue: initialPreset.topRightEnabled)
         self._tempBottomLeftEnabled = State(initialValue: initialPreset.bottomLeftEnabled)
         self._tempBottomRightEnabled = State(initialValue: initialPreset.bottomRightEnabled)
+        self._tempCutoutStyle = State(initialValue: initialPreset.cornerCutoutStyle)
         self._tempSuperGamingMode = State(initialValue: initialPreset.superGamingMode)
         self._tempGamingSpeed = State(initialValue: initialPreset.gamingSpeed)
     }
@@ -137,10 +145,25 @@ struct EditPresetTabView: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         
-                        Slider(value: $tempRadius, in: 0...40, step: 1)
+                        Slider(value: $tempRadius, in: RounderAppConstants.cornerRadiusMin...RounderAppConstants.cornerRadiusMax, step: RounderAppConstants.cornerRadiusStep)
                             .onChange(of: tempRadius) { _, _ in
                                 markAsChanged()
                             }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("corner_shape")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        Picker("corner_shape", selection: $tempCutoutStyle) {
+                            Text("rounded_corner").tag(CornerCutoutStyle.rounded)
+                            Text("polygon_cutout").tag(CornerCutoutStyle.polygon)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: tempCutoutStyle) { _, _ in
+                            markAsChanged()
+                        }
                     }
                     
                     // 色選択
@@ -192,7 +215,7 @@ struct EditPresetTabView: View {
                 .padding()
             }
         }
-        .frame(width: 600, height: 500)
+        .frame(width: EditPresetTabViewConstants.windowWidth, height: EditPresetTabViewConstants.windowHeight)
     }
     
     private func markAsChanged() {
@@ -204,6 +227,7 @@ struct EditPresetTabView: View {
         updatedPreset = updatedPreset.withName(tempName)
         updatedPreset = updatedPreset.withRadius(tempRadius)
         updatedPreset = updatedPreset.withColor(NSColor(tempColor))
+        updatedPreset = updatedPreset.withCutoutStyle(tempCutoutStyle)
         updatedPreset = updatedPreset.withCorners(
             topLeft: tempTopLeftEnabled,
             topRight: tempTopRightEnabled,
@@ -233,7 +257,18 @@ extension CornerPreset {
     
     func withColor(_ color: NSColor) -> CornerPreset {
         var updated = self
-        updated.cornerColor = try! NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false)
+        do {
+            updated.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false)
+        } catch {
+            print("Failed to archive corner color: \(error)")
+            updated.cornerColor = Data()
+        }
+        return updated
+    }
+
+    func withCutoutStyle(_ style: CornerCutoutStyle) -> CornerPreset {
+        var updated = self
+        updated.cornerCutoutStyle = style
         return updated
     }
     

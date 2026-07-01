@@ -7,13 +7,33 @@
 
 import SwiftUI
 
+// MARK: - Constants
+struct FirstLaunchSetupConstants {
+    static let iconSize = CGFloat(40)
+    static let headerPadding = CGFloat(24)
+    static let topPadding = CGFloat(20)
+    static let cornerRadiusKey = UserDefaultsKeys.cornerRadius
+    static let cornerColorKey = UserDefaultsKeys.cornerColor
+    static let totalTabs = 3.0
+    static let horizontalPadding = CGFloat(24)
+    static let windowWidth = CGFloat(600)
+    static let windowHeight = CGFloat(500)
+    static let spacingValue = CGFloat(16)
+    static let spacingValueSmall = CGFloat(4)
+    static let buttonSpacing = CGFloat(12)
+    static let iconFrameWidth = CGFloat(32)
+    static let iconFontSize = CGFloat(24)
+    static let titleFontSize = CGFloat(20)
+    static let permissionIconSize = CGFloat(40)
+    static let buttonWidth = CGFloat(50)
+    static let buttonHeight = CGFloat(30)
+    static let checkmarkSize = CGFloat(24)
+}
+
 struct FirstLaunchSetupView: View {
     @State private var selectedTab: Int = 0
-    @State private var accessibilityGranted: Bool = false
-    @State private var screenGranted: Bool = false
-    @State private var automationGranted: Bool = false
     @State private var setupComplete: Bool = false
-    
+
     // バージョン情報
     private var appVersion: String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -31,7 +51,7 @@ struct FirstLaunchSetupView: View {
                     Image("ICON")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 40, height: 40)
+                        .frame(width: FirstLaunchSetupConstants.iconSize, height: FirstLaunchSetupConstants.iconSize)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("welcome_to_rounder")
@@ -45,13 +65,13 @@ struct FirstLaunchSetupView: View {
                     
                     Spacer()
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+                .padding(.horizontal, FirstLaunchSetupConstants.headerPadding)
+                .padding(.top, FirstLaunchSetupConstants.topPadding)
                 
                 // プログレスバー
-                ProgressView(value: Double(selectedTab + 1), total: 3.0)
+                ProgressView(value: Double(selectedTab + 1), total: FirstLaunchSetupConstants.totalTabs)
                     .tint(.blue)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, FirstLaunchSetupConstants.horizontalPadding)
             }
             .background(Color(NSColor.controlBackgroundColor))
             
@@ -59,23 +79,19 @@ struct FirstLaunchSetupView: View {
             
             // タブコンテンツ
             TabView(selection: $selectedTab) {
-                // タブ1: 権限設定
-                PermissionsSetupView(
-                    accessibilityGranted: $accessibilityGranted,
-                    screenGranted: $screenGranted,
-                    automationGranted: $automationGranted
-                )
+                // タブ1: ようこそ
+                WelcomeStepView()
                     .tag(0)
-                
+
                 // タブ2: 初期設定
                 InitialSettingsView()
                     .tag(1)
-                
+
                 // タブ3: 完了
                 SetupCompleteView(setupComplete: $setupComplete)
                     .tag(2)
             }
-                        
+
             // フッターボタン
             HStack(spacing: 12) {
                 if selectedTab > 0 {
@@ -84,16 +100,15 @@ struct FirstLaunchSetupView: View {
                     }
                     .keyboardShortcut(.leftArrow)
                 }
-                
+
                 Spacer()
-                
+
                 if selectedTab < 2 {
                     Button("next") {
                         selectedTab += 1
                     }
                     .keyboardShortcut(.rightArrow)
                     .buttonStyle(.borderedProminent)
-                    .disabled(selectedTab == 0 && !allPermissionsGranted())
                 } else {
                     Button("start_rounder") {
                         completeSetup()
@@ -106,156 +121,77 @@ struct FirstLaunchSetupView: View {
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
         }
-        .frame(width: 600, height: 500)
+        .frame(width: FirstLaunchSetupConstants.windowWidth, height: FirstLaunchSetupConstants.windowHeight)
     }
-    
-    private func allPermissionsGranted() -> Bool {
-        return accessibilityGranted && screenGranted && automationGranted
-    }
-    
+
     private func completeSetup() {
-        // 初回起動完了フラグを設定
-        UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-        
-        // Apple推奨の再起動方法：Process + sleep
-        let task = Process()
-        task.launchPath = "/usr/bin/open"
-        task.arguments = [Bundle.main.bundlePath]
-        
-        // バックグラウンドで起動プロセスを実行
-        DispatchQueue.global().async {
-            do {
-                try task.run()
-                task.waitUntilExit()  // プロセスが完了するまで待機
-                
-                // メインスレッドでアプリを終了
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
-            } catch {
-                print("Failed to restart application: \(error)")
-                
-                // フォールバック：直接終了
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
-            }
+        // 再起動せずに、そのままメニューバー常駐モードへ移行する
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            appDelegate.completeFirstLaunchSetup()
+        } else {
+            // フォールバック：フラグだけ立てて終了
+            UserDefaults.standard.set(true, forKey: UserDefaultsKeys.hasLaunchedBefore)
+            NSApplication.shared.terminate(nil)
         }
     }
 }
 
-struct PermissionsSetupView: View {
-    @Binding var accessibilityGranted: Bool
-    @Binding var screenGranted: Bool
-    @Binding var automationGranted: Bool
-    
+struct WelcomeStepView: View {
     var body: some View {
         VStack(spacing: 24) {
-            Text("required_permissions")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.top, 20)
-            
-            VStack(spacing: 16) {
-                PermissionRow(
-                    title: "accessibility_permission",
-                    description: "accessibility_description",
-                    icon: "accessibility",
-                    isGranted: $accessibilityGranted,
-                    action: { requestAccessibilityPermission() }
-                )
-                
-                PermissionRow(
-                    title: "screen_permission",
-                    description: "screen_description",
-                    icon: "display",
-                    isGranted: $screenGranted,
-                    action: { requestScreenPermission() }
-                )
-                
-                PermissionRow(
-                    title: "automation_permission",
-                    description: "automation_description",
-                    icon: "gear.badge",
-                    isGranted: $automationGranted,
-                    action: { requestAutomationPermission() }
-                )
+            Spacer()
+
+            Image("ICON")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 72, height: 72)
+
+            VStack(spacing: 8) {
+                Text("welcome_to_rounder")
+                    .font(.title)
+                    .fontWeight(.semibold)
+
+                Text("app_utility_description")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
             }
-            
+
+            VStack(alignment: .leading, spacing: 14) {
+                WelcomeFeatureRow(icon: "rectangle.roundedbottom", titleKey: "screen_corner_rounding")
+                WelcomeFeatureRow(icon: "slider.horizontal.3", titleKey: "customizable_radius_color")
+                WelcomeFeatureRow(icon: "menubar.rectangle", titleKey: "run_in_background")
+            }
+            .padding(.horizontal, 40)
+
             Spacer()
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
-    }
-    
-    private func requestAccessibilityPermission() {
-        // アクセシビリティ権限を要求
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-        accessibilityGranted = true
-    }
-    
-    private func requestScreenPermission() {
-        // 画面録画権限を要求
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
-        screenGranted = true
-    }
-    
-    private func requestAutomationPermission() {
-        // 自動化権限を要求
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!)
-        automationGranted = true
     }
 }
 
-struct PermissionRow: View {
-    let title: String
-    let description: String
+struct WelcomeFeatureRow: View {
     let icon: String
-    @Binding var isGranted: Bool
-    let action: () -> Void
-    
+    let titleKey: LocalizedStringKey
+
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(isGranted ? .green : .blue)
-                .frame(width: 32)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
-            }
-            
+                .font(.system(size: 18))
+                .foregroundColor(.accentColor)
+                .frame(width: 26)
+            Text(titleKey)
+                .font(.body)
             Spacer()
-            
-            if isGranted {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.system(size: 20))
-            } else {
-                Button("許可する") {
-                    action()
-                }
-                .buttonStyle(.bordered)
-            }
         }
-        .padding()
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-        )
     }
 }
 
 struct InitialSettingsView: View {
-    @AppStorage("cornerRadius") private var cornerRadius: Double = 20.0
-    @AppStorage("cornerColor") private var cornerColorData: Data = Data()
+    @AppStorage(FirstLaunchSetupConstants.cornerRadiusKey) private var cornerRadius: Double = RounderAppConstants.defaultCornerRadius
+    @AppStorage(FirstLaunchSetupConstants.cornerColorKey) private var cornerColorData: Data = Data()
     @State private var selectedColor: Color = .black
     
     var body: some View {
@@ -272,9 +208,9 @@ struct InitialSettingsView: View {
                         .font(.headline)
                     
                     HStack {
-                        Slider(value: $cornerRadius, in: 0...40, step: 1)
+                        Slider(value: $cornerRadius, in: RounderAppConstants.cornerRadiusMin...RounderAppConstants.cornerRadiusMax, step: RounderAppConstants.cornerRadiusStep)
                         Text("\(Int(cornerRadius))px")
-                            .frame(width: 40)
+                            .frame(width: FirstLaunchSetupConstants.permissionIconSize)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -287,7 +223,7 @@ struct InitialSettingsView: View {
                     HStack(spacing: 12) {
                         ColorPicker(String(localized: "custom_color"), selection: $selectedColor)
                             .labelsHidden()
-                            .frame(width: 50, height: 30)
+                            .frame(width: FirstLaunchSetupConstants.buttonWidth, height: FirstLaunchSetupConstants.buttonHeight)
                         
                         ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
                             Button(action: {
@@ -295,10 +231,10 @@ struct InitialSettingsView: View {
                             }) {
                                 Circle()
                                     .fill(color)
-                                    .frame(width: 24, height: 24)
+                                    .frame(width: FirstLaunchSetupConstants.checkmarkSize, height: FirstLaunchSetupConstants.checkmarkSize)
                                     .overlay(
                                         Circle()
-                                            .stroke(Color.primary, lineWidth: selectedColor == color ? 2 : 0)
+                                            .stroke(Color.primary, lineWidth: selectedColor.matchesSwatch(color) ? 2 : 0)
                                     )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -348,46 +284,58 @@ struct InitialSettingsView: View {
 
 struct SetupCompleteView: View {
     @Binding var setupComplete: Bool
-    @State private var isChecked: Bool = false
-    
+    @State private var launchAtLogin: Bool = true
+    @State private var didApplyDefault = false
+
     var body: some View {
         VStack(spacing: 24) {
             Text("setup_complete")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding(.top, 20)
-            
+
             VStack(spacing: 20) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 60))
                     .foregroundColor(.green)
-                
+
                 VStack(spacing: 12) {
                     Text("setup_complete_message")
                         .font(.title3)
                         .fontWeight(.medium)
-                    
+
                     Text("rounder_description")
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 12) {
-                    Toggle(String(localized: "complete_setup_start_rounder"), isOn: $isChecked)
-                        .onChange(of: isChecked) { _, _ in
-                            setupComplete = isChecked
+                    Toggle("launch_at_login", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, newValue in
+                            launchAtLogin = LoginItemManager.setEnabled(newValue)
                         }
-                    
+
                     Text("background_operation_description")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)
                 }
+                .padding(.horizontal, 20)
             }
-            
+
             Spacer()
         }
         .padding(.horizontal, 24)
+        .onAppear {
+            // 完了ステップに来たら「開始」ボタンを有効化する
+            setupComplete = true
+            // 既定でログイン起動を登録するのは初回のみ。戻る/進むで再表示されたときに
+            // ユーザーの解除を上書きしないようにする。
+            if !didApplyDefault {
+                didApplyDefault = true
+                launchAtLogin = LoginItemManager.setEnabled(true)
+            }
+        }
     }
 }
 
