@@ -9,6 +9,118 @@ import Cocoa
 import SwiftUI
 import QuartzCore
 
+// MARK: - Constants
+struct RounderAppConstants {
+    static let maxInstances = 3
+    static let firstLaunchWindowSize = NSSize(width: 600, height: 500)
+    static let minWindowSize = NSSize(width: 500, height: 450)
+    static let defaultCornerRadius: Double = 20.0
+    static let cornerSizePadding: CGFloat = 0.01
+    static let settingsWindowSize = NSSize(width: 600, height: 650)
+    static let threadSleepInterval: TimeInterval = 0.001
+    static let cornerRadiusMin: Double = 0
+    static let cornerRadiusMax: Double = 40
+    static let cornerRadiusStep: Double = 1
+}
+
+// MARK: - UserDefaults Keys
+struct UserDefaultsKeys {
+    static let hasLaunchedBefore = "hasLaunchedBefore"
+    static let cornerRadius = "cornerRadius"
+    static let cornerColor = "cornerColor"
+    static let isEnabled = "isEnabled"
+    static let superGamingMode = "superGamingMode"
+    static let gamingSpeed = "gamingSpeed"
+    static let glowIntensity = "glowIntensity"
+    static let cornerCutoutStyle = "cornerCutoutStyle"
+    static let topLeftEnabled = "topLeftEnabled"
+    static let topRightEnabled = "topRightEnabled"
+    static let bottomLeftEnabled = "bottomLeftEnabled"
+    static let bottomRightEnabled = "bottomRightEnabled"
+    static let selectedDisplayIDs = "selectedDisplayIDs"
+}
+
+struct OverlayConfiguration {
+    var isEnabled: Bool
+    var radius: Double
+    var color: NSColor
+    var superGamingMode: Bool
+    var gamingSpeed: Double
+    var glowIntensity: Double
+    var cutoutStyle: CornerCutoutStyle
+    var topLeftEnabled: Bool
+    var topRightEnabled: Bool
+    var bottomLeftEnabled: Bool
+    var bottomRightEnabled: Bool
+    var selectedDisplayIDs: [CGDirectDisplayID]
+
+    static func current() -> OverlayConfiguration {
+        let defaults = UserDefaults.standard
+        let selectedDisplayIDs = loadSelectedDisplayIDs(from: defaults)
+
+        return OverlayConfiguration(
+            isEnabled: defaults.bool(forKey: UserDefaultsKeys.isEnabled, defaultValue: true),
+            radius: defaults.object(forKey: UserDefaultsKeys.cornerRadius) as? Double ?? RounderAppConstants.defaultCornerRadius,
+            color: loadColor(from: defaults),
+            superGamingMode: defaults.bool(forKey: UserDefaultsKeys.superGamingMode, defaultValue: false),
+            gamingSpeed: defaults.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed,
+            glowIntensity: defaults.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity,
+            cutoutStyle: CornerCutoutStyle(
+                rawValue: defaults.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
+            ) ?? .rounded,
+            topLeftEnabled: defaults.bool(forKey: UserDefaultsKeys.topLeftEnabled, defaultValue: true),
+            topRightEnabled: defaults.bool(forKey: UserDefaultsKeys.topRightEnabled, defaultValue: true),
+            bottomLeftEnabled: defaults.bool(forKey: UserDefaultsKeys.bottomLeftEnabled, defaultValue: true),
+            bottomRightEnabled: defaults.bool(forKey: UserDefaultsKeys.bottomRightEnabled, defaultValue: true),
+            selectedDisplayIDs: selectedDisplayIDs
+        )
+    }
+
+    private static func loadColor(from defaults: UserDefaults) -> NSColor {
+        guard let colorData = defaults.data(forKey: UserDefaultsKeys.cornerColor),
+              let color = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: colorData) else {
+            return .black
+        }
+        return color
+    }
+
+    private static func loadSelectedDisplayIDs(from defaults: UserDefaults) -> [CGDirectDisplayID] {
+        let connected = NSScreen.screens.compactMap { $0.displayID }
+
+        var saved: [CGDirectDisplayID]? = nil
+        if let data = defaults.data(forKey: UserDefaultsKeys.selectedDisplayIDs),
+           let displayIDs = try? JSONDecoder().decode([UInt32].self, from: data) {
+            saved = displayIDs.map { CGDirectDisplayID($0) }
+        } else if let displayIDs = defaults.array(forKey: UserDefaultsKeys.selectedDisplayIDs) as? [UInt32] {
+            saved = displayIDs.map { CGDirectDisplayID($0) }
+        }
+
+        guard let saved else {
+            // 未設定：接続中のすべてのディスプレイを対象にする
+            return connected
+        }
+
+        // ユーザーが意図的にすべてのモニターを解除した場合（空の選択）は、その意思を尊重して
+        // どこにも角を出さない。空＝「全部」ではない点に注意（保存パスと再作成パスの不一致を防ぐ）。
+        if saved.isEmpty {
+            return []
+        }
+
+        // ディスプレイID は再接続やGPU切り替えで変わり得る。保存済みIDが（空ではないのに）
+        // 現在のどのディスプレイとも一致しない場合は、全ディスプレイから角が消えるのを避けるため、
+        // 接続中のすべてを対象にフォールバックする。
+        let connectedSet = Set(connected)
+        let stillValid = saved.filter { connectedSet.contains($0) }
+        return stillValid.isEmpty ? connected : stillValid
+    }
+}
+
+extension UserDefaults {
+    func bool(forKey key: String, defaultValue: Bool) -> Bool {
+        object(forKey: key) as? Bool ?? defaultValue
+    }
+}
+
 @main
 struct RounderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -23,16 +135,18 @@ struct RounderApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var settingsWindow: NSWindow?
+    /// 初回起動セットアップ用ウィンドウ。settingsWindow とは別に保持しないと、
+    /// 直後の setupSettingsWindow() で参照が上書きされ、閉じたときの処理ができなくなる。
+    private var onboardingWindow: NSWindow?
+    private var firstLaunchCompleted = false
     private var menuBarController = MenuBarController()
-    private var selectedDisplayIDs: [CGDirectDisplayID] = []
-    private let maxInstances = 3  // 最大インスタンス数
-    
+
     private func preventMultipleInstances() -> Bool {
         let bundleIdentifier = Bundle.main.bundleIdentifier ?? ""
         let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
         
         // 実行中のインスタンス数が最大数を超えている場合は終了
-        if runningApps.count > maxInstances {
+        if runningApps.count > RounderAppConstants.maxInstances {
             // 既存のインスタンスを前面に持ってくる
             if let oldestApp = runningApps.first {
                 oldestApp.activate(options: [.activateIgnoringOtherApps])
@@ -68,11 +182,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     private func isFirstLaunch() -> Bool {
-        return !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        return !UserDefaults.standard.bool(forKey: UserDefaultsKeys.hasLaunchedBefore)
     }
     
     private func setFirstLaunchComplete() {
-        UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+        UserDefaults.standard.set(true, forKey: UserDefaultsKeys.hasLaunchedBefore)
     }
     
     private func showFirstLaunchSetup() {
@@ -84,31 +198,41 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: contentView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            contentRect: NSRect(origin: .zero, size: RounderAppConstants.firstLaunchWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         
-        window.title = "Rounder 初期設定"
+        window.title = String(localized: "window_title_setup")
         window.contentViewController = hostingController
         window.center()
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 500, height: 450)
-        
-        self.settingsWindow = window
+        window.minSize = RounderAppConstants.minWindowSize
+
+        self.onboardingWindow = window
         window.delegate = self
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// 初回セットアップ完了。再起動せずにそのままメニューバー常駐モードへ移行する。
+    func completeFirstLaunchSetup() {
+        firstLaunchCompleted = true
+        setFirstLaunchComplete()
+
+        onboardingWindow?.orderOut(nil)
+        onboardingWindow?.close()
+        onboardingWindow = nil
+
+        createOverlayWindows()
+        setupMenuBar()
+        NSApp.setActivationPolicy(.accessory)
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // すべてのオーバーレイウィンドウを明示的に閉じる
-        for window in overlayWindows {
-            window.orderOut(nil)
-            window.close()
-        }
-        overlayWindows.removeAll()
+        closeOverlayWindows()
         
         // 設定ウィンドウも閉じる
         settingsWindow?.orderOut(nil)
@@ -133,37 +257,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func createOverlayWindows() {
-        // 既存のウィンドウをクリア
-        overlayWindows.removeAll()
-        
-        // 選択されたディスプレイIDを読み込み
-        loadSelectedDisplays()
+        applyOverlayConfiguration(.current())
+    }
+
+    func applyOverlayConfiguration(_ configuration: OverlayConfiguration) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.applyOverlayConfiguration(configuration)
+            }
+            return
+        }
+
+        closeOverlayWindows()
+
+        guard configuration.isEnabled else { return }
         
         // すべてのスクリーンを取得
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
         
-        // @AppStorageから現在の設定を読み込み
-        let radius = UserDefaults.standard.object(forKey: "cornerRadius") as? Double ?? 20.0
-        let cornerSize: CGFloat = CGFloat(radius) + 0.01  // 余白が残らないように半径と同じサイズ
-        let color: NSColor = {
-            guard let colorData = UserDefaults.standard.data(forKey: "cornerColor"),
-                  let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: colorData) else {
-                return .black
-            }
-            return nsColor
-        }()
-        
-        // スーパーゲーミングモード設定を読み込み
-        let superGamingMode = UserDefaults.standard.bool(forKey: "superGamingMode")
-        let gamingSpeed = UserDefaults.standard.object(forKey: "gamingSpeed") as? Double ?? 1.0
-        let glowIntensity = UserDefaults.standard.object(forKey: "glowIntensity") as? Double ?? 1.0
-        
-        // 四つの角の表示設定を読み込み
-        let topLeftEnabled = UserDefaults.standard.bool(forKey: "topLeftEnabled")
-        let topRightEnabled = UserDefaults.standard.bool(forKey: "topRightEnabled")
-        let bottomLeftEnabled = UserDefaults.standard.bool(forKey: "bottomLeftEnabled")
-        let bottomRightEnabled = UserDefaults.standard.bool(forKey: "bottomRightEnabled")
+        let cornerSize = CGFloat(configuration.radius) + RounderAppConstants.cornerSizePadding
         
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
@@ -171,68 +284,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let displayID = screen.displayID else { continue }
             
             // 選択されたディスプレイかチェック
-            if !selectedDisplayIDs.contains(displayID) {
+            if !configuration.selectedDisplayIDs.contains(displayID) {
                 continue
             }
             
             let frame = screen.frame
-            
-            // 左上
-            if topLeftEnabled {
-                let topLeftWindow = CornerOverlayWindow(
-                    corner: CGPoint(x: frame.minX, y: frame.maxY - cornerSize),
+
+            // 各角の「物理的な位置」と、その角を描画するときに使う CornerType の対応表。
+            // CornerType は描画座標系（非フリップ）の都合で上下が反転している点に注意
+            // （物理的な左上 → .bottomLeft など）。以前は window.screen から角を推測していたが、
+            // マルチモニターで誤判定するため、生成時に確定した値を渡すようにした。
+            let cornerSpecs: [(enabled: Bool, origin: CGPoint, type: CornerType)] = [
+                (configuration.topLeftEnabled,     CGPoint(x: frame.minX, y: frame.maxY - cornerSize),              .bottomLeft),
+                (configuration.topRightEnabled,    CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize), .bottomRight),
+                (configuration.bottomLeftEnabled,  CGPoint(x: frame.minX, y: frame.minY),                           .topLeft),
+                (configuration.bottomRightEnabled, CGPoint(x: frame.maxX - cornerSize, y: frame.minY),              .topRight)
+            ]
+
+            for spec in cornerSpecs where spec.enabled {
+                let window = CornerOverlayWindow(
+                    corner: spec.origin,
                     size: cornerSize,
-                    radius: CGFloat(radius),
-                    color: color
+                    radius: CGFloat(configuration.radius),
+                    color: configuration.color,
+                    cutoutStyle: configuration.cutoutStyle,
+                    cornerType: spec.type
                 )
-                overlayWindows.append(topLeftWindow)
-                if superGamingMode {
-                    topLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
-                }
-            }
-            
-            // 右上
-            if topRightEnabled {
-                let topRightWindow = CornerOverlayWindow(
-                    corner: CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize),
-                    size: cornerSize,
-                    radius: CGFloat(radius),
-                    color: color
-                )
-                overlayWindows.append(topRightWindow)
-                if superGamingMode {
-                    topRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
-                }
-            }
-            
-            // 左下
-            if bottomLeftEnabled {
-                let bottomLeftWindow = CornerOverlayWindow(
-                    corner: CGPoint(x: frame.minX, y: frame.minY),
-                    size: cornerSize,
-                    radius: CGFloat(radius),
-                    color: color
-                )
-                overlayWindows.append(bottomLeftWindow)
-                if superGamingMode {
-                    bottomLeftWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
-                }
-            }
-            
-            // 右下
-            if bottomRightEnabled {
-                let bottomRightWindow = CornerOverlayWindow(
-                    corner: CGPoint(x: frame.maxX - cornerSize, y: frame.minY),
-                    size: cornerSize,
-                    radius: CGFloat(radius),
-                    color: color
-                )
-                overlayWindows.append(bottomRightWindow)
-                if superGamingMode {
-                    bottomRightWindow.setGamingMode(true, speed: gamingSpeed, glowIntensity: glowIntensity)
+                overlayWindows.append(window)
+                if configuration.superGamingMode {
+                    window.setGamingMode(true, speed: configuration.gamingSpeed, glowIntensity: configuration.glowIntensity)
                 }
             }
         }
+    }
+
+    func recreateOverlayWindows() {
+        createOverlayWindows()
+    }
+
+    private func closeOverlayWindows() {
+        for window in overlayWindows {
+            window.prepareForClose()
+            window.orderOut(nil)
+            window.close()
+        }
+        overlayWindows.removeAll()
     }
     
     func setupMenuBar() {
@@ -244,18 +340,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: settingsView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 600),
+            contentRect: NSRect(origin: .zero, size: RounderAppConstants.settingsWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         
-        window.title = "Rounder 設定"
+        window.title = String(localized: "window_title_settings")
         window.contentViewController = hostingController
         window.center()
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 500, height: 450)
+        window.minSize = RounderAppConstants.minWindowSize
         
         // モダンなウィンドウ外観に設定
         if #available(macOS 11.0, *) {
@@ -265,60 +361,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // ウィンドウが閉じられたときにDockから非表示にする
         window.delegate = self
         
-        // コンテンツサイズに応じてウィンドウを自動リサイズ
-        window.setContentSize(hostingController.view.intrinsicContentSize)
-        
-        // SwiftUIのビューが変更されたときにウィンドウサイズを更新
-        NotificationCenter.default.addObserver(
-            forName: NSView.frameDidChangeNotification,
-            object: hostingController.view,
-            queue: .main
-        ) { _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.updateWindowSizeToFitContent(window: window, view: hostingController.view)
-            }
-        }
-        
                 
         self.settingsWindow = window
-    }
-    
-    private func updateWindowSizeToFitContent(window: NSWindow, view: NSView) {
-        // SwiftUIビューの実際の必要サイズを計算
-        let fittingSize = view.fittingSize
-        
-        // 最小サイズ制約を考慮
-        let targetWidth = max(fittingSize.width + 40, window.minSize.width) // 余白を追加
-        let targetHeight = max(fittingSize.height + 40, window.minSize.height)
-        
-        let currentFrame = window.frame
-        
-        // サイズが実際に変更されている場合のみ更新
-        if abs(currentFrame.size.width - targetWidth) > 1 || abs(currentFrame.size.height - targetHeight) > 1 {
-            let newFrame = NSRect(
-                x: currentFrame.origin.x,
-                y: currentFrame.origin.y - (targetHeight - currentFrame.size.height),
-                width: targetWidth,
-                height: targetHeight
-            )
-            
-            // 美しいアニメーション付きでウィンドウサイズを変更
-            NSAnimationContext.runAnimationGroup({ context in
-                context.duration = 0.25
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                window.animator().setFrame(newFrame, display: true)
-            })
-        }
     }
     
     func showSettings() {
         // 設定ウィンドウを開くときはDockに表示
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        
-        // 設定画面を開いている間は画面変更監視を停止
-        ScreenMonitor.shared.stopMonitoring()
-        
+
+        // 設定を開いている間も画面監視は継続する。監視の再作成は保存済み設定を読むだけで、
+        // メインスレッド上で 0.5 秒デバウンスされるため手動の「適用」と競合しない。
+        // 停止してしまうと、設定を開いている間のディスプレイ着脱を取りこぼしてしまう。
+        ScreenMonitor.shared.startMonitoring(appDelegate: self)
+
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
     
@@ -326,160 +382,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 設定ウィンドウを閉じるときはDockから非表示
         NSApp.setActivationPolicy(.accessory)
         settingsWindow?.orderOut(nil)
+        ScreenMonitor.shared.startMonitoring(appDelegate: self)
     }
     
     // MARK: - NSWindowDelegate
     
     func windowWillClose(_ notification: Notification) {
-        // 設定ウィンドウが閉じられたときにDockから非表示に戻す
-        if notification.object as? NSWindow == settingsWindow {
+        guard let closingWindow = notification.object as? NSWindow else { return }
+
+        if closingWindow == settingsWindow {
+            // 設定ウィンドウが閉じられたときにDockから非表示に戻す
             NSApp.setActivationPolicy(.accessory)
             // 画面変更監視を再開
             ScreenMonitor.shared.startMonitoring(appDelegate: self)
-        }
-    }
-    
-    func updateOverlaySettings(radius: CGFloat, color: NSColor) {
-        // パフォーマンス最適化：ウィンドウを再利用して再作成を避ける
-        if overlayWindows.isEmpty {
-            createOverlayWindows()
-        }
-        
-        // 既存のウィンドウの設定を更新
-        for window in overlayWindows {
-            window.updateSettings(radius: radius, color: color)
-            // 強制的に再描画を実行
-            window.contentView?.needsDisplay = true
-            
-            // メインスレッドで確実に更新
-            DispatchQueue.main.async {
-                window.display()
-                window.orderFront(nil)
-            }
-        }
-        
-        // UserDefaultsへの保存は@AppStorageに任せる（二重書き込みを避ける）
-    }
-    
-    func updateGamingMode(enabled: Bool, speed: Double, glowIntensity: Double) {
-        // パフォーマンス最適化：バックグラウンドスレッドで順次更新
-        DispatchQueue.global(qos: .userInteractive).async {
-            for window in self.overlayWindows {
-                DispatchQueue.main.async {
-                    window.setGamingMode(enabled, speed: speed, glowIntensity: glowIntensity)
-                }
-                // 少し待機してUIスレッドの負荷を分散
-                Thread.sleep(forTimeInterval: 0.001)
-            }
-        }
-    }
-    
-    func updateCornerVisibility(topLeft: Bool, topRight: Bool, bottomLeft: Bool, bottomRight: Bool) {
-        // 設定を保存
-        UserDefaults.standard.set(topLeft, forKey: "topLeftEnabled")
-        UserDefaults.standard.set(topRight, forKey: "topRightEnabled")
-        UserDefaults.standard.set(bottomLeft, forKey: "bottomLeftEnabled")
-        UserDefaults.standard.set(bottomRight, forKey: "bottomRightEnabled")
-        
-        // すべてのウィンドウを一度削除して再作成
-        for window in overlayWindows {
-            window.orderOut(nil)
-            window.close()
-        }
-        overlayWindows.removeAll()
-        
-        // 新しい設定でウィンドウを再作成
-        createOverlayWindows()
-    }
-    
-    func updateSelectedDisplays(_ displayIDs: [CGDirectDisplayID]) {
-        selectedDisplayIDs = displayIDs
-    }
-    
-    private func loadSelectedDisplays() {
-        if let savedDisplayIDs = UserDefaults.standard.array(forKey: "selectedDisplayIDs") as? [UInt32] {
-            selectedDisplayIDs = savedDisplayIDs.map { CGDirectDisplayID($0) }
-        } else {
-            // デフォルトですべてのディスプレイを選択
-            selectedDisplayIDs = NSScreen.screens.compactMap { $0.displayID }
-        }
-    }
-    
-    func restartApplication() {
-        // アプリのバンドルパスを取得
-        let bundlePath = Bundle.main.bundlePath
-        
-        // NSTaskを使用して新しいインスタンスとして再起動
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-n", bundlePath] // -n で新しいインスタンスとして開く
-        
-        // バックグラウンドで実行し、アプリを終了
-        DispatchQueue.global().async {
-            do {
-                try task.run()
-                
-                // タスクが開始されたらアプリを終了
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
-            } catch {
-                print("Failed to restart application: \(error)")
-                
-                // フォールバック：シェルスクリプト方式
-                self.restartWithShellScript()
-            }
-        }
-    }
-    
-    private func restartWithShellScript() {
-        // フォールバックとしてシェルスクリプト方式を使用
-        let bundlePath = Bundle.main.bundlePath
-        let shellScript = """
-        #!/bin/bash
-        sleep 0.5
-        open "\(bundlePath)"
-        exit 0
-        """
-        
-        let tempDir = FileManager.default.temporaryDirectory
-        let scriptFile = tempDir.appendingPathComponent("restart_rounder.sh")
-        
-        do {
-            try shellScript.write(to: scriptFile, atomically: true, encoding: .utf8)
-            
-            // 実行権限を付与
-            let chmodProcess = Process()
-            chmodProcess.launchPath = "/bin/chmod"
-            chmodProcess.arguments = ["+x", scriptFile.path]
-            chmodProcess.launch()
-            chmodProcess.waitUntilExit()
-            
-            // シェルスクリプトを実行
-            let scriptProcess = Process()
-            scriptProcess.launchPath = scriptFile.path
-            scriptProcess.arguments = []
-            
-            DispatchQueue.global().async {
-                do {
-                    try scriptProcess.run()
-                    
-                    DispatchQueue.main.async {
-                        NSApplication.shared.terminate(nil)
-                    }
-                } catch {
-                    print("Shell script restart failed: \(error)")
-                    DispatchQueue.main.async {
-                        NSApplication.shared.terminate(nil)
-                    }
-                }
-            }
-            
-        } catch {
-            print("Failed to create restart script: \(error)")
-            DispatchQueue.main.async {
+        } else if closingWindow == onboardingWindow {
+            // 初期設定を完了せずに閉じた場合は、メニューバーもオーバーレイも未構築で
+            // 操作不能になるため、アプリを終了する（次回起動で再度セットアップを表示）。
+            if !firstLaunchCompleted {
                 NSApplication.shared.terminate(nil)
             }
         }
     }
+    
 }

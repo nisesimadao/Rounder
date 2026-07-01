@@ -8,18 +8,28 @@
 import Cocoa
 import Foundation
 
+// MARK: - Constants
+struct ScreenMonitorConstants {
+    static let screenChangeDelay: TimeInterval = 0.5
+}
+
 class ScreenMonitor: NSObject {
     static let shared = ScreenMonitor()
     
     private var screenChangeObserver: NSObjectProtocol?
     private var appDelegate: AppDelegate?
+    private var pendingScreenChangeWorkItem: DispatchWorkItem?
+    private var isMonitoring = false
     
     private override init() {
         super.init()
     }
     
     func startMonitoring(appDelegate: AppDelegate) {
+        stopMonitoring()
+
         self.appDelegate = appDelegate
+        isMonitoring = true
         
         screenChangeObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -28,16 +38,13 @@ class ScreenMonitor: NSObject {
         ) { [weak self] _ in
             self?.handleScreenParametersChanged()
         }
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screenConfigurationChanged),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
     }
     
     func stopMonitoring() {
+        isMonitoring = false
+        pendingScreenChangeWorkItem?.cancel()
+        pendingScreenChangeWorkItem = nil
+
         if let observer = screenChangeObserver {
             NotificationCenter.default.removeObserver(observer)
             screenChangeObserver = nil
@@ -46,26 +53,18 @@ class ScreenMonitor: NSObject {
         NotificationCenter.default.removeObserver(self)
     }
     
-    @objc private func screenParametersChanged() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.handleScreenParametersChanged()
-        }
-    }
-    
-    @objc private func screenConfigurationChanged() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.handleScreenParametersChanged()
-        }
-    }
-    
+        
     private func handleScreenParametersChanged() {
         guard let appDelegate = appDelegate else { return }
+        pendingScreenChangeWorkItem?.cancel()
         
-        // マルチモニター対応：スクリーン構成が変更されたためアプリを再起動
-        // 解像度や配置、枚数が変わったときは再起動が必要
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            appDelegate.restartApplication()
+        // マルチモニター対応：スクリーン構成が変わったらオーバーレイだけを再作成する
+        let workItem = DispatchWorkItem { [weak self, weak appDelegate] in
+            guard let self, self.isMonitoring else { return }
+            appDelegate?.recreateOverlayWindows()
         }
+        pendingScreenChangeWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + ScreenMonitorConstants.screenChangeDelay, execute: workItem)
     }
     
     deinit {
