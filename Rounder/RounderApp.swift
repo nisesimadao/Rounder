@@ -134,6 +134,8 @@ struct RounderApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
+    /// ゲーミングモードのふち（側面）グロー用ウィンドウ
+    var edgeWindows: [EdgeOverlayWindow] = []
     var settingsWindow: NSWindow?
     /// 初回起動セットアップ用ウィンドウ。settingsWindow とは別に保持しないと、
     /// 直後の setupSettingsWindow() で参照が上書きされ、閉じたときの処理ができなくなる。
@@ -315,6 +317,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     window.setGamingMode(true, speed: configuration.gamingSpeed, glowIntensity: configuration.glowIntensity)
                 }
             }
+
+            // ゲーミングモードでは、四隅に加えて画面のふち（4辺）全体を光らせる
+            if configuration.superGamingMode {
+                for edge in [ScreenEdge.top, .bottom, .left, .right] {
+                    let edgeWindow = EdgeOverlayWindow(
+                        edge: edge,
+                        screenFrame: frame,
+                        speed: configuration.gamingSpeed,
+                        glowIntensity: configuration.glowIntensity
+                    )
+                    edgeWindows.append(edgeWindow)
+                }
+            }
         }
     }
 
@@ -329,6 +344,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.close()
         }
         overlayWindows.removeAll()
+
+        for window in edgeWindows {
+            window.prepareForClose()
+            window.orderOut(nil)
+            window.close()
+        }
+        edgeWindows.removeAll()
     }
     
     func setupMenuBar() {

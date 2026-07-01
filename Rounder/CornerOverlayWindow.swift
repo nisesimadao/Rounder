@@ -15,10 +15,10 @@ import CoreVideo
 struct CornerOverlayConstants {
     /// レインボーカラーの数
     static let rainbowColorCount = 360
-    /// レインボーカラーの彩度
-    static let rainbowSaturation = 0.9
-    /// レインボーカラーの明度
-    static let rainbowBrightness = 0.8
+    /// レインボーカラーの彩度（ゲーミングらしいビビッドさのため最大値）
+    static let rainbowSaturation = 1.0
+    /// レインボーカラーの明度（ゲーミングらしいビビッドさのため最大値）
+    static let rainbowBrightness = 1.0
     /// ブルームエフェクトの彩度
     static let bloomSaturation = 1.0
     /// ブルームエフェクトの明度
@@ -389,10 +389,42 @@ class CornerOverlayView: NSView {
             context.addPath(createRoundedCutoutPath(in: bounds, cornerType: cornerType))
             context.fillPath()
             context.setBlendMode(.normal)
+        case .squircle:
+            context.fill(bounds)
+            context.setBlendMode(.clear)
+            context.addPath(createSquircleCutoutPath(in: bounds, cornerType: cornerType))
+            context.fillPath()
+            context.setBlendMode(.normal)
         case .polygon:
             context.addPath(createPolygonMaskPath(in: bounds, cornerType: cornerType))
             context.fillPath()
         }
+    }
+
+    /// スーパー楕円（Squircle）の切り欠きパス。内側の角を中心に、iOS風の連続的な曲率で
+    /// 角丸よりも角に沿った丸みを描く。
+    private func createSquircleCutoutPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
+        let r = radius
+        let center: CGPoint
+        switch cornerType {
+        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY)
+        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY)
+        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY)
+        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY)
+        }
+        let path = CGMutablePath()
+        let n = 5.0  // スーパー楕円の指数（大きいほど角ばる。5前後がSquircleらしい）
+        let steps = 72
+        for i in 0...steps {
+            let theta = Double(i) / Double(steps) * 2.0 * .pi
+            let ct = cos(theta), st = sin(theta)
+            let x = Double(r) * copysign(pow(abs(ct), 2.0 / n), ct)
+            let y = Double(r) * copysign(pow(abs(st), 2.0 / n), st)
+            let pt = CGPoint(x: center.x + CGFloat(x), y: center.y + CGFloat(y))
+            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
+        }
+        path.closeSubpath()
+        return path
     }
 
     private func createRoundedCutoutPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
@@ -528,6 +560,7 @@ enum CornerType {
 
 enum CornerCutoutStyle: String, Codable, CaseIterable, Identifiable {
     case rounded
+    case squircle
     case polygon
 
     var id: String { rawValue }
@@ -536,6 +569,8 @@ enum CornerCutoutStyle: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .rounded:
             return String(localized: "rounded_corner")
+        case .squircle:
+            return String(localized: "squircle_corner")
         case .polygon:
             return String(localized: "polygon_cutout")
         }
