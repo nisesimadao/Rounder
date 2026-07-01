@@ -1,66 +1,52 @@
 # <img src="Rounder/ICON.png" width="40" vertical-align="middle" /> Rounder
 
-A tool that beautifully rounds the corners of your macOS screen.
+A tiny menu-bar app that beautifully rounds the corners of your macOS screen.
 
-It uses a software-controlled overlay to give modern rounded corners to older MacBooks (pre-notch) and external monitors that still have sharp edges. It runs quietly in the background and does not interfere with normal system behavior.
+It uses a lightweight, software-controlled overlay to give modern rounded corners to older MacBooks (pre-notch) and external monitors that still have sharp edges. It runs quietly in the menu bar, needs **no special permissions**, and applies every change **instantly — no restart required**.
 
 <img src="Rounder/SCREENSHOT.png" alt="Screenshot" />
 
 [日本語版READMEはこちら](./README_jp.md)
 
-> Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect.
-
-## Project Structure
-
-```
-Rounder/
-├── Rounder/
-│   ├── RounderApp.swift           # Main application entry point
-│   ├── CornerOverlayWindow.swift  # Rounded corner overlay window
-│   ├── ContentView.swift          # Advanced settings UI
-│   ├── PresetsTabView.swift       # Preset management UI
-│   ├── PresetManager.swift        # Preset data management
-│   ├── FirstLaunchSetupView.swift # First launch setup flow
-│   ├── MenuBarController.swift    # Menu bar control
-│   └── ScreenMonitor.swift        # Screen change monitoring
-├── Rounder.xcodeproj              # Xcode project
-└── README.md                      # This file
-```
+> Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect there. It's most useful on external displays and older Macs.
 
 ## Features
 
-- **Background operation**: Runs as a menu bar app
-- **Real-time configuration**: Instantly adjust corner radius and color
-- **Individual corner control**: Toggle each corner independently
-- **Preset functionality**: Save and switch between favorite settings
-- **Import/Export**: Share and backup presets
-- **Super Duper Gaming Mode**: Special mode with animated effects
-- **Multi-monitor support**: Select which monitors to apply rounded corners to
-- **Monitor refresh**: Manually refresh monitor list in settings
-- **Simple interface**: Intuitive settings screen
-- **Lightweight and stable**: Runs smoothly in the background
+- **Instant apply** — every change takes effect live; no restart, no flicker
+- **Runs in the menu bar** — quiet background utility, no Dock icon
+- **One-click on/off** — toggle the effect straight from the menu bar
+- **Launch at Login** — set it once and forget it (via `SMAppService`)
+- **Adjustable radius & color** — 0–40 px, any color, with quick black/white/gray swatches
+- **Corner shape** — smooth rounded corners or a sharp polygon cutout
+- **Per-corner control** — enable each of the four corners independently
+- **Multi-monitor** — choose exactly which displays get rounded corners; newly connected displays are covered automatically
+- **Presets** — save, apply, and edit favorite configurations (ships with All / Top / Bottom / Left / Right / None)
+- **Super Duper Gaming Mode** — animated rainbow glow with adjustable speed and intensity
+- **No special permissions** — draws with borderless overlay windows, so no Accessibility / Screen Recording / Automation prompts
 
 ## System Requirements
 
 - macOS 14.6 (Sonoma) or later
-- Apple Silicon (M1/M2/M3) or Intel Mac
-- Accessibility permission required
+- Apple Silicon or Intel Mac
 
 ## Installation
 
 ### Prebuilt App (Recommended)
 
-1. Download the latest version from [Releases](https://github.com/nisesimadao/rounder/releases)
-2. Move it to your Applications folder
-3. Grant permissions on first launch
+1. Download `Rounder.zip` from the [latest release](https://github.com/nisesimadao/Rounder/releases/latest) and unzip it.
+2. Move `Rounder.app` to your Applications folder.
+3. The build is **not signed with a paid Developer ID**, so on first launch macOS Gatekeeper may block it. Right-click the app → **Open** → **Open**, or run:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Rounder.app
+   ```
 
 ### Build from Source
 
 ```bash
-# Open the project in Xcode
+# Open in Xcode
 open Rounder.xcodeproj
 
-# Or build from the command line
+# …or build from the command line
 xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release build
 ```
 
@@ -68,84 +54,56 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 
 ### First Launch
 
-1. Launch the app to open the setup wizard
-2. Grant required permissions (Accessibility, Screen Recording)
-3. Set corner radius and color
-4. Click "Start Rounder" to finish
+A short setup appears: **Welcome → basic settings (radius & color) → done**. Choose whether to launch at login, click **Start Rounder**, and it moves into the menu bar. No permission prompts.
 
-### Daily Use
+### Everyday Use
 
-- **Menu bar**: Open settings from the Rounder icon
-- **Adjust settings**: Change corner radius (0–40px) and color in real time
-- **Individual corners**: Toggle each corner independently (2x2 grid layout)
-- **Enable/disable**: Toggle rounded corner effect on or off
-- **Quit**: Fully exit the app
+- **Menu bar icon** → toggle rounded corners on/off, open **Settings**, or **Quit**.
+- **Settings** → adjust radius (0–40 px), color, corner shape, which corners show, which monitors are covered, and Launch at Login. Changes apply the moment you click **Apply** / **OK** — no restart.
 
-### Preset Features
+### Presets
 
-- **Apply presets**: One-click apply saved configurations
-- **Save current settings**: Create new preset from current configuration
-- **Edit presets**: Rename or delete existing presets
+- **Apply** a saved configuration with one click.
+- **Save** the current settings as a new preset.
+- **Edit** or delete existing presets.
+- Ships with **All Corners / Top Only / Bottom Only / Left Only / Right Only / None**.
 
-~~**Import/Export**: Share and backup presets in JSON format~~
-- **Default presets**: Includes "All Corners", "Top Only", "Bottom Only", "Left Only", "Right Only", and "None"
+## Settings Reference
 
-## Configuration Options
+### General
+- **Launch at Login** — start Rounder automatically when you log in
+- **Enable rounded corners** — master on/off (also available from the menu bar)
 
-### General Settings
-- **Corner radius**: Adjustable from 0 to 40 pixels
-- **Corner color**: Choose via color picker or presets
-- **Corner visibility**: Toggle each corner independently (2x2 grid layout)
-- **Enable**: Toggle the rounded corner effect
-- **Monitor selection**: Choose which monitors to apply rounded corners to (saved independently from presets)
-- **Refresh monitors**: Manually refresh the monitor list after connecting/disconnecting displays
+### Appearance
+- **Corner radius** — 0–40 px
+- **Corner color** — color picker + quick swatches
+- **Corner shape** — rounded corner or polygon cutout
+- **Corner visibility** — toggle each corner independently (2×2 grid)
+
+### Monitors
+- **Monitor selection** — pick which displays get rounded corners (stored separately from presets)
+- **Refresh** — re-scan connected displays
 
 ### Super Duper Gaming Mode
-- **Enable**: Rainbow animation effects
-- **Speed control**: Adjust animation speed from 0.1x to 5.0x
+- **Rainbow animation** with **speed** (0.1×–5.0×) and **glow intensity** controls
 
-### Preset Management
-- **Preset list**: View and manage saved configurations
-- **Create new**: Save current settings as preset
+## Technical Notes
 
-~~**Import**: Load presets from JSON files~~
+- **SwiftUI + AppKit**, drawing with **Core Graphics** into borderless `NSWindow`s at `.screenSaver` level.
+- Overlays are rebuilt through a single configuration path, so live apply, presets, the menu toggle, and display hot-plug all share the same reliable code.
+- Settings persist in `UserDefaults`; Launch at Login uses `SMAppService`.
 
-~~**Export**: Save presets as JSON files~~
+## Releases / CI
 
-### Permissions
-- **Accessibility**: Required for detecting screen elements
-- **Screen Recording**: Required for overlay rendering at screen-saver level
-- **Automation**: Required for monitoring system events
-
-## Technical Details
-
-### Core Technologies
-- **SwiftUI + AppKit**: Modern native macOS app
-- **Core Graphics**: High-performance overlay rendering
-- **NSWindow.Level.screenSaver**: Displays above menu bar layer
-- **UserDefaults**: Persistent settings storage
-
-### Performance
-- **Low overhead**: Minimal CPU usage
-- **Memory efficient**: Uses only necessary resources
-- **Real-time updates**: Changes apply instantly
+Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/release.yml`) that builds the app and publishes `Rounder.zip` to [Releases](https://github.com/nisesimadao/Rounder/releases) automatically.
 
 ## Troubleshooting
 
-### Common Issues
+**Rounded corners aren't visible**
+On a Mac with a notch, the built-in display is already rounded — try an external monitor, and make sure the effect is enabled (menu bar → toggle) and the display is selected in Settings → Monitors.
 
-**Q: Rounded corners are not visible**  
-A: Make sure Accessibility permission is granted
+**A change didn't seem to apply**
+It should apply instantly; if a display was just connected, open Settings → Monitors → Refresh, or toggle the effect off/on from the menu bar.
 
-**Q: Settings changes are not applied**  
-A: Click "Apply" or restart the app
-
-**Q: No menu bar icon appears**  
-A: Ensure the app is running in the background
-
-### Reset Permissions
-
-```bash
-# Open System Settings directly
-open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
-```
+**No menu bar icon**
+Make sure Rounder is running (it has no Dock icon by design).
