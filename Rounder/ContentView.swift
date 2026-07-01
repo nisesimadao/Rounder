@@ -650,6 +650,7 @@ struct SettingsTabView: View {
 
                     Picker("corner_shape", selection: $tempCornerCutoutStyle) {
                         Text("rounded_corner").tag(CornerCutoutStyle.rounded)
+                        Text("squircle_corner").tag(CornerCutoutStyle.squircle)
                         Text("polygon_cutout").tag(CornerCutoutStyle.polygon)
                     }
                     .pickerStyle(.segmented)

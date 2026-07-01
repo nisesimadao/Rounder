@@ -158,6 +158,7 @@ struct EditPresetTabView: View {
 
                         Picker("corner_shape", selection: $tempCutoutStyle) {
                             Text("rounded_corner").tag(CornerCutoutStyle.rounded)
+                            Text("squircle_corner").tag(CornerCutoutStyle.squircle)
                             Text("polygon_cutout").tag(CornerCutoutStyle.polygon)
                         }
                         .pickerStyle(.segmented)
