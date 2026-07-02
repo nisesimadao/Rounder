@@ -145,12 +145,11 @@ class CornerOverlayView: NSView {
         if enabled {
             wantsLayer = true
             let offset = CornerOverlayConstants.contentSizeOffset
-            // レイヤーを contentBounds に合わせて masksToBounds でクリップする。
-            // こうしないと、くり抜き円の contentBounds 外にはみ出た部分まで塗られてしまう。
+            // くり抜きは境界内に収まるパイ型パスで構成するため、masksToBounds は不要。
+            // （ハードクリップは外周のアンチエイリアスを削り、画面のふちで1px欠けて見える原因になる）
             let localBounds = NSRect(x: 0, y: 0, width: contentSize, height: contentSize)
             let shape = CAShapeLayer()
             shape.frame = NSRect(x: offset, y: offset, width: contentSize, height: contentSize)
-            shape.masksToBounds = true
             shape.path = gamingFillPath(in: localBounds)
             shape.fillRule = .evenOdd
 
@@ -171,19 +170,38 @@ class CornerOverlayView: NSView {
         needsDisplay = true
     }
 
-    /// 塗りつぶし可能な「切り欠き形状」パス（角丸/スクイークルは矩形−くり抜きの even-odd）
+    /// 塗りつぶし可能な「切り欠き形状」パス（角丸/スクイークルは矩形−くり抜きの even-odd）。
+    /// くり抜き側は bounds の外にはみ出ない象限パイ型で構成する（クリップ不要にするため）。
     private func gamingFillPath(in bounds: NSRect) -> CGPath {
         let path = CGMutablePath()
         switch cutoutStyle {
         case .rounded:
             path.addRect(bounds)
-            path.addPath(createRoundedCutoutPath(in: bounds, cornerType: cornerType))
+            path.addPath(createRoundedQuadrantPath(in: bounds, cornerType: cornerType))
         case .squircle:
             path.addRect(bounds)
             path.addPath(createSquircleCutoutPath(in: bounds, cornerType: cornerType))
         case .polygon:
             path.addPath(createPolygonMaskPath(in: bounds, cornerType: cornerType))
         }
+        return path
+    }
+
+    /// 角丸くり抜きの象限パイ版。円全体ではなく bounds 内の 1/4 象限のみを閉路にする。
+    private func createRoundedQuadrantPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
+        let r = radius
+        let center: CGPoint
+        let startAngle: CGFloat
+        switch cornerType {
+        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY); startAngle = .pi
+        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY); startAngle = .pi * 1.5
+        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY); startAngle = .pi * 0.5
+        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY); startAngle = 0
+        }
+        let path = CGMutablePath()
+        path.move(to: center)
+        path.addArc(center: center, radius: r, startAngle: startAngle, endAngle: startAngle + .pi * 0.5, clockwise: false)
+        path.closeSubpath()
         return path
     }
 
@@ -238,27 +256,30 @@ class CornerOverlayView: NSView {
         }
     }
 
-    /// スーパー楕円（Squircle）の切り欠きパス。内側の角を中心に、iOS風の連続的な曲率で
-    /// 角丸よりも角に沿った丸みを描く。
+    /// スーパー楕円（Squircle）の切り欠きパス。内側の角を中心に、iOS風の連続的な曲率で描く。
+    /// 曲線はウィンドウ枠の両端（画面のふち上）でちょうど厚み0になるよう、枠いっぱいの
+    /// 到達幅で象限パイ型に構成する（端のリップ・内側への突き出しが構造的に出ない）。
+    /// ウィンドウ自体は radius より辺方向に長く取ってあり（applyOverlayConfiguration 側）、
+    /// 対角の深さが角丸とほぼ揃う。
     private func createSquircleCutoutPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
-        let r = radius
+        let n = 4.0  // スーパー楕円の指数（大きいほど角ばる。4が古典的なSquircle）
+        let sx: CGFloat, sy: CGFloat  // 中心から画面の角へ向かう方向
         let center: CGPoint
         switch cornerType {
-        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY)
-        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY)
-        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY)
-        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY)
+        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY); sx = -1; sy = -1
+        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY); sx =  1; sy = -1
+        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY); sx = -1; sy =  1
+        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY); sx =  1; sy =  1
         }
+        let rx = bounds.width, ry = bounds.height
         let path = CGMutablePath()
-        let n = 5.0  // スーパー楕円の指数（大きいほど角ばる。5前後がSquircleらしい）
+        path.move(to: center)
         let steps = 72
         for i in 0...steps {
-            let theta = Double(i) / Double(steps) * 2.0 * .pi
-            let ct = cos(theta), st = sin(theta)
-            let x = Double(r) * copysign(pow(abs(ct), 2.0 / n), ct)
-            let y = Double(r) * copysign(pow(abs(st), 2.0 / n), st)
-            let pt = CGPoint(x: center.x + CGFloat(x), y: center.y + CGFloat(y))
-            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
+            let theta = Double(i) / Double(steps) * .pi / 2.0
+            let x = Double(rx) * pow(cos(theta), 2.0 / n)
+            let y = Double(ry) * pow(sin(theta), 2.0 / n)
+            path.addLine(to: CGPoint(x: center.x + sx * CGFloat(x), y: center.y + sy * CGFloat(y)))
         }
         path.closeSubpath()
         return path
