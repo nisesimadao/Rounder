@@ -133,6 +133,16 @@ struct RounderApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    /// SwiftUI の @NSApplicationDelegateAdaptor 環境では NSApp.delegate が
+    /// 転送用ラッパーになり `NSApplication.shared.delegate as? AppDelegate` が nil になる。
+    /// そのため確実に参照できる共有インスタンスを保持する。
+    static weak var shared: AppDelegate?
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
     var overlayWindows: [CornerOverlayWindow] = []
     /// ゲーミングモードのふち（側面）グロー用ウィンドウ
     var edgeWindows: [EdgeOverlayWindow] = []
@@ -273,7 +283,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         closeOverlayWindows()
 
         guard configuration.isEnabled else { return }
-        
+
         // すべてのスクリーンを取得
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }

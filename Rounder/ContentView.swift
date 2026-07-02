@@ -379,9 +379,7 @@ struct AdvancedSettingsView: View {
         saveDisplaySettings()
 
         // 即時適用：保存済みの読み戻しではなく、現在の画面状態をそのまま反映する
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            appDelegate.applyOverlayConfiguration(currentOverlayConfiguration())
-        }
+        AppDelegate.shared?.applyOverlayConfiguration(currentOverlayConfiguration())
 
         hasUnsavedChanges = false
     }
@@ -405,9 +403,7 @@ struct AdvancedSettingsView: View {
     
     private func closeSettings() {
         // 設定ウィンドウを閉じるときはDockから非表示に戻す
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            appDelegate.hideSettings()
-        }
+        AppDelegate.shared?.hideSettings()
     }
 
     private func loadSavedColor() {

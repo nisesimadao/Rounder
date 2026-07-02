@@ -206,9 +206,7 @@ class PresetManager: ObservableObject {
         UserDefaults.standard.set(preset.cornerCutoutStyle.rawValue, forKey: UserDefaultsKeys.cornerCutoutStyle)
         
         // AppDelegateに通知して設定を反映
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            appDelegate.recreateOverlayWindows()
-        }
+        AppDelegate.shared?.recreateOverlayWindows()
     }
     
     // 現在の設定からプリセットを作成
