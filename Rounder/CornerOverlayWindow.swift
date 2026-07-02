@@ -96,8 +96,9 @@ class CornerOverlayWindow: NSWindow {
         
         let contentView = CornerOverlayView(radius: radius, color: color, cutoutStyle: cutoutStyle, contentSize: size, cornerType: cornerType)
         self.contentView = contentView
-        
-        orderFront(nil)
+
+        // アプリが非アクティブ（常時）でも確実に前面へ出す
+        orderFrontRegardless()
     }
     
     func setGamingMode(_ enabled: Bool, speed: Double, baseHue: Double = 0) {
