@@ -121,7 +121,7 @@ struct OverlayConfiguration {
 
 extension UserDefaults {
     func bool(forKey key: String, defaultValue: Bool) -> Bool {
-        object(forKey: key) as? Bool ?? defaultValue
+        object(forKey: key) == nil ? defaultValue : bool(forKey: key)
     }
 }
 
@@ -150,6 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
     var glowWindows: [GamingGlowWindow] = []
+    private var overlayGeneration = 0
     var settingsWindow: NSWindow?
     /// 初回起動セットアップ用ウィンドウ。settingsWindow とは別に保持しないと、
     /// 直後の setupSettingsWindow() で参照が上書きされ、閉じたときの処理ができなくなる。
@@ -165,7 +166,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if runningApps.count > RounderAppConstants.maxInstances {
             // 既存のインスタンスを前面に持ってくる
             if let oldestApp = runningApps.first {
-                oldestApp.activate(options: [.activateIgnoringOtherApps])
+                oldestApp.activate()
             }
             
             // このインスタンスを終了
@@ -399,8 +400,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // ウィンドウがどの Space にもアタッチされず、存在するのに表示されない状態になることがある。
         // 単なる orderFrontRegardless の再実行では復帰しないため、ランループ一巡後に
         // orderOut→orderFrontRegardless のサイクルで Space への再アタッチを強制する。
+        let generation = invalidatePendingOverlayPresentation()
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+            guard let self, generation == self.overlayGeneration else { return }
             let windows = self.overlayWindows + self.glowWindows as [NSWindow]
             for window in windows {
                 window.orderOut(nil)
@@ -415,7 +417,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         createOverlayWindows()
     }
 
+    @discardableResult
+    private func invalidatePendingOverlayPresentation() -> Int {
+        overlayGeneration &+= 1
+        return overlayGeneration
+    }
+
     private func closeOverlayWindows() {
+        invalidatePendingOverlayPresentation()
+
         for window in overlayWindows {
             window.prepareForClose()
             window.orderOut(nil)

@@ -23,6 +23,25 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Resolve app version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(
+              xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release -showBuildSettings |
+              awk -F '= ' '/MARKETING_VERSION/ { print $2; exit }'
+            )"
+          fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Failed to resolve MARKETING_VERSION"; exit 1
+          fi
+
+          echo "MARKETING_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "CURRENT_PROJECT_VERSION=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "Building Rounder $VERSION (${GITHUB_RUN_NUMBER})"
+
       - name: Build (unsigned)
         run: |
           set -o pipefail
@@ -35,7 +54,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             clean build
+
+      - name: Validate app version
+        run: |
+          APP="build/Build/Products/Release/Rounder.app"
+          ACTUAL_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          ACTUAL_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
+
+          echo "Built Rounder $ACTUAL_VERSION ($ACTUAL_BUILD)"
+
+          if [[ "$ACTUAL_VERSION" != "$MARKETING_VERSION" ]]; then
+            echo "::error::Expected version $MARKETING_VERSION, got $ACTUAL_VERSION"; exit 1
+          fi
 
       - name: Package
         run: |
