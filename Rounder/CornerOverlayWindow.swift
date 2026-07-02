@@ -23,8 +23,9 @@ struct CornerOverlayConstants {
     static let bloomSaturation = 1.0
     /// ブルームエフェクトの明度
     static let bloomBrightness = 1.0
-    /// コンテンツサイズのオフセット
-    static let contentSizeOffset: CGFloat = 50
+    /// コンテンツサイズのオフセット（ウィンドウ＝コンテンツ同サイズのため 0。
+    /// 旧実装のシャドウ用余白の名残で、参照箇所の互換のために残している）
+    static let contentSizeOffset: CGFloat = 0
     /// ゲーミングモードの更新間隔（秒）
     static let gamingUpdateInterval: TimeInterval = 0.016
     /// スレッドのスリープ間隔（秒）
@@ -65,15 +66,10 @@ class CornerOverlayWindow: NSWindow {
         self.cutoutStyle = cutoutStyle
         self.cornerType = cornerType
 
-        // スーパーゲーミングモードのシャドウが見切れないようにウィンドウサイズを拡張
-        let extendedSize = size + 100 // シャドウ用の余白を追加
-        let adjustedOrigin = CGPoint(
-            x: corner.x - 50,
-            y: corner.y - 50
-        )
-        
+        // ウィンドウは切り欠きコンテンツと同サイズ（描画はすべて境界内に収まるため余白は不要。
+        // 余白があるとその分レイヤーバッキングと合成面積を無駄に消費する）
         super.init(
-            contentRect: NSRect(origin: adjustedOrigin, size: CGSize(width: extendedSize, height: extendedSize)),
+            contentRect: NSRect(origin: corner, size: CGSize(width: size, height: size)),
             styleMask: .borderless,
             backing: .buffered,
             defer: false

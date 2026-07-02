@@ -192,8 +192,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             setupMenuBar()
         }
         
-        setupSettingsWindow()
-
         ScreenMonitor.shared.startMonitoring(appDelegate: self)
 
         // フルスクリーンSpaceへの切替時、先に作られたオーバーレイが前面から外れる
@@ -353,13 +351,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
             // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）
             if configuration.superGamingMode {
-                let glow = GamingGlowWindow(
-                    screenFrame: frame,
-                    speed: configuration.gamingSpeed,
-                    glowIntensity: configuration.glowIntensity,
-                    bloomWidth: configuration.bloomWidth
-                )
-                glowWindows.append(glow)
+                for edge in ScreenEdge.allCases {
+                    let glow = GamingGlowWindow(
+                        screenFrame: frame,
+                        edge: edge,
+                        speed: configuration.gamingSpeed,
+                        glowIntensity: configuration.glowIntensity,
+                        bloomWidth: configuration.bloomWidth
+                    )
+                    glowWindows.append(glow)
+                }
+            }
+        }
+
+        // アプリがアクティブ（設定ウィンドウが開いている等）な状態で close→再作成すると、
+        // ウィンドウがどの Space にもアタッチされず、存在するのに表示されない状態になることがある。
+        // 単なる orderFrontRegardless の再実行では復帰しないため、ランループ一巡後に
+        // orderOut→orderFrontRegardless のサイクルで Space への再アタッチを強制する。
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            for window in self.overlayWindows + self.glowWindows as [NSWindow] {
+                window.orderOut(nil)
+                window.orderFrontRegardless()
             }
         }
     }
@@ -388,6 +401,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menuBarController.setupMenuBar(appDelegate: self)
     }
     
+    /// 設定ウィンドウを生成する。SwiftUI のビュー階層はメモリを消費するため、
+    /// 起動時ではなく最初に表示されるときに遅延生成する（showSettings から呼ばれる）。
     func setupSettingsWindow() {
         let settingsView = AdvancedSettingsView()
         let hostingController = NSHostingController(rootView: settingsView)
@@ -401,6 +416,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         window.title = String(localized: "window_title_settings")
         window.contentViewController = hostingController
+        // contentViewController を設定すると SwiftUI のフィットサイズ（最小寸法）に
+        // 縮んでしまうため、意図した初期サイズへ明示的に戻してから中央配置する。
+        window.setContentSize(RounderAppConstants.settingsWindowSize)
         window.center()
         window.level = .floating
         window.isReleasedWhenClosed = false
@@ -423,6 +441,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func showSettings() {
+        // 初回表示時に遅延生成（起動時のメモリ・時間を節約）。
+        // 注意：必ずアクティベーションポリシー切替（.accessory→.regular）の前に生成する。
+        // 切替の最中にウィンドウを作ると Space に紐付かず、isVisible=true なのに
+        // 画面に表示されない状態になる（AppKit の罠）。
+        if settingsWindow == nil {
+            setupSettingsWindow()
+        }
+
         // 設定ウィンドウを開くときはDockに表示
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
