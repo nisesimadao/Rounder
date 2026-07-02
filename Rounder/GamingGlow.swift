@@ -2,39 +2,17 @@
 //  GamingGlow.swift
 //  Rounder
 //
-//  スーパーゲーミングモードの「ふち発光」。スクリーン全体を覆う1枚の透明ウィンドウに
-//  各辺の CAGradientLayer を置き、色を Core Animation でレインボーに巡回させる。
-//  GPU 合成なので draw() もタイマーも使わず、以前のCPUシャドウ描画のような重さは出ない。
+//  スーパーゲーミングモードの「ふち発光」。画面の各辺に細いバンド状の透明ウィンドウを
+//  1本ずつ置き（1スクリーンにつき4枚）、CAGradientLayer の色を Core Animation で
+//  レインボーに巡回させる。GPU 合成なので draw() もタイマーも使わず軽量。
+//  全画面を覆う1枚方式に比べ、WindowServer の合成面積とレイヤーバッキングを
+//  1桁小さく抑えられる（発光の見た目は同一）。
 //  枠線（バー）は描かず、内側へにじむ Bloom（グラデーション）のみ。
 //
 
 import Cocoa
 
 enum ScreenEdge: Int, CaseIterable { case top, bottom, left, right }
-
-/// スクリーン全体を覆うゲーミング発光ウィンドウ（1スクリーンにつき1枚）。
-final class GamingGlowWindow: NSWindow {
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
-
-    init(screenFrame: NSRect, speed: Double, glowIntensity: Double, bloomWidth: Double) {
-        super.init(contentRect: screenFrame, styleMask: .borderless, backing: .buffered, defer: false)
-        level = .screenSaver
-        backgroundColor = .clear
-        isOpaque = false
-        hasShadow = false
-        ignoresMouseEvents = true
-        isReleasedWhenClosed = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        contentView = GamingGlowView(size: screenFrame.size, speed: speed, glowIntensity: glowIntensity, bloomWidth: bloomWidth)
-        // アプリが非アクティブ（常時）でも確実に前面へ出す
-        orderFrontRegardless()
-    }
-
-    func prepareForClose() {
-        (contentView as? GamingGlowView)?.stop()
-    }
-}
 
 /// ゲーミング発光の色巡回を、角（CAShapeLayer）とふち（CAGradientLayer）で完全に同期させるための共有時刻。
 /// 全レイヤーが同じ基準時刻から begin することで、角とBloomの色が一致する。
@@ -48,44 +26,79 @@ enum GamingGlowClock {
     static func color(at index: Int) -> NSColor {
         NSColor(hue: hue(at: index), saturation: 1.0, brightness: 1.0, alpha: 1.0)
     }
+
+    /// ふちから内側へ届く光の幅。プロファイル基準（24px）× 広さ設定。
+    static func reach(bloomWidth: Double) -> CGFloat {
+        max(5, 24 * CGFloat(bloomWidth))
+    }
 }
 
-final class GamingGlowView: NSView {
+/// 画面の1辺ぶんのゲーミング発光バンドウィンドウ（1スクリーンにつき4枚）。
+final class GamingGlowWindow: NSWindow {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+
+    init(screenFrame: NSRect, edge: ScreenEdge, speed: Double, glowIntensity: Double, bloomWidth: Double) {
+        let reach = GamingGlowClock.reach(bloomWidth: bloomWidth)
+        let bandFrame: NSRect
+        switch edge {
+        case .top:    bandFrame = NSRect(x: screenFrame.minX, y: screenFrame.maxY - reach, width: screenFrame.width, height: reach)
+        case .bottom: bandFrame = NSRect(x: screenFrame.minX, y: screenFrame.minY, width: screenFrame.width, height: reach)
+        case .left:   bandFrame = NSRect(x: screenFrame.minX, y: screenFrame.minY, width: reach, height: screenFrame.height)
+        case .right:  bandFrame = NSRect(x: screenFrame.maxX - reach, y: screenFrame.minY, width: reach, height: screenFrame.height)
+        }
+        super.init(contentRect: bandFrame, styleMask: .borderless, backing: .buffered, defer: false)
+        level = .screenSaver
+        backgroundColor = .clear
+        isOpaque = false
+        hasShadow = false
+        ignoresMouseEvents = true
+        isReleasedWhenClosed = false
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        contentView = GamingGlowEdgeView(size: bandFrame.size, edge: edge, speed: speed, glowIntensity: glowIntensity)
+        // アプリが非アクティブ（常時）でも確実に前面へ出す
+        orderFrontRegardless()
+    }
+
+    func prepareForClose() {
+        (contentView as? GamingGlowEdgeView)?.stop()
+    }
+}
+
+/// 1辺ぶんの発光バンド。辺に沿って hue が並び、時間で回転して虹がふちを流れる。
+final class GamingGlowEdgeView: NSView {
+    private let edge: ScreenEdge
     private let speed: Double
     private let glowIntensity: Double
-    private let bloomWidth: Double
-    /// ふちから内側へ届く光の幅（bloomWidth で調整）
-    private let reach: CGFloat
-    private var edgeLayers: [CAGradientLayer] = []
+    private var hueLayer: CAGradientLayer?
 
-    init(size: CGSize, speed: Double, glowIntensity: Double, bloomWidth: Double) {
+    init(size: CGSize, edge: ScreenEdge, speed: Double, glowIntensity: Double) {
+        self.edge = edge
         self.speed = max(0.1, speed)
         self.glowIntensity = glowIntensity
-        self.bloomWidth = bloomWidth
-        // 幅は bloomWidth で独立に調整。プロファイル基準（24px）× 幅。
-        self.reach = max(5, 24 * CGFloat(bloomWidth))
         super.init(frame: CGRect(origin: .zero, size: size))
         wantsLayer = true
-        layer?.masksToBounds = false
-        setupLayers(size: size)
+        setupLayer(size: size)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var isFlipped: Bool { false }
 
-    private func setupLayers(size: CGSize) {
-        let w = size.width, h = size.height
-        // 各辺: バンド矩形 / 色(hue)方向 start→end / 内側フェードのマスク方向 start→end / 周回上の基準hue
-        // hue は「辺に沿って」並べ、時間で回転させる（＝虹がふちを順番に流れる）。
-        let edges: [(band: CGRect, hueStart: CGPoint, hueEnd: CGPoint, maskStart: CGPoint, maskEnd: CGPoint, base: Double)] = [
-            (CGRect(x: 0, y: h - reach, width: w, height: reach), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), 0.0),  // top: 左→右
-            (CGRect(x: w - reach, y: 0, width: reach, height: h), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), 0.25), // right: 上→下
-            (CGRect(x: 0, y: 0, width: w, height: reach), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), 0.5),          // bottom: 右→左
-            (CGRect(x: 0, y: 0, width: reach, height: h), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), 0.75),         // left: 下→上
-        ]
+    /// 辺ごとの hue 方向（辺に沿って周回順）・内側フェード方向・周回上の基準 hue
+    private var spec: (hueStart: CGPoint, hueEnd: CGPoint, maskStart: CGPoint, maskEnd: CGPoint, base: Double) {
+        switch edge {
+        case .top:    return (CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), 0.0)   // 左→右
+        case .right:  return (CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), 0.25)  // 上→下
+        case .bottom: return (CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), 0.5)   // 右→左
+        case .left:   return (CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), 0.75)  // 下→上
+        }
+    }
 
+    private func setupLayer(size: CGSize) {
+        let spec = self.spec
         let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
+
         // 画面の縁からの距離（reach=24px基準）と不透明度のプロファイル。
         // 一番はじ(≤1px)は必ず不透明、そこから 2px=50%,3px=30%,4px=25%… と急激に減衰。
         // 本体（1pxより内側）は「濃さ(glowIntensity)」でスケールする。
@@ -94,43 +107,40 @@ final class GamingGlowView: NSView {
             (0, 1.0), (1, 1.0), (2, 0.5), (3, 0.3), (4, 0.25), (6, 0.16), (9, 0.09), (14, 0.04), (24, 0.0),
         ]
         let maxPx = 24.0
-        let maskLocations = profile.map { NSNumber(value: $0.px / maxPx) }
-        let maskColors = profile.map { p -> CGColor in
+
+        // 虹レイヤー：辺に沿って hue が並ぶ。colors を回転させて流す。
+        let hueLayer = CAGradientLayer()
+        hueLayer.frame = CGRect(origin: .zero, size: size)
+        hueLayer.type = .axial
+        hueLayer.startPoint = spec.hueStart
+        hueLayer.endPoint = spec.hueEnd
+        hueLayer.colors = hueColors(base: spec.base, t: 0)
+
+        // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える（急減衰プロファイル）。
+        let mask = CAGradientLayer()
+        mask.frame = CGRect(origin: .zero, size: size)
+        mask.type = .axial
+        mask.startPoint = spec.maskStart
+        mask.endPoint = spec.maskEnd
+        mask.locations = profile.map { NSNumber(value: $0.px / maxPx) }
+        mask.colors = profile.map { p -> CGColor in
             let a = p.px <= 1.0 ? 1.0 : p.a * opacity
             return NSColor.white.withAlphaComponent(a).cgColor
         }
+        hueLayer.mask = mask
 
-        for edge in edges {
-            // 虹レイヤー：辺に沿って hue が並ぶ。colors を回転させて流す。
-            let hueLayer = CAGradientLayer()
-            hueLayer.frame = edge.band
-            hueLayer.type = .axial
-            hueLayer.startPoint = edge.hueStart
-            hueLayer.endPoint = edge.hueEnd
-            hueLayer.colors = hueColors(base: edge.base, t: 0)
+        layer?.addSublayer(hueLayer)
+        self.hueLayer = hueLayer
 
-            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える（急減衰プロファイル）。
-            let mask = CAGradientLayer()
-            mask.frame = CGRect(origin: .zero, size: edge.band.size)
-            mask.type = .axial
-            mask.startPoint = edge.maskStart
-            mask.endPoint = edge.maskEnd
-            mask.locations = maskLocations
-            mask.colors = maskColors
-            hueLayer.mask = mask
-
-            layer?.addSublayer(hueLayer)
-            edgeLayers.append(hueLayer)
-
-            let anim = CAKeyframeAnimation(keyPath: "colors")
-            anim.values = (0...GamingGlowClock.steps).map { hueColors(base: edge.base, t: Double($0) / Double(GamingGlowClock.steps)) }
-            anim.duration = duration
-            anim.repeatCount = .infinity
-            anim.calculationMode = .linear
-            anim.isRemovedOnCompletion = false
-            anim.beginTime = hueLayer.convertTime(GamingGlowClock.anchor, from: nil)
-            hueLayer.add(anim, forKey: "rainbow")
-        }
+        let anim = CAKeyframeAnimation(keyPath: "colors")
+        anim.values = (0...GamingGlowClock.steps).map { hueColors(base: spec.base, t: Double($0) / Double(GamingGlowClock.steps)) }
+        anim.duration = duration
+        anim.repeatCount = .infinity
+        anim.calculationMode = .linear
+        anim.isRemovedOnCompletion = false
+        // 全辺・全角を共有時刻から begin して色を完全同期
+        anim.beginTime = hueLayer.convertTime(GamingGlowClock.anchor, from: nil)
+        hueLayer.add(anim, forKey: "rainbow")
     }
 
     /// 1つの辺に沿った hue 配列（周回上の base から 0.25周ぶん）。t で全体を回転させる。
@@ -143,7 +153,7 @@ final class GamingGlowView: NSView {
     }
 
     func stop() {
-        edgeLayers.forEach { $0.removeAllAnimations() }
+        hueLayer?.removeAllAnimations()
     }
 
     deinit {
