@@ -126,7 +126,7 @@ struct FirstLaunchSetupView: View {
 
     private func completeSetup() {
         // 再起動せずに、そのままメニューバー常駐モードへ移行する
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+        if let appDelegate = AppDelegate.shared {
             appDelegate.completeFirstLaunchSetup()
         } else {
             // フォールバック：フラグだけ立てて終了
