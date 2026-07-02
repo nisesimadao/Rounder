@@ -292,7 +292,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
         
-        let cornerSize = CGFloat(configuration.radius) + RounderAppConstants.cornerSizePadding
+        // Squircle は円より角に沿って膨らむため、iOS 実機と同様に辺方向へ長く伸ばして描く。
+        // ウィンドウを radius の 1.8 倍にすると、対角の深さが角丸とほぼ揃う（0.405r ≒ 0.414r）。
+        let styleFactor: CGFloat = configuration.cutoutStyle == .squircle ? 1.8 : 1.0
+        let cornerSize = CGFloat(configuration.radius) * styleFactor + RounderAppConstants.cornerSizePadding
         
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
