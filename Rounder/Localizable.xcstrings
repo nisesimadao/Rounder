@@ -855,6 +855,41 @@
         }
       }
     },
+    "pane_general" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "General" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "一般" } }
+      }
+    },
+    "pane_appearance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "外観" } }
+      }
+    },
+    "pane_corners" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Corners" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "角の表示" } }
+      }
+    },
+    "pane_displays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Displays" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ディスプレイ" } }
+      }
+    },
+    "pane_gaming" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gaming" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ゲーミング" } }
+      }
+    },
     "launch_at_login" : {
       "extractionState" : "manual",
       "localizations" : {

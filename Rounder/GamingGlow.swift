@@ -2,44 +2,23 @@
 //  GamingGlow.swift
 //  Rounder
 //
-//  スーパーゲーミングモードで、画面の四隅だけでなく「ふち（側面）」全体を光らせる。
-//  各辺に薄いオーバーレイウィンドウを置き、画面の外側にライトがあるように内側へブルームさせる。
+//  スーパーゲーミングモードの「ふち発光」。スクリーン全体を覆う1枚の透明ウィンドウに
+//  各辺の CAGradientLayer を置き、色を Core Animation でレインボーに巡回させる。
+//  GPU 合成なので draw() もタイマーも使わず、以前のCPUシャドウ描画のような重さは出ない。
+//  枠線（バー）は描かず、内側へにじむ Bloom（グラデーション）のみ。
 //
 
 import Cocoa
 
-enum ScreenEdge {
-    case top, bottom, left, right
-}
+enum ScreenEdge: Int, CaseIterable { case top, bottom, left, right }
 
-/// 画面の1辺に沿って光るオーバーレイウィンドウ（ゲーミングモード専用）。
-final class EdgeOverlayWindow: NSWindow {
-    /// 画面内側へ光が届く深さ（pt）
-    static let glowDepth: CGFloat = 160
-    /// 画面外側の余白（シャドウ源を置く領域）
-    static let overhang: CGFloat = 60
-
+/// スクリーン全体を覆うゲーミング発光ウィンドウ（1スクリーンにつき1枚）。
+final class GamingGlowWindow: NSWindow {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    init(edge: ScreenEdge, screenFrame: NSRect, speed: Double, glowIntensity: Double) {
-        let d = EdgeOverlayWindow.glowDepth
-        let o = EdgeOverlayWindow.overhang
-
-        let frame: NSRect
-        switch edge {
-        case .top:
-            frame = NSRect(x: screenFrame.minX, y: screenFrame.maxY - d, width: screenFrame.width, height: d + o)
-        case .bottom:
-            frame = NSRect(x: screenFrame.minX, y: screenFrame.minY - o, width: screenFrame.width, height: d + o)
-        case .left:
-            frame = NSRect(x: screenFrame.minX - o, y: screenFrame.minY, width: d + o, height: screenFrame.height)
-        case .right:
-            frame = NSRect(x: screenFrame.maxX - d, y: screenFrame.minY, width: d + o, height: screenFrame.height)
-        }
-
-        super.init(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-
+    init(screenFrame: NSRect, speed: Double, glowIntensity: Double) {
+        super.init(contentRect: screenFrame, styleMask: .borderless, backing: .buffered, defer: false)
         level = .screenSaver
         backgroundColor = .clear
         isOpaque = false
@@ -47,105 +26,98 @@ final class EdgeOverlayWindow: NSWindow {
         ignoresMouseEvents = true
         isReleasedWhenClosed = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-
-        contentView = EdgeOverlayView(edge: edge, glowDepth: d, overhang: o, glowIntensity: glowIntensity, speed: speed)
+        contentView = GamingGlowView(size: screenFrame.size, speed: speed, glowIntensity: glowIntensity)
         orderFront(nil)
     }
 
     func prepareForClose() {
-        (contentView as? EdgeOverlayView)?.stopAnimation()
+        (contentView as? GamingGlowView)?.stop()
     }
 }
 
-final class EdgeOverlayView: NSView {
-    private let edge: ScreenEdge
-    private let glowDepth: CGFloat
-    private let overhang: CGFloat
-    private let glowIntensity: Double
+final class GamingGlowView: NSView {
     private let speed: Double
+    private let glowIntensity: Double
+    /// ふちから内側へ届く光の幅（intensity で広がる）
+    private let reach: CGFloat
+    private var edgeLayers: [CAGradientLayer] = []
 
-    private var glowPhase: Double = 0.0
-    private var lastColorIndex: Int = 0
-    private var timer: Timer?
-
-    /// 光源となる細いバーの太さ
-    private let barThickness: CGFloat = 4
-
-    init(edge: ScreenEdge, glowDepth: CGFloat, overhang: CGFloat, glowIntensity: Double, speed: Double) {
-        self.edge = edge
-        self.glowDepth = glowDepth
-        self.overhang = overhang
+    init(size: CGSize, speed: Double, glowIntensity: Double) {
+        self.speed = max(0.1, speed)
         self.glowIntensity = glowIntensity
-        self.speed = speed
-        super.init(frame: .zero)
-        startAnimation()
+        // ふちから内側へ届く光の幅。人工的な光っぽく、やや狭めで強く。
+        self.reach = 90 + CGFloat(glowIntensity) * 45
+        super.init(frame: CGRect(origin: .zero, size: size))
+        wantsLayer = true
+        layer?.masksToBounds = false
+        setupLayers(size: size)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func startAnimation() {
-        stopAnimation()
-        let t = Timer(timeInterval: CornerOverlayConstants.gamingUpdateInterval, repeats: true) { [weak self] _ in
-            self?.tick()
+    override var isFlipped: Bool { false }
+
+    private func setupLayers(size: CGSize) {
+        let w = size.width, h = size.height
+        // 各辺: (フレーム, グラデーションの明→暗の向き)
+        let specs: [(rect: CGRect, start: CGPoint, end: CGPoint)] = [
+            (CGRect(x: 0, y: h - reach, width: w, height: reach), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0)), // top
+            (CGRect(x: 0, y: 0, width: w, height: reach), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1)),         // bottom
+            (CGRect(x: 0, y: 0, width: reach, height: h), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5)),         // left
+            (CGRect(x: w - reach, y: 0, width: reach, height: h), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5)), // right
+        ]
+
+        let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
+        let keyframes = rainbowKeyframes()
+
+        for (index, spec) in specs.enumerated() {
+            let gradient = CAGradientLayer()
+            gradient.frame = spec.rect
+            gradient.type = .axial
+            gradient.startPoint = spec.start
+            gradient.endPoint = spec.end
+            // 明るい芯 → 素早く減衰、で「光源」っぽく
+            gradient.locations = [0.0, 0.3, 1.0]
+            gradient.colors = keyframes.first
+            layer?.addSublayer(gradient)
+            edgeLayers.append(gradient)
+
+            let animation = CAKeyframeAnimation(keyPath: "colors")
+            animation.values = keyframes
+            animation.duration = duration
+            animation.repeatCount = .infinity
+            animation.calculationMode = .linear
+            animation.isRemovedOnCompletion = false
+            // 辺ごとに位相をずらして、色がふちを流れて回るように見せる
+            animation.timeOffset = duration * Double(index) / 4.0
+            gradient.add(animation, forKey: "rainbow")
         }
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
     }
 
-    func stopAnimation() {
-        timer?.invalidate()
-        timer = nil
-        glowPhase = 0.0
-        lastColorIndex = 0
-    }
-
-    private func tick() {
-        glowPhase += CornerOverlayConstants.glowPhaseIncrement * speed
-        if glowPhase > CornerOverlayConstants.twoPi {
-            glowPhase -= CornerOverlayConstants.twoPi
+    /// レインボー1周分のグラデーション色配列（明→中→透明の3ストップ）
+    private func rainbowKeyframes() -> [[CGColor]] {
+        let steps = 60
+        let alphaEdge = min(1.0, 0.95 * glowIntensity)
+        let alphaMid = alphaEdge * 0.45
+        var values: [[CGColor]] = []
+        values.reserveCapacity(steps + 1)
+        for i in 0...steps {
+            let hue = Double(i % steps) / Double(steps)
+            let color = NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0)
+            values.append([
+                color.withAlphaComponent(alphaEdge).cgColor,
+                color.withAlphaComponent(alphaMid).cgColor,
+                color.withAlphaComponent(0.0).cgColor,
+            ])
         }
-        let idx = Int((glowPhase / CornerOverlayConstants.twoPi) * Double(CornerOverlayConstants.rainbowColorCount))
-        if idx != lastColorIndex {
-            lastColorIndex = idx
-            needsDisplay = true
-        }
+        return values
     }
 
-    /// 画面のふちに沿った、光源となる細いバーの矩形（ウィンドウローカル座標）
-    private func barRect() -> NSRect {
-        let b = bounds
-        let t = barThickness
-        switch edge {
-        case .top:    return NSRect(x: b.minX, y: glowDepth - t / 2, width: b.width, height: t)
-        case .bottom: return NSRect(x: b.minX, y: overhang - t / 2, width: b.width, height: t)
-        case .left:   return NSRect(x: overhang - t / 2, y: b.minY, width: t, height: b.height)
-        case .right:  return NSRect(x: glowDepth - t / 2, y: b.minY, width: t, height: b.height)
-        }
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-
-        let idx = min(
-            Int((glowPhase / CornerOverlayConstants.twoPi) * Double(CornerOverlayConstants.rainbowColorCount)),
-            CornerOverlayConstants.rainbowColorCount - 1
-        )
-        let color = SharedColorCache.shared.getColor(at: idx).cgColor
-        let bar = barRect()
-
-        // 角のブルームと同じ強さで、内側へ光をにじませる（2段のシャドウ）
-        ctx.setBlendMode(.normal)
-        ctx.setFillColor(color)
-        ctx.setShadow(offset: .zero, blur: 50.0 + CGFloat(glowIntensity) * 40.0, color: color)
-        ctx.fill(bar)
-        ctx.setShadow(offset: .zero, blur: 80.0 + CGFloat(glowIntensity) * 60.0, color: color)
-        ctx.fill(bar)
+    func stop() {
+        edgeLayers.forEach { $0.removeAllAnimations() }
     }
 
     deinit {
-        stopAnimation()
+        stop()
     }
 }
