@@ -14,9 +14,10 @@ struct RounderAppConstants {
     static let maxInstances = 3
     static let firstLaunchWindowSize = NSSize(width: 600, height: 500)
     static let minWindowSize = NSSize(width: 500, height: 450)
+    static let settingsMinWindowSize = NSSize(width: 700, height: 600)
     static let defaultCornerRadius: Double = 20.0
     static let cornerSizePadding: CGFloat = 0.01
-    static let settingsWindowSize = NSSize(width: 600, height: 650)
+    static let settingsWindowSize = NSSize(width: 860, height: 820)
     static let threadSleepInterval: TimeInterval = 0.001
     static let cornerRadiusMin: Double = 0
     static let cornerRadiusMax: Double = 40
@@ -144,8 +145,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     var overlayWindows: [CornerOverlayWindow] = []
-    /// ゲーミングモードのふち（側面）グロー用ウィンドウ
-    var edgeWindows: [EdgeOverlayWindow] = []
+    /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
+    var glowWindows: [GamingGlowWindow] = []
     var settingsWindow: NSWindow?
     /// 初回起動セットアップ用ウィンドウ。settingsWindow とは別に保持しないと、
     /// 直後の setupSettingsWindow() で参照が上書きされ、閉じたときの処理ができなくなる。
@@ -324,21 +325,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 )
                 overlayWindows.append(window)
                 if configuration.superGamingMode {
-                    window.setGamingMode(true, speed: configuration.gamingSpeed, glowIntensity: configuration.glowIntensity)
+                    window.setGamingMode(true, speed: configuration.gamingSpeed)
                 }
             }
 
-            // ゲーミングモードでは、四隅に加えて画面のふち（4辺）全体を光らせる
+            // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）
             if configuration.superGamingMode {
-                for edge in [ScreenEdge.top, .bottom, .left, .right] {
-                    let edgeWindow = EdgeOverlayWindow(
-                        edge: edge,
-                        screenFrame: frame,
-                        speed: configuration.gamingSpeed,
-                        glowIntensity: configuration.glowIntensity
-                    )
-                    edgeWindows.append(edgeWindow)
-                }
+                let glow = GamingGlowWindow(
+                    screenFrame: frame,
+                    speed: configuration.gamingSpeed,
+                    glowIntensity: configuration.glowIntensity
+                )
+                glowWindows.append(glow)
             }
         }
     }
@@ -355,12 +353,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         overlayWindows.removeAll()
 
-        for window in edgeWindows {
+        for window in glowWindows {
             window.prepareForClose()
             window.orderOut(nil)
             window.close()
         }
-        edgeWindows.removeAll()
+        glowWindows.removeAll()
     }
     
     func setupMenuBar() {
@@ -383,12 +381,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.center()
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.minSize = RounderAppConstants.minWindowSize
-        
-        // モダンなウィンドウ外観に設定
-        if #available(macOS 11.0, *) {
-            window.titlebarSeparatorStyle = .none
-        }
+        window.minSize = RounderAppConstants.settingsMinWindowSize
+
+        // 半透明（vibrancy）が背後まで抜けるようにウィンドウを透過させ、
+        // タイトルバーもコンテンツと一体化させたモダンな外観にする。
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.styleMask.insert(.fullSizeContentView)
+        window.titlebarSeparatorStyle = .none
         
         // ウィンドウが閉じられたときにDockから非表示にする
         window.delegate = self

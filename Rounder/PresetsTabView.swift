@@ -81,9 +81,8 @@ struct PresetsTabView: View {
                 }
             }
             
-            // プリセットリスト
-            ScrollView {
-                LazyVStack(spacing: 12) {
+            // プリセットリスト（外側の連続スクロールに載るため、ここでは自前でスクロールしない）
+            VStack(spacing: 12) {
                     ForEach(presetManager.presets) { preset in
                         PresetRowView(
                             preset: preset,
@@ -113,10 +112,7 @@ struct PresetsTabView: View {
                             }
                         )
                     }
-                }
             }
-            
-            Spacer()
         }
         .sheet(isPresented: $showingAddPresetSheet) {
             AddPresetSheet(
