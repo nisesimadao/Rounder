@@ -17,7 +17,7 @@ final class GamingGlowWindow: NSWindow {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    init(screenFrame: NSRect, speed: Double, glowIntensity: Double) {
+    init(screenFrame: NSRect, speed: Double, glowIntensity: Double, bloomWidth: Double) {
         super.init(contentRect: screenFrame, styleMask: .borderless, backing: .buffered, defer: false)
         level = .screenSaver
         backgroundColor = .clear
@@ -26,7 +26,7 @@ final class GamingGlowWindow: NSWindow {
         ignoresMouseEvents = true
         isReleasedWhenClosed = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        contentView = GamingGlowView(size: screenFrame.size, speed: speed, glowIntensity: glowIntensity)
+        contentView = GamingGlowView(size: screenFrame.size, speed: speed, glowIntensity: glowIntensity, bloomWidth: bloomWidth)
         orderFront(nil)
     }
 
@@ -35,18 +35,34 @@ final class GamingGlowWindow: NSWindow {
     }
 }
 
+/// ゲーミング発光の色巡回を、角（CAShapeLayer）とふち（CAGradientLayer）で完全に同期させるための共有時刻。
+/// 全レイヤーが同じ基準時刻から begin することで、角とBloomの色が一致する。
+enum GamingGlowClock {
+    /// 全レイヤー共通の基準時刻（初回アクセス時に一度だけ確定）。
+    static let anchor: CFTimeInterval = CACurrentMediaTime()
+
+    /// レインボー1周分の色（虹の hue を N 分割）。角・ふちで同じ進行を使う。
+    static let steps = 120
+    static func hue(at index: Int) -> Double { Double(index % steps) / Double(steps) }
+    static func color(at index: Int) -> NSColor {
+        NSColor(hue: hue(at: index), saturation: 1.0, brightness: 1.0, alpha: 1.0)
+    }
+}
+
 final class GamingGlowView: NSView {
     private let speed: Double
     private let glowIntensity: Double
-    /// ふちから内側へ届く光の幅（intensity で広がる）
+    private let bloomWidth: Double
+    /// ふちから内側へ届く光の幅（bloomWidth で調整）
     private let reach: CGFloat
     private var edgeLayers: [CAGradientLayer] = []
 
-    init(size: CGSize, speed: Double, glowIntensity: Double) {
+    init(size: CGSize, speed: Double, glowIntensity: Double, bloomWidth: Double) {
         self.speed = max(0.1, speed)
         self.glowIntensity = glowIntensity
-        // ふちから内側へ届く光の幅。人工的な光っぽく、やや狭めで強く。
-        self.reach = 90 + CGFloat(glowIntensity) * 45
+        self.bloomWidth = bloomWidth
+        // 幅は bloomWidth で独立に調整（広さ）
+        self.reach = 40 + CGFloat(bloomWidth) * 80
         super.init(frame: CGRect(origin: .zero, size: size))
         wantsLayer = true
         layer?.masksToBounds = false
@@ -70,14 +86,14 @@ final class GamingGlowView: NSView {
         let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
         let keyframes = rainbowKeyframes()
 
-        for (index, spec) in specs.enumerated() {
+        for spec in specs {
             let gradient = CAGradientLayer()
             gradient.frame = spec.rect
             gradient.type = .axial
             gradient.startPoint = spec.start
             gradient.endPoint = spec.end
             // 明るい芯 → 素早く減衰、で「光源」っぽく
-            gradient.locations = [0.0, 0.3, 1.0]
+            gradient.locations = [0.0, 0.32, 1.0]
             gradient.colors = keyframes.first
             layer?.addSublayer(gradient)
             edgeLayers.append(gradient)
@@ -88,22 +104,22 @@ final class GamingGlowView: NSView {
             animation.repeatCount = .infinity
             animation.calculationMode = .linear
             animation.isRemovedOnCompletion = false
-            // 辺ごとに位相をずらして、色がふちを流れて回るように見せる
-            animation.timeOffset = duration * Double(index) / 4.0
+            // 全辺・全角を共有時刻から begin して色を完全同期（位相ずらしはしない）
+            animation.beginTime = gradient.convertTime(GamingGlowClock.anchor, from: nil)
             gradient.add(animation, forKey: "rainbow")
         }
     }
 
     /// レインボー1周分のグラデーション色配列（明→中→透明の3ストップ）
     private func rainbowKeyframes() -> [[CGColor]] {
-        let steps = 60
-        let alphaEdge = min(1.0, 0.95 * glowIntensity)
+        let steps = GamingGlowClock.steps
+        // 濃さは glowIntensity で独立に調整（薄さ）
+        let alphaEdge = min(1.0, 0.9 * glowIntensity)
         let alphaMid = alphaEdge * 0.45
         var values: [[CGColor]] = []
         values.reserveCapacity(steps + 1)
         for i in 0...steps {
-            let hue = Double(i % steps) / Double(steps)
-            let color = NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0)
+            let color = GamingGlowClock.color(at: i)
             values.append([
                 color.withAlphaComponent(alphaEdge).cgColor,
                 color.withAlphaComponent(alphaMid).cgColor,

@@ -16,6 +16,7 @@ struct PresetManagerConstants {
     static let defaultCornerRadius: Double = 20.0
     static let defaultGamingSpeed: Double = 1.0
     static let defaultGlowIntensity: Double = 1.0
+    static let defaultBloomWidth: Double = 1.0
     static let defaultCornerCutoutStyle: CornerCutoutStyle = .rounded
     static let presetsKey = "cornerPresets"
 }
