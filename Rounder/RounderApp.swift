@@ -193,8 +193,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
         setupSettingsWindow()
-        
+
         ScreenMonitor.shared.startMonitoring(appDelegate: self)
+
+        // フルスクリーンSpaceへの切替時、先に作られたオーバーレイが前面から外れる
+        // ことがあるため、Space変更を監視して常に前面へ再表示する。
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(activeSpaceDidChange),
+            name: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func activeSpaceDidChange(_ notification: Notification) {
+        for window in overlayWindows { window.orderFrontRegardless() }
+        for window in glowWindows { window.orderFrontRegardless() }
     }
     
     private func isFirstLaunch() -> Bool {

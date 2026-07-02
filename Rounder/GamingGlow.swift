@@ -27,7 +27,8 @@ final class GamingGlowWindow: NSWindow {
         isReleasedWhenClosed = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         contentView = GamingGlowView(size: screenFrame.size, speed: speed, glowIntensity: glowIntensity, bloomWidth: bloomWidth)
-        orderFront(nil)
+        // アプリが非アクティブ（常時）でも確実に前面へ出す
+        orderFrontRegardless()
     }
 
     func prepareForClose() {
