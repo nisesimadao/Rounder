@@ -204,9 +204,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         )
     }
 
+    /// Space変更後の再アタッチ処理（デバウンス用）
+    private var spaceReassertWorkItem: DispatchWorkItem?
+
     @objc private func activeSpaceDidChange(_ notification: Notification) {
-        for window in overlayWindows { window.orderFrontRegardless() }
-        for window in glowWindows { window.orderFrontRegardless() }
+        // 遷移アニメーションの最中にウィンドウ操作をすると、逆に Space から外れて
+        // 見えなくなることがある（フルスクリーン移行時など）。遷移が落ち着いてから、
+        // 実際に画面へ載っていないウィンドウだけを再アタッチする。
+        spaceReassertWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.reattachDetachedOverlays()
+        }
+        spaceReassertWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: work)
+    }
+
+    /// 現在の Space に表示されていないオーバーレイを orderOut→orderFrontRegardless で再アタッチする。
+    /// （orderFrontRegardless の再実行だけでは復帰しない：一度 orderOut して入れ直す必要がある）
+    private func reattachDetachedOverlays() {
+        let windows: [NSWindow] = overlayWindows + glowWindows
+        guard !windows.isEmpty else { return }
+
+        guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return }
+        let onscreenIDs = Set(info.compactMap { $0[kCGWindowNumber as String] as? Int })
+
+        for window in windows where !onscreenIDs.contains(window.windowNumber) {
+            window.orderOut(nil)
+            window.orderFrontRegardless()
+        }
     }
     
     private func isFirstLaunch() -> Bool {
