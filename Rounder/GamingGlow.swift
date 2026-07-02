@@ -61,8 +61,8 @@ final class GamingGlowView: NSView {
         self.speed = max(0.1, speed)
         self.glowIntensity = glowIntensity
         self.bloomWidth = bloomWidth
-        // 幅は bloomWidth で独立に調整（広さ）
-        self.reach = 40 + CGFloat(bloomWidth) * 80
+        // 幅は bloomWidth で独立に調整。プロファイル基準（24px）× 幅。
+        self.reach = max(5, 24 * CGFloat(bloomWidth))
         super.init(frame: CGRect(origin: .zero, size: size))
         wantsLayer = true
         layer?.masksToBounds = false
@@ -85,7 +85,19 @@ final class GamingGlowView: NSView {
         ]
 
         let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
-        let alphaEdge = min(1.0, 0.9 * glowIntensity)
+        // 画面の縁からの距離（reach=24px基準）と不透明度のプロファイル。
+        // 一番はじ(≤1px)は必ず不透明、そこから 2px=50%,3px=30%,4px=25%… と急激に減衰。
+        // 本体（1pxより内側）は「濃さ(glowIntensity)」でスケールする。
+        let opacity = min(1.0, glowIntensity)
+        let profile: [(px: Double, a: Double)] = [
+            (0, 1.0), (1, 1.0), (2, 0.5), (3, 0.3), (4, 0.25), (6, 0.16), (9, 0.09), (14, 0.04), (24, 0.0),
+        ]
+        let maxPx = 24.0
+        let maskLocations = profile.map { NSNumber(value: $0.px / maxPx) }
+        let maskColors = profile.map { p -> CGColor in
+            let a = p.px <= 1.0 ? 1.0 : p.a * opacity
+            return NSColor.white.withAlphaComponent(a).cgColor
+        }
 
         for edge in edges {
             // 虹レイヤー：辺に沿って hue が並ぶ。colors を回転させて流す。
@@ -96,21 +108,14 @@ final class GamingGlowView: NSView {
             hueLayer.endPoint = edge.hueEnd
             hueLayer.colors = hueColors(base: edge.base, t: 0)
 
-            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える。
-            // 一番はじ（画面の縁）から約1pxは必ず完全不透明にし、そこから内側へフェードする。
-            let solidLoc = min(0.12, 1.5 / reach)
+            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える（急減衰プロファイル）。
             let mask = CAGradientLayer()
             mask.frame = CGRect(origin: .zero, size: edge.band.size)
             mask.type = .axial
             mask.startPoint = edge.maskStart
             mask.endPoint = edge.maskEnd
-            mask.locations = [0.0, NSNumber(value: solidLoc), 0.35, 1.0]
-            mask.colors = [
-                NSColor.white.cgColor,                                  // 画面の縁：完全不透明（必ず）
-                NSColor.white.cgColor,                                  // 約1pxまで不透明
-                NSColor.white.withAlphaComponent(alphaEdge).cgColor,    // Bloom本体（濃さ）
-                NSColor.white.withAlphaComponent(0.0).cgColor,          // 内側：透明
-            ]
+            mask.locations = maskLocations
+            mask.colors = maskColors
             hueLayer.mask = mask
 
             layer?.addSublayer(hueLayer)
