@@ -86,7 +86,6 @@ final class GamingGlowView: NSView {
 
         let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
         let alphaEdge = min(1.0, 0.9 * glowIntensity)
-        let alphaMid = alphaEdge * 0.45
 
         for edge in edges {
             // 虹レイヤー：辺に沿って hue が並ぶ。colors を回転させて流す。
@@ -97,17 +96,20 @@ final class GamingGlowView: NSView {
             hueLayer.endPoint = edge.hueEnd
             hueLayer.colors = hueColors(base: edge.base, t: 0)
 
-            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える
+            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える。
+            // 一番はじ（画面の縁）から約1pxは必ず完全不透明にし、そこから内側へフェードする。
+            let solidLoc = min(0.12, 1.5 / reach)
             let mask = CAGradientLayer()
             mask.frame = CGRect(origin: .zero, size: edge.band.size)
             mask.type = .axial
             mask.startPoint = edge.maskStart
             mask.endPoint = edge.maskEnd
-            mask.locations = [0.0, 0.32, 1.0]
+            mask.locations = [0.0, NSNumber(value: solidLoc), 0.35, 1.0]
             mask.colors = [
-                NSColor.white.withAlphaComponent(alphaEdge).cgColor,
-                NSColor.white.withAlphaComponent(alphaMid).cgColor,
-                NSColor.white.withAlphaComponent(0.0).cgColor,
+                NSColor.white.cgColor,                                  // 画面の縁：完全不透明（必ず）
+                NSColor.white.cgColor,                                  // 約1pxまで不透明
+                NSColor.white.withAlphaComponent(alphaEdge).cgColor,    // Bloom本体（濃さ）
+                NSColor.white.withAlphaComponent(0.0).cgColor,          // 内側：透明
             ]
             hueLayer.mask = mask
 
