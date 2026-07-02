@@ -1134,19 +1134,26 @@
         }
       }
     },
+    "bloom_width" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Bloom Width" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "発光の広さ" } }
+      }
+    },
     "glow_intensity" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glow Intensity"
+            "value" : "Glow Opacity"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "発光強度"
+            "value" : "発光の濃さ"
           }
         }
       }

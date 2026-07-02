@@ -162,9 +162,10 @@ class CornerOverlayView: NSView {
             animation.repeatCount = .infinity
             animation.calculationMode = .linear
             animation.isRemovedOnCompletion = false
-            shape.add(animation, forKey: "rainbow")
-
             layer?.addSublayer(shape)
+            // ふちのBloomと同じ共有時刻から begin して、角とBloomの色を一致させる
+            animation.beginTime = shape.convertTime(GamingGlowClock.anchor, from: nil)
+            shape.add(animation, forKey: "rainbow")
             gamingLayer = shape
         }
         needsDisplay = true
@@ -187,9 +188,8 @@ class CornerOverlayView: NSView {
     }
 
     private func rainbowCGColors() -> [CGColor] {
-        (0...60).map { i in
-            NSColor(hue: Double(i % 60) / 60.0, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
-        }
+        // ふちのBloomと同じ色進行（GamingGlowClock）を使う
+        (0...GamingGlowClock.steps).map { GamingGlowClock.color(at: $0).cgColor }
     }
 
     override func draw(_ dirtyRect: NSRect) {

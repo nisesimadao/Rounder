@@ -25,6 +25,10 @@ struct ContentViewConstants {
     static let glowIntensityMax: Double = 3.0
     /// ブルーム強度のステップ
     static let glowIntensityStep: Double = 0.1
+    /// ブルームの広さ（範囲）
+    static let bloomWidthMin: Double = 0.1
+    static let bloomWidthMax: Double = 3.0
+    static let bloomWidthStep: Double = 0.1
     /// テキストフィールドの幅
     static let textFieldWidth: CGFloat = 50
     /// ヘッダーアイコンサイズ
@@ -182,6 +186,7 @@ struct AdvancedSettingsView: View {
     @AppStorage(UserDefaultsKeys.superGamingMode) private var savedSuperGamingMode: Bool = false
     @AppStorage(UserDefaultsKeys.gamingSpeed) private var savedGamingSpeed: Double = PresetManagerConstants.defaultGamingSpeed
     @AppStorage(UserDefaultsKeys.glowIntensity) private var savedGlowIntensity: Double = PresetManagerConstants.defaultGlowIntensity
+    @AppStorage(UserDefaultsKeys.bloomWidth) private var savedBloomWidth: Double = PresetManagerConstants.defaultBloomWidth
     @AppStorage(UserDefaultsKeys.cornerCutoutStyle) private var savedCornerCutoutStyleRawValue: String = CornerCutoutStyle.rounded.rawValue
     @AppStorage(UserDefaultsKeys.topLeftEnabled) private var savedTopLeftEnabled: Bool = true
     @AppStorage(UserDefaultsKeys.topRightEnabled) private var savedTopRightEnabled: Bool = true
@@ -202,6 +207,7 @@ struct AdvancedSettingsView: View {
     @State private var superGamingMode: Bool = false
     @State private var gamingSpeed: Double = PresetManagerConstants.defaultGamingSpeed
     @State private var glowIntensity: Double = PresetManagerConstants.defaultGlowIntensity
+    @State private var bloomWidth: Double = PresetManagerConstants.defaultBloomWidth
     @State private var availableDisplays: [DisplayInfo] = []
     @State private var selectedDisplays: Set<CGDirectDisplayID> = Set()
     @State private var scrolledPane: SettingsPane? = .general
@@ -293,6 +299,7 @@ struct AdvancedSettingsView: View {
         .onChange(of: savedSuperGamingMode) { _, newValue in superGamingMode = newValue }
         .onChange(of: savedGamingSpeed) { _, newValue in gamingSpeed = newValue }
         .onChange(of: savedGlowIntensity) { _, newValue in glowIntensity = newValue }
+        .onChange(of: savedBloomWidth) { _, newValue in bloomWidth = newValue }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             launchAtLogin = LoginItemManager.isEnabled
         }
@@ -568,6 +575,18 @@ struct AdvancedSettingsView: View {
                     .tint(.cyan)
                     .onChange(of: glowIntensity) { _, _ in markAsChanged() }
             }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("bloom_width")
+                    Spacer()
+                    Text(String(format: "%.1fx", bloomWidth)).monospacedDigit().foregroundStyle(.secondary)
+                }
+                Slider(value: $bloomWidth,
+                       in: ContentViewConstants.bloomWidthMin...ContentViewConstants.bloomWidthMax,
+                       step: ContentViewConstants.bloomWidthStep)
+                    .tint(.purple)
+                    .onChange(of: bloomWidth) { _, _ in markAsChanged() }
+            }
         }
     }
 
@@ -608,6 +627,7 @@ struct AdvancedSettingsView: View {
         let gamingModeChanged = superGamingMode != savedSuperGamingMode
         let gamingSpeedChanged = gamingSpeed != savedGamingSpeed
         let glowIntensityChanged = glowIntensity != savedGlowIntensity
+        let bloomWidthChanged = bloomWidth != savedBloomWidth
         let cutoutStyleChanged = tempCornerCutoutStyle != (CornerCutoutStyle(rawValue: savedCornerCutoutStyleRawValue) ?? .rounded)
         let topLeftChanged = tempTopLeftEnabled != savedTopLeftEnabled
         let topRightChanged = tempTopRightEnabled != savedTopRightEnabled
@@ -617,7 +637,7 @@ struct AdvancedSettingsView: View {
         // モニター選択の変更をチェック（保存値の読み出しは savedSelectedDisplays() に一本化）
         let displaySelectionChanged = savedSelectedDisplays() != selectedDisplays
         
-        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
+        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
     }
     
     private func colorsEqual(_ color1: Color, _ color2: Color) -> Bool {
@@ -633,6 +653,7 @@ struct AdvancedSettingsView: View {
         savedSuperGamingMode = superGamingMode
         savedGamingSpeed = gamingSpeed
         savedGlowIntensity = glowIntensity
+        savedBloomWidth = bloomWidth
         savedCornerCutoutStyleRawValue = tempCornerCutoutStyle.rawValue
         savedTopLeftEnabled = tempTopLeftEnabled
         savedTopRightEnabled = tempTopRightEnabled
@@ -666,6 +687,7 @@ struct AdvancedSettingsView: View {
         superGamingMode = savedSuperGamingMode
         gamingSpeed = savedGamingSpeed
         glowIntensity = savedGlowIntensity
+        bloomWidth = savedBloomWidth
         // モニター選択もキャンセルで元に戻す（他の設定と同様に破棄する）
         selectedDisplays = savedSelectedDisplays()
         hasUnsavedChanges = false
@@ -696,6 +718,7 @@ struct AdvancedSettingsView: View {
             superGamingMode: superGamingMode,
             gamingSpeed: gamingSpeed,
             glowIntensity: glowIntensity,
+            bloomWidth: bloomWidth,
             cutoutStyle: tempCornerCutoutStyle,
             topLeftEnabled: tempTopLeftEnabled,
             topRightEnabled: tempTopRightEnabled,

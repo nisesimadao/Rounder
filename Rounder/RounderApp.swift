@@ -33,6 +33,7 @@ struct UserDefaultsKeys {
     static let superGamingMode = "superGamingMode"
     static let gamingSpeed = "gamingSpeed"
     static let glowIntensity = "glowIntensity"
+    static let bloomWidth = "bloomWidth"
     static let cornerCutoutStyle = "cornerCutoutStyle"
     static let topLeftEnabled = "topLeftEnabled"
     static let topRightEnabled = "topRightEnabled"
@@ -48,6 +49,7 @@ struct OverlayConfiguration {
     var superGamingMode: Bool
     var gamingSpeed: Double
     var glowIntensity: Double
+    var bloomWidth: Double
     var cutoutStyle: CornerCutoutStyle
     var topLeftEnabled: Bool
     var topRightEnabled: Bool
@@ -66,6 +68,7 @@ struct OverlayConfiguration {
             superGamingMode: defaults.bool(forKey: UserDefaultsKeys.superGamingMode, defaultValue: false),
             gamingSpeed: defaults.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed,
             glowIntensity: defaults.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity,
+            bloomWidth: defaults.object(forKey: UserDefaultsKeys.bloomWidth) as? Double ?? PresetManagerConstants.defaultBloomWidth,
             cutoutStyle: CornerCutoutStyle(
                 rawValue: defaults.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
             ) ?? .rounded,
@@ -334,7 +337,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 let glow = GamingGlowWindow(
                     screenFrame: frame,
                     speed: configuration.gamingSpeed,
-                    glowIntensity: configuration.glowIntensity
+                    glowIntensity: configuration.glowIntensity,
+                    bloomWidth: configuration.bloomWidth
                 )
                 glowWindows.append(glow)
             }
