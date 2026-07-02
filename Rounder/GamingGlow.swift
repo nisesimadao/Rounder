@@ -75,58 +75,63 @@ final class GamingGlowView: NSView {
 
     private func setupLayers(size: CGSize) {
         let w = size.width, h = size.height
-        // 各辺: (フレーム, グラデーションの明→暗の向き)
-        let specs: [(rect: CGRect, start: CGPoint, end: CGPoint)] = [
-            (CGRect(x: 0, y: h - reach, width: w, height: reach), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0)), // top
-            (CGRect(x: 0, y: 0, width: w, height: reach), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1)),         // bottom
-            (CGRect(x: 0, y: 0, width: reach, height: h), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5)),         // left
-            (CGRect(x: w - reach, y: 0, width: reach, height: h), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5)), // right
+        // 各辺: バンド矩形 / 色(hue)方向 start→end / 内側フェードのマスク方向 start→end / 周回上の基準hue
+        // hue は「辺に沿って」並べ、時間で回転させる（＝虹がふちを順番に流れる）。
+        let edges: [(band: CGRect, hueStart: CGPoint, hueEnd: CGPoint, maskStart: CGPoint, maskEnd: CGPoint, base: Double)] = [
+            (CGRect(x: 0, y: h - reach, width: w, height: reach), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), 0.0),  // top: 左→右
+            (CGRect(x: w - reach, y: 0, width: reach, height: h), CGPoint(x: 0.5, y: 1), CGPoint(x: 0.5, y: 0), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), 0.25), // right: 上→下
+            (CGRect(x: 0, y: 0, width: w, height: reach), CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), 0.5),          // bottom: 右→左
+            (CGRect(x: 0, y: 0, width: reach, height: h), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), 0.75),         // left: 下→上
         ]
 
         let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
-        let keyframes = rainbowKeyframes()
+        let alphaEdge = min(1.0, 0.9 * glowIntensity)
+        let alphaMid = alphaEdge * 0.45
 
-        for spec in specs {
-            let gradient = CAGradientLayer()
-            gradient.frame = spec.rect
-            gradient.type = .axial
-            gradient.startPoint = spec.start
-            gradient.endPoint = spec.end
-            // 明るい芯 → 素早く減衰、で「光源」っぽく
-            gradient.locations = [0.0, 0.32, 1.0]
-            gradient.colors = keyframes.first
-            layer?.addSublayer(gradient)
-            edgeLayers.append(gradient)
+        for edge in edges {
+            // 虹レイヤー：辺に沿って hue が並ぶ。colors を回転させて流す。
+            let hueLayer = CAGradientLayer()
+            hueLayer.frame = edge.band
+            hueLayer.type = .axial
+            hueLayer.startPoint = edge.hueStart
+            hueLayer.endPoint = edge.hueEnd
+            hueLayer.colors = hueColors(base: edge.base, t: 0)
 
-            let animation = CAKeyframeAnimation(keyPath: "colors")
-            animation.values = keyframes
-            animation.duration = duration
-            animation.repeatCount = .infinity
-            animation.calculationMode = .linear
-            animation.isRemovedOnCompletion = false
-            // 全辺・全角を共有時刻から begin して色を完全同期（位相ずらしはしない）
-            animation.beginTime = gradient.convertTime(GamingGlowClock.anchor, from: nil)
-            gradient.add(animation, forKey: "rainbow")
+            // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える
+            let mask = CAGradientLayer()
+            mask.frame = CGRect(origin: .zero, size: edge.band.size)
+            mask.type = .axial
+            mask.startPoint = edge.maskStart
+            mask.endPoint = edge.maskEnd
+            mask.locations = [0.0, 0.32, 1.0]
+            mask.colors = [
+                NSColor.white.withAlphaComponent(alphaEdge).cgColor,
+                NSColor.white.withAlphaComponent(alphaMid).cgColor,
+                NSColor.white.withAlphaComponent(0.0).cgColor,
+            ]
+            hueLayer.mask = mask
+
+            layer?.addSublayer(hueLayer)
+            edgeLayers.append(hueLayer)
+
+            let anim = CAKeyframeAnimation(keyPath: "colors")
+            anim.values = (0...GamingGlowClock.steps).map { hueColors(base: edge.base, t: Double($0) / Double(GamingGlowClock.steps)) }
+            anim.duration = duration
+            anim.repeatCount = .infinity
+            anim.calculationMode = .linear
+            anim.isRemovedOnCompletion = false
+            anim.beginTime = hueLayer.convertTime(GamingGlowClock.anchor, from: nil)
+            hueLayer.add(anim, forKey: "rainbow")
         }
     }
 
-    /// レインボー1周分のグラデーション色配列（明→中→透明の3ストップ）
-    private func rainbowKeyframes() -> [[CGColor]] {
-        let steps = GamingGlowClock.steps
-        // 濃さは glowIntensity で独立に調整（薄さ）
-        let alphaEdge = min(1.0, 0.9 * glowIntensity)
-        let alphaMid = alphaEdge * 0.45
-        var values: [[CGColor]] = []
-        values.reserveCapacity(steps + 1)
-        for i in 0...steps {
-            let color = GamingGlowClock.color(at: i)
-            values.append([
-                color.withAlphaComponent(alphaEdge).cgColor,
-                color.withAlphaComponent(alphaMid).cgColor,
-                color.withAlphaComponent(0.0).cgColor,
-            ])
+    /// 1つの辺に沿った hue 配列（周回上の base から 0.25周ぶん）。t で全体を回転させる。
+    private func hueColors(base: Double, t: Double) -> [CGColor] {
+        let stops = 6
+        return (0...stops).map { s in
+            let hue = (base + t + Double(s) / Double(stops) * 0.25).truncatingRemainder(dividingBy: 1.0)
+            return NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
         }
-        return values
     }
 
     func stop() {

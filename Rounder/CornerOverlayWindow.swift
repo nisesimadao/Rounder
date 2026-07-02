@@ -100,12 +100,12 @@ class CornerOverlayWindow: NSWindow {
         orderFront(nil)
     }
     
-    func setGamingMode(_ enabled: Bool, speed: Double) {
-        (contentView as? CornerOverlayView)?.setGamingMode(enabled, speed: speed)
+    func setGamingMode(_ enabled: Bool, speed: Double, baseHue: Double = 0) {
+        (contentView as? CornerOverlayView)?.setGamingMode(enabled, speed: speed, baseHue: baseHue)
     }
 
     func prepareForClose() {
-        (contentView as? CornerOverlayView)?.setGamingMode(false, speed: 1)
+        (contentView as? CornerOverlayView)?.setGamingMode(false, speed: 1, baseHue: 0)
     }
 }
 
@@ -137,7 +137,7 @@ class CornerOverlayView: NSView {
 
     /// ゲーミング時、角丸の「見えている部分（切り欠き形状）」を虹色に光らせる。
     /// draw() の黒マスクの代わりに、同じ形の CAShapeLayer を Core Animation で色巡回させる（軽量）。
-    func setGamingMode(_ enabled: Bool, speed: Double) {
+    func setGamingMode(_ enabled: Bool, speed: Double, baseHue: Double = 0) {
         isGaming = enabled
         gamingLayer?.removeFromSuperlayer()
         gamingLayer = nil
@@ -154,7 +154,7 @@ class CornerOverlayView: NSView {
             shape.path = gamingFillPath(in: localBounds)
             shape.fillRule = .evenOdd
 
-            let colors = rainbowCGColors()
+            let colors = rainbowCGColors(baseHue: baseHue)
             shape.fillColor = colors.first
             let animation = CAKeyframeAnimation(keyPath: "fillColor")
             animation.values = colors
@@ -187,9 +187,12 @@ class CornerOverlayView: NSView {
         return path
     }
 
-    private func rainbowCGColors() -> [CGColor] {
-        // ふちのBloomと同じ色進行（GamingGlowClock）を使う
-        (0...GamingGlowClock.steps).map { GamingGlowClock.color(at: $0).cgColor }
+    /// baseHue（周回上の位置）から1周ぶん巡回する色。ふちのBloomと連続するようにする。
+    private func rainbowCGColors(baseHue: Double) -> [CGColor] {
+        (0...GamingGlowClock.steps).map { i in
+            let hue = (baseHue + Double(i) / Double(GamingGlowClock.steps)).truncatingRemainder(dividingBy: 1.0)
+            return NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
+        }
     }
 
     override func draw(_ dirtyRect: NSRect) {

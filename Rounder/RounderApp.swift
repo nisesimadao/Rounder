@@ -310,11 +310,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // CornerType は描画座標系（非フリップ）の都合で上下が反転している点に注意
             // （物理的な左上 → .bottomLeft など）。以前は window.screen から角を推測していたが、
             // マルチモニターで誤判定するため、生成時に確定した値を渡すようにした。
-            let cornerSpecs: [(enabled: Bool, origin: CGPoint, type: CornerType)] = [
-                (configuration.topLeftEnabled,     CGPoint(x: frame.minX, y: frame.maxY - cornerSize),              .bottomLeft),
-                (configuration.topRightEnabled,    CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize), .bottomRight),
-                (configuration.bottomLeftEnabled,  CGPoint(x: frame.minX, y: frame.minY),                           .topLeft),
-                (configuration.bottomRightEnabled, CGPoint(x: frame.maxX - cornerSize, y: frame.minY),              .topRight)
+            // baseHue は周回上の位置（時計回りに 左上=0, 右上=0.25, 右下=0.5, 左下=0.75）。
+            // これでふちの虹と角の色が連続してつながる。
+            let cornerSpecs: [(enabled: Bool, origin: CGPoint, type: CornerType, baseHue: Double)] = [
+                (configuration.topLeftEnabled,     CGPoint(x: frame.minX, y: frame.maxY - cornerSize),              .bottomLeft,  0.0),
+                (configuration.topRightEnabled,    CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize), .bottomRight, 0.25),
+                (configuration.bottomLeftEnabled,  CGPoint(x: frame.minX, y: frame.minY),                           .topLeft,     0.75),
+                (configuration.bottomRightEnabled, CGPoint(x: frame.maxX - cornerSize, y: frame.minY),              .topRight,    0.5)
             ]
 
             for spec in cornerSpecs where spec.enabled {
@@ -328,7 +330,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 )
                 overlayWindows.append(window)
                 if configuration.superGamingMode {
-                    window.setGamingMode(true, speed: configuration.gamingSpeed)
+                    window.setGamingMode(true, speed: configuration.gamingSpeed, baseHue: spec.baseHue)
                 }
             }
 
