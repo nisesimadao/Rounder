@@ -232,6 +232,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.orderOut(nil)
             window.orderFrontRegardless()
         }
+
+        // Space 構成が変わっている可能性がある（フルスクリーン Space の新規作成など）ため、
+        // すべての Space への登録を取り直す。遷移アニメーション中も両側に切り欠きが描画される。
+        OverlaySpace.pin(windows)
     }
     
     private func isFirstLaunch() -> Bool {
@@ -397,10 +401,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // orderOut→orderFrontRegardless のサイクルで Space への再アタッチを強制する。
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            for window in self.overlayWindows + self.glowWindows as [NSWindow] {
+            let windows = self.overlayWindows + self.glowWindows as [NSWindow]
+            for window in windows {
                 window.orderOut(nil)
                 window.orderFrontRegardless()
             }
+            // すべての Space に登録し、Space 遷移アニメーション中も両側に描画されるようにする
+            OverlaySpace.pin(windows)
         }
     }
 

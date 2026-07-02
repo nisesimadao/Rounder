@@ -14,6 +14,61 @@ import Cocoa
 
 enum ScreenEdge: Int, CaseIterable { case top, bottom, left, right }
 
+/// オーバーレイ専用の「常時表示 Space」を作り、そこへ窓を移す（SkyLight の私有API）。
+/// 通常の Space に属した窓は、Space 切替のスライドアニメーション中に出ていく側の
+/// レイヤーと一緒に流れてしまい、入ってくる側には切り欠きが無い片側状態になる。
+/// 独自に作った Space は常に画面へ重ねて表示され、遷移アニメーションに参加しない
+/// ため、切り欠き・発光が常に固定表示される（JankyBorders / yabai と同じ手法）。
+/// 私有APIのため dlsym で解決し、存在しない環境では静かに何もしない
+/// （その場合は従来どおり canJoinAllSpaces の挙動になるだけ）。
+enum OverlaySpace {
+    private typealias MainConnectionFunc = @convention(c) () -> Int32
+    private typealias SpaceCreateFunc = @convention(c) (Int32, Int32, CFDictionary?) -> UInt64
+    private typealias SpaceSetAbsoluteLevelFunc = @convention(c) (Int32, UInt64, Int32) -> Void
+    private typealias ShowSpacesFunc = @convention(c) (Int32, CFArray) -> Void
+    private typealias SpaceAddWindowsFunc = @convention(c) (Int32, UInt64, CFArray, Int32) -> Void
+
+    private static let functions: (
+        main: MainConnectionFunc,
+        create: SpaceCreateFunc,
+        setLevel: SpaceSetAbsoluteLevelFunc,
+        show: ShowSpacesFunc,
+        addWindows: SpaceAddWindowsFunc
+    )? = {
+        guard let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY),
+              let mainSym = dlsym(handle, "SLSMainConnectionID"),
+              let createSym = dlsym(handle, "SLSSpaceCreate"),
+              let levelSym = dlsym(handle, "SLSSpaceSetAbsoluteLevel"),
+              let showSym = dlsym(handle, "SLSShowSpaces"),
+              let addSym = dlsym(handle, "SLSSpaceAddWindowsAndRemoveFromSpaces") else { return nil }
+        return (unsafeBitCast(mainSym, to: MainConnectionFunc.self),
+                unsafeBitCast(createSym, to: SpaceCreateFunc.self),
+                unsafeBitCast(levelSym, to: SpaceSetAbsoluteLevelFunc.self),
+                unsafeBitCast(showSym, to: ShowSpacesFunc.self),
+                unsafeBitCast(addSym, to: SpaceAddWindowsFunc.self))
+    }()
+
+    /// 一度だけ作るオーバーレイ専用 Space の ID（0 = 未作成/失敗）
+    private static var spaceID: UInt64 = 0
+
+    /// 窓をオーバーレイ専用 Space へ移す。窓を作り直すたびに呼び直すこと。
+    static func pin(_ windows: [NSWindow]) {
+        guard let functions else { return }
+        let cid = functions.main()
+
+        if spaceID == 0 {
+            spaceID = functions.create(cid, 1, nil)
+            guard spaceID != 0 else { return }
+            functions.setLevel(cid, spaceID, 0)
+            functions.show(cid, [NSNumber(value: spaceID)] as CFArray)
+        }
+
+        let windowIDs = windows.compactMap { $0.windowNumber > 0 ? NSNumber(value: $0.windowNumber) : nil }
+        guard !windowIDs.isEmpty else { return }
+        functions.addWindows(cid, spaceID, windowIDs as CFArray, 0x7)
+    }
+}
+
 /// ゲーミング発光の色巡回を、角（CAShapeLayer）とふち（CAGradientLayer）で完全に同期させるための共有時刻。
 /// 全レイヤーが同じ基準時刻から begin することで、角とBloomの色が一致する。
 enum GamingGlowClock {
