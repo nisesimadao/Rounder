@@ -25,6 +25,8 @@ struct EditPresetTabView: View {
     @State private var tempCutoutStyle: CornerCutoutStyle
     @State private var tempSuperGamingMode: Bool
     @State private var tempGamingSpeed: Double
+    @State private var tempGlowIntensity: Double
+    @State private var tempBloomWidth: Double
     @State private var hasUnsavedChanges: Bool = false
     
     let onSave: (CornerPreset) -> Void
@@ -48,6 +50,8 @@ struct EditPresetTabView: View {
         self._tempCutoutStyle = State(initialValue: initialPreset.cornerCutoutStyle)
         self._tempSuperGamingMode = State(initialValue: initialPreset.superGamingMode)
         self._tempGamingSpeed = State(initialValue: initialPreset.gamingSpeed)
+        self._tempGlowIntensity = State(initialValue: initialPreset.glowIntensity)
+        self._tempBloomWidth = State(initialValue: initialPreset.bloomWidth)
     }
     
     var body: some View {
@@ -203,9 +207,41 @@ struct EditPresetTabView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 .font(.caption)
-                                
+
                                 Slider(value: $tempGamingSpeed, in: 0.1...5.0, step: 0.1)
                                     .onChange(of: tempGamingSpeed) { _, _ in
+                                        markAsChanged()
+                                    }
+                            }
+                            .padding(.leading, 20)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("glow_intensity")
+                                    Spacer()
+                                    Text(String(format: "%.1fx", tempGlowIntensity))
+                                        .foregroundColor(.secondary)
+                                }
+                                .font(.caption)
+
+                                Slider(value: $tempGlowIntensity, in: 0.1...3.0, step: 0.1)
+                                    .onChange(of: tempGlowIntensity) { _, _ in
+                                        markAsChanged()
+                                    }
+                            }
+                            .padding(.leading, 20)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("bloom_width")
+                                    Spacer()
+                                    Text(String(format: "%.1fx", tempBloomWidth))
+                                        .foregroundColor(.secondary)
+                                }
+                                .font(.caption)
+
+                                Slider(value: $tempBloomWidth, in: 0.1...3.0, step: 0.1)
+                                    .onChange(of: tempBloomWidth) { _, _ in
                                         markAsChanged()
                                     }
                             }
@@ -236,7 +272,8 @@ struct EditPresetTabView: View {
             bottomRight: tempBottomRightEnabled
         )
         updatedPreset = updatedPreset.withGamingMode(tempSuperGamingMode, speed: tempGamingSpeed)
-        
+        updatedPreset = updatedPreset.withGlowSettings(intensity: tempGlowIntensity, bloomWidth: tempBloomWidth)
+
         onSave(updatedPreset)
         dismiss()
     }
@@ -259,7 +296,7 @@ extension CornerPreset {
     func withColor(_ color: NSColor) -> CornerPreset {
         var updated = self
         do {
-            updated.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false)
+            updated.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: true)
         } catch {
             print("Failed to archive corner color: \(error)")
             updated.cornerColor = Data()
@@ -286,6 +323,13 @@ extension CornerPreset {
         var updated = self
         updated.superGamingMode = enabled
         updated.gamingSpeed = speed
+        return updated
+    }
+
+    func withGlowSettings(intensity: Double, bloomWidth: Double) -> CornerPreset {
+        var updated = self
+        updated.glowIntensity = intensity
+        updated.bloomWidth = bloomWidth
         return updated
     }
 }

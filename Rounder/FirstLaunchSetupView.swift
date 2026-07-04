@@ -276,7 +276,7 @@ struct InitialSettingsView: View {
     
     private func saveColor() {
         let nsColor = NSColor(selectedColor)
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
+        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: true) {
             cornerColorData = data
         }
     }

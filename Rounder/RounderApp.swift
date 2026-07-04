@@ -504,6 +504,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
+
+    func updateSettingsWindowTitle(hasUnsavedChanges: Bool) {
+        let baseTitle = String(localized: "window_title_settings")
+        settingsWindow?.title = hasUnsavedChanges ? "\(baseTitle) *" : baseTitle
+    }
     
     func hideSettings() {
         // 設定ウィンドウを閉じるときはDockから非表示

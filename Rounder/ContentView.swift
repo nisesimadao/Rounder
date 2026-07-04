@@ -43,6 +43,25 @@ struct ContentViewConstants {
     static let quickSelectColorSize: CGFloat = 24
 }
 
+private struct SettingsDraftSnapshot: Equatable {
+    var radius: Double
+    var colorRed: CGFloat
+    var colorGreen: CGFloat
+    var colorBlue: CGFloat
+    var colorAlpha: CGFloat
+    var enabled: Bool
+    var cutoutStyle: CornerCutoutStyle
+    var topLeftEnabled: Bool
+    var topRightEnabled: Bool
+    var bottomLeftEnabled: Bool
+    var bottomRightEnabled: Bool
+    var superGamingMode: Bool
+    var gamingSpeed: Double
+    var glowIntensity: Double
+    var bloomWidth: Double
+    var selectedDisplays: Set<CGDirectDisplayID>
+}
+
 /// NSVisualEffectView をラップして、ウィンドウ背後をぼかす半透明（vibrancy）を提供する。
 struct VisualEffectView: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .underWindowBackground
@@ -209,27 +228,58 @@ struct AdvancedSettingsView: View {
         .onChange(of: cornerRadius) { _, newValue in
             selectedColor = loadColorFromData(cornerColorData)
             tempRadius = newValue
+            markAsChanged()
         }
         .onChange(of: cornerColorData) { _, newData in
             selectedColor = loadColorFromData(newData)
             tempColor = selectedColor
+            markAsChanged()
         }
         .onChange(of: savedCornerCutoutStyleRawValue) { _, newValue in
             tempCornerCutoutStyle = CornerCutoutStyle(rawValue: newValue) ?? .rounded
+            markAsChanged()
         }
         .onChange(of: isEnabled) { _, newValue in
             tempEnabled = newValue
+            markAsChanged()
         }
         // プリセット適用など、設定ウィンドウの外から保存値が変わったときにも
         // 各タブの一時状態を追従させる（ウィンドウは使い回されるため onAppear は再実行されない）。
-        .onChange(of: savedTopLeftEnabled) { _, newValue in tempTopLeftEnabled = newValue }
-        .onChange(of: savedTopRightEnabled) { _, newValue in tempTopRightEnabled = newValue }
-        .onChange(of: savedBottomLeftEnabled) { _, newValue in tempBottomLeftEnabled = newValue }
-        .onChange(of: savedBottomRightEnabled) { _, newValue in tempBottomRightEnabled = newValue }
-        .onChange(of: savedSuperGamingMode) { _, newValue in superGamingMode = newValue }
-        .onChange(of: savedGamingSpeed) { _, newValue in gamingSpeed = newValue }
-        .onChange(of: savedGlowIntensity) { _, newValue in glowIntensity = newValue }
-        .onChange(of: savedBloomWidth) { _, newValue in bloomWidth = newValue }
+        .onChange(of: savedTopLeftEnabled) { _, newValue in
+            tempTopLeftEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedTopRightEnabled) { _, newValue in
+            tempTopRightEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedBottomLeftEnabled) { _, newValue in
+            tempBottomLeftEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedBottomRightEnabled) { _, newValue in
+            tempBottomRightEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedSuperGamingMode) { _, newValue in
+            superGamingMode = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedGamingSpeed) { _, newValue in
+            gamingSpeed = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedGlowIntensity) { _, newValue in
+            glowIntensity = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedBloomWidth) { _, newValue in
+            bloomWidth = newValue
+            markAsChanged()
+        }
+        .onChange(of: draftSnapshot) { _, _ in
+            markAsChanged()
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             launchAtLogin = LoginItemManager.isEnabled
         }
@@ -354,7 +404,6 @@ struct AdvancedSettingsView: View {
 
     @ViewBuilder private var generalContent: some View {
         Toggle("enable_rounded_corners", isOn: $tempEnabled)
-            .onChange(of: tempEnabled) { _, _ in markAsChanged() }
         Divider()
         Toggle("launch_at_login", isOn: $launchAtLogin)
             .onChange(of: launchAtLogin) { _, newValue in
@@ -373,10 +422,6 @@ struct AdvancedSettingsView: View {
             Slider(value: $tempRadius,
                    in: RounderAppConstants.cornerRadiusMin...RounderAppConstants.cornerRadiusMax,
                    step: RounderAppConstants.cornerRadiusStep)
-                .onChange(of: tempRadius) { _, newValue in
-                    let clamped = max(0, min(40, newValue))
-                    if clamped != newValue { tempRadius = clamped } else { markAsChanged() }
-                }
         }
         Divider()
         VStack(alignment: .leading, spacing: 8) {
@@ -388,7 +433,6 @@ struct AdvancedSettingsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .onChange(of: tempCornerCutoutStyle) { _, _ in markAsChanged() }
         }
         Divider()
         VStack(alignment: .leading, spacing: 10) {
@@ -397,7 +441,6 @@ struct AdvancedSettingsView: View {
                 Spacer()
                 ColorPicker("", selection: $tempColor)
                     .labelsHidden()
-                    .onChange(of: tempColor) { _, _ in markAsChanged() }
             }
             HStack(spacing: 10) {
                 Text("quick_select").font(.caption).foregroundStyle(.secondary)
@@ -405,7 +448,6 @@ struct AdvancedSettingsView: View {
                 ForEach([Color.black, Color.white, Color.gray], id: \.self) { color in
                     Button {
                         tempColor = color
-                        markAsChanged()
                     } label: {
                         Circle()
                             .fill(color)
@@ -423,15 +465,11 @@ struct AdvancedSettingsView: View {
         Grid(horizontalSpacing: 24, verticalSpacing: 12) {
             GridRow {
                 Toggle("top_left_corner", isOn: $tempTopLeftEnabled)
-                    .onChange(of: tempTopLeftEnabled) { _, _ in markAsChanged() }
                 Toggle("top_right_corner", isOn: $tempTopRightEnabled)
-                    .onChange(of: tempTopRightEnabled) { _, _ in markAsChanged() }
             }
             GridRow {
                 Toggle("bottom_left_corner", isOn: $tempBottomLeftEnabled)
-                    .onChange(of: tempBottomLeftEnabled) { _, _ in markAsChanged() }
                 Toggle("bottom_right_corner", isOn: $tempBottomRightEnabled)
-                    .onChange(of: tempBottomRightEnabled) { _, _ in markAsChanged() }
             }
         }
     }
@@ -448,28 +486,46 @@ struct AdvancedSettingsView: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
         }
-        ForEach(Array(availableDisplays.enumerated()), id: \.element.id) { index, display in
-            if index > 0 { Divider() }
-            Toggle(isOn: Binding(
-                get: { selectedDisplays.contains(display.displayID) },
-                set: { isSelected in
-                    if isSelected { selectedDisplays.insert(display.displayID) }
-                    else { selectedDisplays.remove(display.displayID) }
-                    markAsChanged()
-                }
-            )) {
-                HStack(spacing: 8) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(display.name).fontWeight(.medium)
-                        Text("\(Int(display.resolution.width))×\(Int(display.resolution.height))")
-                            .font(.caption).foregroundStyle(.secondary)
+
+        if availableDisplays.isEmpty {
+            VStack(spacing: 12) {
+                Image(systemName: "display")
+                    .font(.system(size: 40))
+                    .foregroundColor(.secondary)
+                Text("no_displays_found")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("no_displays_description")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 40)
+        } else {
+            ForEach(Array(availableDisplays.enumerated()), id: \.element.id) { index, display in
+                if index > 0 { Divider() }
+                Toggle(isOn: Binding(
+                    get: { selectedDisplays.contains(display.displayID) },
+                    set: { isSelected in
+                        if isSelected { selectedDisplays.insert(display.displayID) }
+                        else { selectedDisplays.remove(display.displayID) }
+                        markAsChanged()
                     }
-                    if display.isMain {
-                        Text("main_display")
-                            .font(.caption2)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(Color.accentColor.opacity(0.15), in: Capsule())
-                            .foregroundStyle(Color.accentColor)
+                )) {
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(display.name).fontWeight(.medium)
+                            Text("\(Int(display.resolution.width))×\(Int(display.resolution.height))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        if display.isMain {
+                            Text("main_display")
+                                .font(.caption2)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Color.accentColor.opacity(0.15), in: Capsule())
+                                .foregroundStyle(Color.accentColor)
+                        }
                     }
                 }
             }
@@ -478,7 +534,6 @@ struct AdvancedSettingsView: View {
 
     @ViewBuilder private var gamingContent: some View {
         Toggle("super_gaming_mode", isOn: $superGamingMode)
-            .onChange(of: superGamingMode) { _, _ in markAsChanged() }
         if superGamingMode {
             Divider()
             VStack(alignment: .leading, spacing: 6) {
@@ -491,7 +546,6 @@ struct AdvancedSettingsView: View {
                        in: ContentViewConstants.gamingSpeedMin...ContentViewConstants.gamingSpeedMax,
                        step: ContentViewConstants.gamingSpeedStep)
                     .tint(.orange)
-                    .onChange(of: gamingSpeed) { _, _ in markAsChanged() }
             }
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -503,7 +557,6 @@ struct AdvancedSettingsView: View {
                        in: ContentViewConstants.glowIntensityMin...ContentViewConstants.glowIntensityMax,
                        step: ContentViewConstants.glowIntensityStep)
                     .tint(.cyan)
-                    .onChange(of: glowIntensity) { _, _ in markAsChanged() }
             }
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -515,7 +568,6 @@ struct AdvancedSettingsView: View {
                        in: ContentViewConstants.bloomWidthMin...ContentViewConstants.bloomWidthMax,
                        step: ContentViewConstants.bloomWidthStep)
                     .tint(.purple)
-                    .onChange(of: bloomWidth) { _, _ in markAsChanged() }
             }
         }
     }
@@ -549,6 +601,28 @@ struct AdvancedSettingsView: View {
     }
 
     // MARK: - 設定管理
+    private var draftSnapshot: SettingsDraftSnapshot {
+        let color = NSColor(tempColor).usingColorSpace(.deviceRGB) ?? .black
+        return SettingsDraftSnapshot(
+            radius: tempRadius,
+            colorRed: color.redComponent,
+            colorGreen: color.greenComponent,
+            colorBlue: color.blueComponent,
+            colorAlpha: color.alphaComponent,
+            enabled: tempEnabled,
+            cutoutStyle: tempCornerCutoutStyle,
+            topLeftEnabled: tempTopLeftEnabled,
+            topRightEnabled: tempTopRightEnabled,
+            bottomLeftEnabled: tempBottomLeftEnabled,
+            bottomRightEnabled: tempBottomRightEnabled,
+            superGamingMode: superGamingMode,
+            gamingSpeed: gamingSpeed,
+            glowIntensity: glowIntensity,
+            bloomWidth: bloomWidth,
+            selectedDisplays: selectedDisplays
+        )
+    }
+
     private func markAsChanged() {
         // 現在の一時値と保存値を比較
         let radiusChanged = tempRadius != cornerRadius
@@ -563,11 +637,14 @@ struct AdvancedSettingsView: View {
         let topRightChanged = tempTopRightEnabled != savedTopRightEnabled
         let bottomLeftChanged = tempBottomLeftEnabled != savedBottomLeftEnabled
         let bottomRightChanged = tempBottomRightEnabled != savedBottomRightEnabled
-        
+
         // モニター選択の変更をチェック（保存値の読み出しは savedSelectedDisplays() に一本化）
         let displaySelectionChanged = savedSelectedDisplays() != selectedDisplays
-        
+
         hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
+
+        // ウィンドウタイトルを更新
+        AppDelegate.shared?.updateSettingsWindowTitle(hasUnsavedChanges: hasUnsavedChanges)
     }
     
     private func colorsEqual(_ color1: Color, _ color2: Color) -> Bool {
@@ -589,13 +666,13 @@ struct AdvancedSettingsView: View {
         savedTopRightEnabled = tempTopRightEnabled
         savedBottomLeftEnabled = tempBottomLeftEnabled
         savedBottomRightEnabled = tempBottomRightEnabled
-        
+
         // 色を保存
         let nsColor = NSColor(tempColor)
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: false) {
+        if let data = try? NSKeyedArchiver.archivedData(withRootObject: nsColor, requiringSecureCoding: true) {
             cornerColorData = data
         }
-        
+
         // ディスプレイ設定を保存
         saveDisplaySettings()
 
@@ -603,6 +680,7 @@ struct AdvancedSettingsView: View {
         AppDelegate.shared?.applyOverlayConfiguration(currentOverlayConfiguration())
 
         hasUnsavedChanges = false
+        AppDelegate.shared?.updateSettingsWindowTitle(hasUnsavedChanges: false)
     }
     
     private func resetToSavedValues() {
@@ -621,6 +699,7 @@ struct AdvancedSettingsView: View {
         // モニター選択もキャンセルで元に戻す（他の設定と同様に破棄する）
         selectedDisplays = savedSelectedDisplays()
         hasUnsavedChanges = false
+        AppDelegate.shared?.updateSettingsWindowTitle(hasUnsavedChanges: false)
     }
     
     private func closeSettings() {

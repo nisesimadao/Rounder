@@ -34,6 +34,7 @@ struct CornerPreset: Codable, Identifiable {
     var superGamingMode: Bool
     var gamingSpeed: Double
     var glowIntensity: Double
+    var bloomWidth: Double
     var cornerCutoutStyle: CornerCutoutStyle
     
     init(name: String,
@@ -46,6 +47,7 @@ struct CornerPreset: Codable, Identifiable {
          superGamingMode: Bool = false,
          gamingSpeed: Double = PresetManagerConstants.defaultGamingSpeed,
          glowIntensity: Double = PresetManagerConstants.defaultGlowIntensity,
+         bloomWidth: Double = PresetManagerConstants.defaultBloomWidth,
          cornerCutoutStyle: CornerCutoutStyle = PresetManagerConstants.defaultCornerCutoutStyle) {
         self.id = UUID()
         self.name = name
@@ -56,7 +58,7 @@ struct CornerPreset: Codable, Identifiable {
         self.cornerRadius = cornerRadius
         
         do {
-            self.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: cornerColor, requiringSecureCoding: false)
+            self.cornerColor = try NSKeyedArchiver.archivedData(withRootObject: cornerColor, requiringSecureCoding: true)
         } catch {
             print("Failed to archive corner color: \(error)")
             self.cornerColor = Data()
@@ -65,6 +67,7 @@ struct CornerPreset: Codable, Identifiable {
         self.superGamingMode = superGamingMode
         self.gamingSpeed = gamingSpeed
         self.glowIntensity = glowIntensity
+        self.bloomWidth = bloomWidth
         self.cornerCutoutStyle = cornerCutoutStyle
     }
 
@@ -80,6 +83,7 @@ struct CornerPreset: Codable, Identifiable {
         case superGamingMode
         case gamingSpeed
         case glowIntensity
+        case bloomWidth
         case cornerCutoutStyle
     }
 
@@ -97,6 +101,7 @@ struct CornerPreset: Codable, Identifiable {
         superGamingMode = try container.decode(Bool.self, forKey: .superGamingMode)
         gamingSpeed = try container.decode(Double.self, forKey: .gamingSpeed)
         glowIntensity = try container.decode(Double.self, forKey: .glowIntensity)
+        bloomWidth = try container.decodeIfPresent(Double.self, forKey: .bloomWidth) ?? PresetManagerConstants.defaultBloomWidth
         cornerCutoutStyle = try container.decodeIfPresent(CornerCutoutStyle.self, forKey: .cornerCutoutStyle) ?? .rounded
     }
 
@@ -113,6 +118,7 @@ struct CornerPreset: Codable, Identifiable {
         try container.encode(superGamingMode, forKey: .superGamingMode)
         try container.encode(gamingSpeed, forKey: .gamingSpeed)
         try container.encode(glowIntensity, forKey: .glowIntensity)
+        try container.encode(bloomWidth, forKey: .bloomWidth)
         try container.encode(cornerCutoutStyle, forKey: .cornerCutoutStyle)
     }
     
@@ -204,6 +210,7 @@ class PresetManager: ObservableObject {
         UserDefaults.standard.set(preset.superGamingMode, forKey: UserDefaultsKeys.superGamingMode)
         UserDefaults.standard.set(preset.gamingSpeed, forKey: UserDefaultsKeys.gamingSpeed)
         UserDefaults.standard.set(preset.glowIntensity, forKey: UserDefaultsKeys.glowIntensity)
+        UserDefaults.standard.set(preset.bloomWidth, forKey: UserDefaultsKeys.bloomWidth)
         UserDefaults.standard.set(preset.cornerCutoutStyle.rawValue, forKey: UserDefaultsKeys.cornerCutoutStyle)
         
         // AppDelegateに通知して設定を反映
@@ -221,6 +228,7 @@ class PresetManager: ObservableObject {
         let superGamingMode = UserDefaults.standard.bool(forKey: UserDefaultsKeys.superGamingMode)
         let gamingSpeed = UserDefaults.standard.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed
         let glowIntensity = UserDefaults.standard.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity
+        let bloomWidth = UserDefaults.standard.object(forKey: UserDefaultsKeys.bloomWidth) as? Double ?? PresetManagerConstants.defaultBloomWidth
         let cornerCutoutStyle = CornerCutoutStyle(
             rawValue: UserDefaults.standard.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
         ) ?? .rounded
@@ -236,6 +244,7 @@ class PresetManager: ObservableObject {
             superGamingMode: superGamingMode,
             gamingSpeed: gamingSpeed,
             glowIntensity: glowIntensity,
+            bloomWidth: bloomWidth,
             cornerCutoutStyle: cornerCutoutStyle
         )
         

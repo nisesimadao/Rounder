@@ -188,7 +188,7 @@ final class GamingGlowEdgeView: NSView {
         self.hueLayer = hueLayer
 
         let anim = CAKeyframeAnimation(keyPath: "colors")
-        anim.values = (0...GamingGlowClock.steps).map { hueColors(base: spec.base, t: Double($0) / Double(GamingGlowClock.steps)) }
+        anim.values = (0...GamingGlowClock.steps).map { cachedHueColors(base: spec.base, t: Double($0) / Double(GamingGlowClock.steps)) }
         anim.duration = duration
         anim.repeatCount = .infinity
         anim.calculationMode = .linear
@@ -204,6 +204,26 @@ final class GamingGlowEdgeView: NSView {
         return (0...stops).map { s in
             let hue = (base + t + Double(s) / Double(stops) * 0.25).truncatingRemainder(dividingBy: 1.0)
             return NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
+        }
+    }
+
+    /// 色配列のキャッシュ（baseとtに対して事前計算）
+    private static var colorCache: [String: [CGColor]] = [:]
+    private static let cacheQueue = DispatchQueue(label: "com.rounder.colorcache")
+
+    private func cachedHueColors(base: Double, t: Double) -> [CGColor] {
+        let cacheKey = String(format: "%.2f_%.2f", base, t)
+        return Self.cacheQueue.sync {
+            if let cached = Self.colorCache[cacheKey] {
+                return cached
+            }
+            let colors = hueColors(base: base, t: t)
+            Self.colorCache[cacheKey] = colors
+            // キャッシュサイズを制限（最新100個のみ）
+            if Self.colorCache.count > 100 {
+                Self.colorCache.removeValue(forKey: Self.colorCache.keys.first!)
+            }
+            return colors
         }
     }
 

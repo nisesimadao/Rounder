@@ -24,6 +24,8 @@ struct PresetsTabView: View {
     @State private var alertMessage = ""
     @State private var presetToEdit: CornerPreset?
     @State private var editingPresetName = ""
+    @State private var presetToDelete: CornerPreset?
+    @State private var showingDeleteConfirmation = false
     
     // 複数選択用の状態
     @State private var selectionMode = false
@@ -105,10 +107,8 @@ struct PresetsTabView: View {
                                 editingPresetName = preset.name
                             },
                             onDelete: {
-                                presetManager.deletePreset(preset)
-                                selectedPresets.remove(preset.id)
-                                alertMessage = String(format: String(localized: "preset_deleted"), preset.name)
-                                showingAlert = true
+                                presetToDelete = preset
+                                showingDeleteConfirmation = true
                             }
                         )
                     }
@@ -142,6 +142,21 @@ struct PresetsTabView: View {
             Button("OK") { }
         } message: {
             Text(alertMessage)
+        }
+        .confirmationDialog(
+            String(localized: "delete_preset_confirmation"),
+            isPresented: $showingDeleteConfirmation,
+            presenting: presetToDelete
+        ) { preset in
+            Button("cancel", role: .cancel) { }
+            Button("delete", role: .destructive) {
+                presetManager.deletePreset(preset)
+                selectedPresets.remove(preset.id)
+                alertMessage = String(format: String(localized: "preset_deleted"), preset.name)
+                showingAlert = true
+            }
+        } message: { preset in
+            Text(String(format: String(localized: "delete_preset_message"), preset.name))
         }
     }
     

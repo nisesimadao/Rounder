@@ -770,6 +770,40 @@
         }
       }
     },
+    "delete_preset_confirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete preset?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プリセットを削除しますか？"
+          }
+        }
+      }
+    },
+    "delete_preset_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” will be permanently deleted."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” は完全に削除されます。"
+          }
+        }
+      }
+    },
     "denied" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1324,6 +1358,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "次へ"
+          }
+        }
+      }
+    },
+    "no_displays_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnect a display, then refresh the monitor list."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ディスプレイを接続してから、モニター一覧を更新してください。"
+          }
+        }
+      }
+    },
+    "no_displays_found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No displays found"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ディスプレイが見つかりません"
           }
         }
       }

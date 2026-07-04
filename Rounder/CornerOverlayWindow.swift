@@ -91,6 +91,8 @@ class CornerOverlayWindow: NSWindow {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         
         let contentView = CornerOverlayView(radius: radius, color: color, cutoutStyle: cutoutStyle, contentSize: size, cornerType: cornerType)
+        contentView.frame = NSRect(origin: .zero, size: NSSize(width: size, height: size))
+        contentView.autoresizingMask = [.width, .height]
         self.contentView = contentView
 
         // アプリが非アクティブ（常時）でも確実に前面へ出す
@@ -118,6 +120,10 @@ class CornerOverlayView: NSView {
     /// ゲーミング時：角の切り欠き形状を虹色にアニメーションさせるレイヤー（GPU合成）
     private var isGaming = false
     private var gamingLayer: CAShapeLayer?
+    /// Squircleパスのキャッシュ（radiusとcontentSizeが変わったら再計算）
+    private var cachedSquirclePath: CGPath?
+    private var cachedSquircleRadius: CGFloat = 0
+    private var cachedSquircleSize: CGFloat = 0
 
     init(radius: CGFloat, color: NSColor, cutoutStyle: CornerCutoutStyle, contentSize: CGFloat, cornerType: CornerType) {
         self.radius = radius
@@ -125,7 +131,7 @@ class CornerOverlayView: NSView {
         self.cutoutStyle = cutoutStyle
         self.contentSize = contentSize
         self.cornerType = cornerType
-        super.init(frame: .zero)
+        super.init(frame: NSRect(origin: .zero, size: NSSize(width: contentSize, height: contentSize)))
     }
 
     required init?(coder: NSCoder) {
@@ -141,14 +147,22 @@ class CornerOverlayView: NSView {
 
         if enabled {
             wantsLayer = true
+            guard let layer else {
+                needsDisplay = true
+                return
+            }
+            layer.masksToBounds = false
+            layer.frame = bounds
+
             let offset = CornerOverlayConstants.contentSizeOffset
             // くり抜きは境界内に収まるパイ型パスで構成するため、masksToBounds は不要。
             // （ハードクリップは外周のアンチエイリアスを削り、画面のふちで1px欠けて見える原因になる）
-            let localBounds = NSRect(x: 0, y: 0, width: contentSize, height: contentSize)
+            let localBounds = bounds.isEmpty ? NSRect(x: 0, y: 0, width: contentSize, height: contentSize) : bounds
             let shape = CAShapeLayer()
-            shape.frame = NSRect(x: offset, y: offset, width: contentSize, height: contentSize)
+            shape.frame = NSRect(x: offset, y: offset, width: localBounds.width, height: localBounds.height)
             shape.path = gamingFillPath(in: localBounds)
             shape.fillRule = .evenOdd
+            shape.contentsScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
 
             let colors = rainbowCGColors(baseHue: baseHue)
             shape.fillColor = colors.first
@@ -158,7 +172,7 @@ class CornerOverlayView: NSView {
             animation.repeatCount = .infinity
             animation.calculationMode = .linear
             animation.isRemovedOnCompletion = false
-            layer?.addSublayer(shape)
+            layer.addSublayer(shape)
             // ふちのBloomと同じ共有時刻から begin して、角とBloomの色を一致させる
             animation.beginTime = shape.convertTime(GamingGlowClock.anchor, from: nil)
             shape.add(animation, forKey: "rainbow")
@@ -259,6 +273,13 @@ class CornerOverlayView: NSView {
     /// ウィンドウ自体は radius より辺方向に長く取ってあり（applyOverlayConfiguration 側）、
     /// 対角の深さが角丸とほぼ揃う。
     private func createSquircleCutoutPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
+        // キャッシュチェック
+        if cachedSquirclePath != nil &&
+           cachedSquircleRadius == radius &&
+           cachedSquircleSize == contentSize {
+            return cachedSquirclePath!
+        }
+
         let n = 4.0  // スーパー楕円の指数（大きいほど角ばる。4が古典的なSquircle）
         let sx: CGFloat, sy: CGFloat  // 中心から画面の角へ向かう方向
         let center: CGPoint
@@ -279,6 +300,12 @@ class CornerOverlayView: NSView {
             path.addLine(to: CGPoint(x: center.x + sx * CGFloat(x), y: center.y + sy * CGFloat(y)))
         }
         path.closeSubpath()
+
+        // キャッシュを更新
+        cachedSquirclePath = path
+        cachedSquircleRadius = radius
+        cachedSquircleSize = contentSize
+
         return path
     }
 
