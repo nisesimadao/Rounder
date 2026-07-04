@@ -13,6 +13,8 @@ I built Rounder, a tiny macOS menu-bar app that gives external monitors and olde
 
 Download: https://github.com/nisesimadao/Rounder/releases/latest
 
+Suggested media: settings screenshot + 5 second before/after clip on an external monitor.
+
 ## Technical Post
 
 Rounder is a small SwiftUI + AppKit macOS utility that draws lightweight borderless overlay windows at the screen corners.
@@ -22,6 +24,8 @@ It exists because many external monitors still have sharp rectangular edges, whi
 The useful part: it works without Accessibility, Screen Recording, or Automation permission.
 
 Repo: https://github.com/nisesimadao/Rounder
+
+Suggested media: short clip showing live radius changes without a restart.
 
 ## Japanese Launch Post
 
@@ -38,6 +42,8 @@ Rounder という macOS メニューバーアプリを作りました。
 
 Download: https://github.com/nisesimadao/Rounder/releases/latest
 
+添付推奨: 設定画面スクショ + 外部モニターでの before/after 短尺動画。
+
 ## Reddit / Hacker News Style
 
 I made a small macOS utility for people who use external monitors with sharp screen corners.
@@ -48,3 +54,6 @@ The app is open source and the release zip is available here:
 
 https://github.com/nisesimadao/Rounder
 
+## Follow-up Reply
+
+The main design goal was to avoid scary permissions. Rounder does not need Accessibility or Screen Recording because it only draws local borderless overlay windows and keeps settings in macOS UserDefaults.

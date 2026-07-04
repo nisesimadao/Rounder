@@ -14,12 +14,26 @@ Notch導入以前のMacBookや、角が直線的な外部モニターに、ソ�
 
 > 注意: Notch搭載Macの内蔵ディスプレイは物理的に角丸なので、そこでは効果がありません。外部ディスプレイや古いMacで最も役立ちます。
 
+## ひとことで
+
+- **角が直線的な外部モニター**に特に向いています
+- **強い権限なし**: アクセシビリティ、画面収録、自動化、ネットワーク権限は不要
+- **即時反映**: 半径、色、モニター選択、プリセット、ゲーミング発光を再起動なしで適用
+- **小さく透明な実装**: 設定はローカルの `UserDefaults`、UI はメニューバー中心、Swift コードは公開
+
 ## ダウンロード
 
 [Releases](https://github.com/nisesimadao/Rounder/releases/latest) から最新版をダウンロードできます。
 
 - `Rounder.zip` — アプリ本体
 - `Rounder.zip.sha256` — ダウンロード検証用チェックサム
+
+Homebrew でもインストールできます:
+
+```bash
+brew tap nisesimadao/rounder
+brew install --cask rounder
+```
 
 Rounder は現在、有料 Developer ID 署名なしで配布しています。初回起動時に macOS にブロックされた場合は、`Rounder.app` を右クリックして **開く** → **開く** を選んでください。詳しくは [FAQ](./FAQ.md) を参照してください。
 
@@ -51,6 +65,13 @@ Rounder は現在、有料 Developer ID 署名なしで配布しています。�
 - Apple Silicon または Intel Mac
 
 ## インストール
+
+### Homebrew
+
+```bash
+brew tap nisesimadao/rounder
+brew install --cask rounder
+```
 
 ### ビルド済みアプリ（推奨）
 
@@ -129,6 +150,8 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 - [Privacy](./PRIVACY.md)
 - [Security](./SECURITY.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Demo asset checklist](./docs/DEMO_ASSETS.md)
+- [Launch checklist](./docs/LAUNCH_CHECKLIST.md)
 - [License](./LICENSE)
 
 ## トラブルシューティング

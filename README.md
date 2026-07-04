@@ -14,12 +14,26 @@ Rounder gives modern rounded corners to older MacBooks and external monitors tha
 
 > Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect there. It's most useful on external displays and older Macs.
 
+## At a Glance
+
+- **Best for external monitors** that still have sharp rectangular corners
+- **No invasive permissions**: no Accessibility, Screen Recording, Automation, or network access
+- **Live apply**: radius, color, monitor selection, presets, and gaming glow update without restarting the app
+- **Small surface area**: local settings in `UserDefaults`, menu-bar-only UI, open-source Swift code
+
 ## Download
 
 Download the latest build from [Releases](https://github.com/nisesimadao/Rounder/releases/latest).
 
 - `Rounder.zip` — the app
 - `Rounder.zip.sha256` — checksum for verifying the download
+
+Or install with Homebrew:
+
+```bash
+brew tap nisesimadao/rounder
+brew install --cask rounder
+```
 
 Rounder is currently distributed as an unsigned app. If macOS blocks the first launch, right-click `Rounder.app`, choose **Open**, then **Open** again. See [FAQ](./FAQ.md) for details.
 
@@ -51,6 +65,13 @@ Rounder is currently distributed as an unsigned app. If macOS blocks the first l
 - Apple Silicon or Intel Mac
 
 ## Installation
+
+### Homebrew
+
+```bash
+brew tap nisesimadao/rounder
+brew install --cask rounder
+```
 
 ### Prebuilt App (Recommended)
 
@@ -129,6 +150,8 @@ Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/re
 - [Privacy](./PRIVACY.md)
 - [Security](./SECURITY.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Demo asset checklist](./docs/DEMO_ASSETS.md)
+- [Launch checklist](./docs/LAUNCH_CHECKLIST.md)
 - [License](./LICENSE)
 
 ## Troubleshooting

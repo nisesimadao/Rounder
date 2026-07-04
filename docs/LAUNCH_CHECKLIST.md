@@ -24,6 +24,15 @@ shasum -a 256 -c Rounder.zip.sha256
 - [ ] Capture one before/after screenshot on an external monitor.
 - [ ] Capture one short demo clip or GIF showing live radius changes.
 - [ ] Capture one gaming-mode clip if promoting the fun angle.
+- [ ] Follow `docs/DEMO_ASSETS.md` and keep final assets small enough to load quickly on GitHub.
+- [ ] Update `Rounder/SCREENSHOT.png` only if the current UI changed materially.
+
+## Release Notes
+
+- [ ] Draft the GitHub release body from `docs/RELEASE_NOTES_TEMPLATE.md`.
+- [ ] Include the checksum verification command.
+- [ ] Include the unsigned-app Gatekeeper note.
+- [ ] Mention the macOS version tested locally.
 
 ## GitHub
 
@@ -33,6 +42,8 @@ shasum -a 256 -c Rounder.zip.sha256
 - [ ] Confirm issue templates appear when creating a new issue.
 - [ ] Add repository topics such as `macos`, `swift`, `swiftui`, `appkit`, `menubar`, `utility`, `rounded-corners`.
 - [ ] Add a social preview image in repository settings.
+- [ ] Confirm `brew info --cask nisesimadao/rounder/rounder` shows the latest release.
+- [ ] Confirm `brew fetch --cask nisesimadao/rounder/rounder` verifies the latest checksum.
 
 ## Posting
 
@@ -41,4 +52,3 @@ shasum -a 256 -c Rounder.zip.sha256
 - [ ] Mention no Accessibility or Screen Recording permission.
 - [ ] Include the download link.
 - [ ] Include a screenshot, GIF, or short video.
-

@@ -1,0 +1,10 @@
+Rounder 開発仕様書.md
+/Build
+/build
+tmp/
+.DS_Store
+**/.DS_Store
+showhn.md
+hn_success_guide.md
+Rounder/rounderapp_old.swift
+UPGRADE_GUIDE.md

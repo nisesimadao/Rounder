@@ -6,13 +6,31 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4F6414072FF92640003E36DE /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F6414062FF92640003E36DE /* AppIntents.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		4F6414062FF92640003E36DE /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		4F6413F72F9BC494003E36DE /* Rounder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rounder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4F6414052FF92640003E36DE /* Exceptions for "Rounder" folder in "Rounder" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4F6413F62F9BC494003E36DE /* Rounder */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4F6413F92F9BC494003E36DE /* Rounder */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4F6414052FF92640003E36DE /* Exceptions for "Rounder" folder in "Rounder" target */,
+			);
 			path = Rounder;
 			sourceTree = "<group>";
 		};
@@ -23,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F6414072FF92640003E36DE /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				4F6413F92F9BC494003E36DE /* Rounder */,
+				4F6414062FF92640003E36DE /* AppIntents.framework */,
 				4F6413F82F9BC494003E36DE /* Products */,
 			);
 			sourceTree = "<group>";
