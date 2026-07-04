@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/nisesimadao/Rounder/security/advisories/new
+    about: Please report security issues privately.
+

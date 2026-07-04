@@ -2,13 +2,34 @@
 
 A tiny menu-bar app that beautifully rounds the corners of your macOS screen.
 
-It uses a lightweight, software-controlled overlay to give modern rounded corners to older MacBooks (pre-notch) and external monitors that still have sharp edges. It runs quietly in the menu bar, needs **no special permissions**, and applies every change **instantly — no restart required**.
+[![Latest release](https://img.shields.io/github/v/release/nisesimadao/Rounder?label=download)](https://github.com/nisesimadao/Rounder/releases/latest)
+[![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
+[![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#system-requirements)
+
+Rounder gives modern rounded corners to older MacBooks and external monitors that still have sharp rectangular edges. It runs quietly in the menu bar, needs **no Accessibility or Screen Recording permission**, and applies every change **instantly, with no restart**.
 
 <img src="Rounder/SCREENSHOT.png" alt="Screenshot" />
 
 [日本語版READMEはこちら](./README_jp.md)
 
 > Note: On Macs with a notch, the built-in display already has physically rounded corners, so this app has no visible effect there. It's most useful on external displays and older Macs.
+
+## Download
+
+Download the latest build from [Releases](https://github.com/nisesimadao/Rounder/releases/latest).
+
+- `Rounder.zip` — the app
+- `Rounder.zip.sha256` — checksum for verifying the download
+
+Rounder is currently distributed as an unsigned app. If macOS blocks the first launch, right-click `Rounder.app`, choose **Open**, then **Open** again. See [FAQ](./FAQ.md) for details.
+
+## Why Rounder?
+
+- Works without special macOS permissions
+- Covers external monitors and multi-display setups
+- Live settings with no app restart
+- Per-corner and per-display control
+- Presets for switching between subtle, all-corner, and gaming-style setups
 
 ## Features
 
@@ -38,6 +59,10 @@ It uses a lightweight, software-controlled overlay to give modern rounded corner
 3. The build is **not signed with a paid Developer ID**, so on first launch macOS Gatekeeper may block it. Right-click the app → **Open** → **Open**, or run:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Rounder.app
+   ```
+4. Optional: verify the download with the checksum file:
+   ```bash
+   shasum -a 256 -c Rounder.zip.sha256
    ```
 
 ### Build from Source
@@ -95,7 +120,16 @@ A short setup appears: **Welcome → basic settings (radius & color) → done**.
 
 ## Releases / CI
 
-Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/release.yml`) that builds the app and publishes `Rounder.zip` to [Releases](https://github.com/nisesimadao/Rounder/releases) automatically.
+Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/release.yml`) that builds the app and publishes `Rounder.zip` plus `Rounder.zip.sha256` to [Releases](https://github.com/nisesimadao/Rounder/releases) automatically.
+
+## Project Docs
+
+- [Changelog](./CHANGELOG.md)
+- [FAQ](./FAQ.md)
+- [Privacy](./PRIVACY.md)
+- [Security](./SECURITY.md)
+- [Contributing](./CONTRIBUTING.md)
+- [License](./LICENSE)
 
 ## Troubleshooting
 

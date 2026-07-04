@@ -2,13 +2,34 @@
 
 macOSの画面の角を美しく角丸化する、小さなメニューバーアプリ。
 
-Notch導入以前のMacBookや、角が直線的な外部モニターに、ソフトウェア制御の軽量オーバーレイでモダンな角丸を与えます。メニューバーに静かに常駐し、**特別な権限は不要**、変更は**再起動なしで即座に反映**されます。
+[![Latest release](https://img.shields.io/github/v/release/nisesimadao/Rounder?label=download)](https://github.com/nisesimadao/Rounder/releases/latest)
+[![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
+[![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#システム要件)
+
+Notch導入以前のMacBookや、角が直線的な外部モニターに、ソフトウェア制御の軽量オーバーレイでモダンな角丸を与えます。メニューバーに静かに常駐し、**アクセシビリティ権限や画面収録権限は不要**、変更は**再起動なしで即座に反映**されます。
 
 <img src="Rounder/SCREENSHOT.png" alt="Screenshot" />
 
 [English README](./README.md)
 
 > 注意: Notch搭載Macの内蔵ディスプレイは物理的に角丸なので、そこでは効果がありません。外部ディスプレイや古いMacで最も役立ちます。
+
+## ダウンロード
+
+[Releases](https://github.com/nisesimadao/Rounder/releases/latest) から最新版をダウンロードできます。
+
+- `Rounder.zip` — アプリ本体
+- `Rounder.zip.sha256` — ダウンロード検証用チェックサム
+
+Rounder は現在、有料 Developer ID 署名なしで配布しています。初回起動時に macOS にブロックされた場合は、`Rounder.app` を右クリックして **開く** → **開く** を選んでください。詳しくは [FAQ](./FAQ.md) を参照してください。
+
+## Rounder の良さ
+
+- 特別な macOS 権限なしで動作
+- 外部モニターとマルチディスプレイに対応
+- 再起動なしで設定を即時反映
+- 角ごと・ディスプレイごとの制御
+- 控えめな角丸からゲーミング風まで切り替えられるプリセット
 
 ## 特徴
 
@@ -38,6 +59,10 @@ Notch導入以前のMacBookや、角が直線的な外部モニターに、ソ�
 3. **有料のDeveloper ID署名は付いていない**ため、初回起動時にGatekeeperがブロックすることがあります。アプリを右クリック →**開く**→**開く**、または次を実行してください:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Rounder.app
+   ```
+4. 任意: チェックサムファイルでダウンロードを検証できます:
+   ```bash
+   shasum -a 256 -c Rounder.zip.sha256
    ```
 
 ### ソースからビルド
@@ -95,7 +120,16 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 
 ## リリース / CI
 
-`vX.Y.Z` タグを push すると、GitHub Actions（`.github/workflows/release.yml`）がアプリをビルドし、`Rounder.zip` を [Releases](https://github.com/nisesimadao/Rounder/releases) に自動で公開します。
+`vX.Y.Z` タグを push すると、GitHub Actions（`.github/workflows/release.yml`）がアプリをビルドし、`Rounder.zip` と `Rounder.zip.sha256` を [Releases](https://github.com/nisesimadao/Rounder/releases) に自動で公開します。
+
+## プロジェクト文書
+
+- [Changelog](./CHANGELOG.md)
+- [FAQ](./FAQ.md)
+- [Privacy](./PRIVACY.md)
+- [Security](./SECURITY.md)
+- [Contributing](./CONTRIBUTING.md)
+- [License](./LICENSE)
 
 ## トラブルシューティング
 
