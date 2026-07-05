@@ -427,6 +427,89 @@
         overflow-x: clip;
       }
 
+      /* Corner-mark: a background quarter-circle bracket, drawn the same
+         way an overlay corner mask is drawn (two straight sides curved by
+         one shared radius). Echoes the actual product instead of being
+         generic decoration; the R-label reads as a radius spec, not a tag. */
+      .corner-mark {
+        position: absolute;
+        z-index: 0;
+        width: var(--mark-size, 260px);
+        height: var(--mark-size, 260px);
+        border: 1.5px solid rgba(21, 21, 21, 0.1);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .corner-mark--tl {
+        top: 30px;
+        left: 30px;
+        border-right: none;
+        border-bottom: none;
+        border-radius: var(--mark-size, 260px) 0 0 0;
+      }
+
+      .corner-mark--tr {
+        top: 30px;
+        right: 30px;
+        border-left: none;
+        border-bottom: none;
+        border-radius: 0 var(--mark-size, 260px) 0 0;
+      }
+
+      .corner-mark--bl {
+        bottom: 30px;
+        left: 30px;
+        border-right: none;
+        border-top: none;
+        border-radius: 0 0 0 var(--mark-size, 260px);
+      }
+
+      .corner-mark--br {
+        bottom: 30px;
+        right: 30px;
+        border-left: none;
+        border-top: none;
+        border-radius: 0 0 var(--mark-size, 260px) 0;
+      }
+
+      .corner-mark-label {
+        position: absolute;
+        z-index: 0;
+        color: rgba(21, 21, 21, 0.24);
+        font-family: var(--font-en);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .corner-mark-label--tl { top: 14px; left: 14px; }
+      .corner-mark-label--tr { top: 14px; right: 14px; }
+      .corner-mark-label--bl { bottom: 14px; left: 14px; }
+      .corner-mark-label--br { bottom: 14px; right: 14px; }
+
+      .black .corner-mark {
+        border-color: rgba(255, 250, 240, 0.14);
+      }
+
+      .black .corner-mark-label {
+        color: rgba(255, 250, 240, 0.3);
+      }
+
+      @media (max-width: 900px) {
+        .corner-mark {
+          width: calc(var(--mark-size, 260px) * 0.6);
+          height: calc(var(--mark-size, 260px) * 0.6);
+        }
+
+        .corner-mark--tl { border-radius: calc(var(--mark-size, 260px) * 0.6) 0 0 0; }
+        .corner-mark--tr { border-radius: 0 calc(var(--mark-size, 260px) * 0.6) 0 0; }
+        .corner-mark--bl { border-radius: 0 0 0 calc(var(--mark-size, 260px) * 0.6); }
+        .corner-mark--br { border-radius: 0 0 calc(var(--mark-size, 260px) * 0.6) 0; }
+      }
+
       .section-inner {
         max-width: 1180px;
         margin: 0 auto;
@@ -1024,6 +1107,8 @@
 
     <main>
       <section class="section">
+        <div class="corner-mark corner-mark--tr" style="--mark-size: 260px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 24</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1064,6 +1149,8 @@
       </section>
 
       <section class="section black">
+        <div class="corner-mark corner-mark--bl" style="--mark-size: 320px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 40</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Under the hood." data-ja="仕組みの話。">Under the hood.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1105,6 +1192,8 @@
       </section>
 
       <section class="section">
+        <div class="corner-mark corner-mark--tr" style="--mark-size: 220px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 8</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Nothing leaves this Mac." data-ja="データは、<wbr>外に出ない。">Nothing leaves this Mac.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1130,6 +1219,8 @@
       </section>
 
       <section class="section black">
+        <div class="corner-mark corner-mark--bl" style="--mark-size: 300px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 32</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps reveal" style="--reveal-delay: 140ms">
@@ -1151,6 +1242,8 @@
       </section>
 
       <section class="section">
+        <div class="corner-mark corner-mark--tr" style="--mark-size: 240px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 20</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Changelog." data-ja="更新履歴。">Changelog.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1175,6 +1268,8 @@
       </section>
 
       <section class="section">
+        <div class="corner-mark corner-mark--br" style="--mark-size: 280px" aria-hidden="true"></div>
+        <span class="corner-mark-label corner-mark-label--br" aria-hidden="true">R 16</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
