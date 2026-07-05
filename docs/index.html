@@ -50,6 +50,21 @@
         color: inherit;
       }
 
+      /* Japanese line breaking: break only at <wbr> phrase marks, never
+         before punctuation; break-word stays as emergency-only fallback. */
+      html[lang="ja"] h1,
+      html[lang="ja"] .giant,
+      html[lang="ja"] .hero-copy,
+      html[lang="ja"] .body-large,
+      html[lang="ja"] .proof-item h3,
+      html[lang="ja"] .proof-item p,
+      html[lang="ja"] .step p,
+      html[lang="ja"] .faq-content h2 {
+        word-break: keep-all;
+        line-break: strict;
+        overflow-wrap: break-word;
+      }
+
       .frame-nav {
         position: fixed;
         inset: 0;
@@ -182,7 +197,6 @@
         display: flex;
         width: max-content;
         color: rgba(21, 21, 21, 0.035);
-        -webkit-text-stroke: 0 transparent;
         font-size: clamp(66px, 10vw, 154px);
         font-weight: 950;
         line-height: 0.9;
@@ -207,6 +221,11 @@
         padding-right: 0.35em;
       }
 
+      html[lang="ja"] .marquee-row {
+        font-size: clamp(52px, 8vw, 120px);
+        text-transform: none;
+      }
+
       .hero-grid {
         position: relative;
         z-index: 2;
@@ -229,8 +248,7 @@
 
       h1 {
         margin: 0;
-        max-width: none;
-        font-size: clamp(58px, 9.8vw, 148px);
+        font-size: clamp(52px, 8vw, 130px);
         font-weight: 900;
         line-height: 0.9;
         letter-spacing: -0.035em;
@@ -242,45 +260,14 @@
         transition: opacity 140ms ease;
       }
 
-      html[lang="ja"] h1,
-      html[lang="ja"] h2 {
-        font-family: var(--font-ja);
-        font-weight: 800;
-        letter-spacing: 0;
-        line-height: 1.04;
-        text-transform: none;
-      }
-
       html[lang="ja"] h1 {
-        max-width: none;
-        font-size: clamp(44px, 6.5vw, 92px);
-        white-space: nowrap;
-      }
-
-      html[lang="ja"] h2 {
-        font-size: clamp(42px, 5.4vw, 78px);
-      }
-
-      html[lang="ja"] .hero-copy,
-      html[lang="ja"] .body-large,
-      html[lang="ja"] .proof-item p,
-      html[lang="ja"] .step p {
-        line-break: strict;
-        word-break: keep-all;
-        overflow-wrap: anywhere;
-      }
-
-      html[lang="ja"] .marquee-row {
-        font-size: clamp(52px, 8vw, 120px);
+        font-family: var(--font-ja);
+        font-size: clamp(42px, 6.4vw, 92px);
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: 0;
         text-transform: none;
-      }
-
-      html[lang="ja"] .visual::before {
-        content: "実際の画面角";
-      }
-
-      html[lang="ja"] .visual::after {
-        content: "追加のプライバシー権限なし / 即時反映";
+        white-space: normal;
       }
 
       .hero-copy {
@@ -319,14 +306,16 @@
 
       .button.ghost-button {
         background: transparent;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 950;
+        cursor: pointer;
       }
 
       .visual {
         position: relative;
-        margin: 0;
+        margin: -84px 0 0 auto;
         width: min(55vw, 720px);
-        margin-left: auto;
-        margin-top: -84px;
         padding: 0 0 52px 54px;
       }
 
@@ -359,6 +348,14 @@
         letter-spacing: 0.08em;
       }
 
+      html[lang="ja"] .visual::before {
+        content: "実際の画面角";
+      }
+
+      html[lang="ja"] .visual::after {
+        content: "追加のプライバシー権限なし / 即時反映";
+      }
+
       .visual img {
         display: block;
         width: 100%;
@@ -377,35 +374,37 @@
         position: relative;
         padding: 110px clamp(26px, 6vw, 88px);
         border-top: 1px solid var(--line);
-        overflow: hidden;
       }
 
-      .section-grid {
-        position: relative;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: clamp(34px, 7vw, 106px);
+      .section-inner {
         max-width: 1180px;
         margin: 0 auto;
-        min-height: 360px;
-        align-items: center;
       }
 
-      h2 {
-        position: absolute;
-        inset: -18px auto auto 0;
+      /* Oversized outline heading, kept in flow so it can never be clipped. */
+      .giant {
+        position: relative;
         z-index: 0;
         margin: 0;
-        max-width: 1120px;
-        width: min(1120px, 100%);
+        max-width: 100%;
         color: transparent;
-        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.09);
-        font-size: clamp(96px, 15vw, 218px);
+        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.1);
+        font-size: clamp(64px, 11vw, 168px);
         font-weight: 950;
-        line-height: 0.82;
+        line-height: 0.92;
         letter-spacing: -0.03em;
         text-transform: uppercase;
-        pointer-events: none;
+        user-select: none;
+      }
+
+      html[lang="ja"] .giant {
+        -webkit-text-stroke-width: 1.5px;
+        font-family: var(--font-ja);
+        font-size: clamp(46px, 8vw, 126px);
+        font-weight: 800;
+        line-height: 1.06;
+        letter-spacing: 0;
+        text-transform: none;
       }
 
       .body-large {
@@ -420,7 +419,7 @@
         z-index: 1;
         width: min(620px, 100%);
         margin-left: auto;
-        padding-top: 74px;
+        margin-top: clamp(-72px, -4vw, -20px);
         display: grid;
         grid-template-columns: 62px minmax(0, 1fr);
         gap: 22px;
@@ -491,7 +490,7 @@
       .proof-item h3 {
         margin: 0 0 12px;
         font-size: 24px;
-        line-height: 1.05;
+        line-height: 1.15;
       }
 
       .proof-item p {
@@ -506,12 +505,7 @@
         color: var(--cream);
       }
 
-      .black .section-grid {
-        align-items: center;
-      }
-
-      .black h2 {
-        color: transparent;
+      .black .giant {
         -webkit-text-stroke-color: rgba(255, 250, 240, 0.16);
       }
 
@@ -528,6 +522,7 @@
         z-index: 1;
         width: min(620px, 100%);
         margin-left: auto;
+        margin-top: clamp(-72px, -4vw, -20px);
         display: grid;
         gap: 1px;
         background: rgba(255, 250, 240, 0.16);
@@ -536,7 +531,7 @@
 
       .step {
         display: grid;
-        grid-template-columns: 74px 1fr;
+        grid-template-columns: 74px minmax(0, 1fr);
         gap: 26px;
         padding: 24px;
         background: var(--ink);
@@ -574,7 +569,6 @@
 
       .faq-panel {
         display: none;
-        padding-top: 0;
       }
 
       .faq-panel.is-open {
@@ -590,10 +584,6 @@
         margin: 0 auto 44px;
       }
 
-      .faq-header h2 {
-        font-size: clamp(56px, 10vw, 144px);
-      }
-
       .faq-content {
         max-width: 920px;
         margin: 0 auto;
@@ -607,9 +597,8 @@
         margin: 0;
         padding: 34px 0 14px;
         border-top: 1px solid var(--line);
-        font-size: clamp(26px, 3.8vw, 42px);
-        line-height: 1.1;
-        text-transform: none;
+        font-size: clamp(24px, 3.4vw, 38px);
+        line-height: 1.2;
       }
 
       .faq-content h2:first-child {
@@ -667,31 +656,24 @@
           padding: 94px 16px 60px;
         }
 
-        .hero-grid,
-        .section-grid,
-        .proof {
-          grid-template-columns: 1fr;
-        }
-
-        .section-grid {
-          min-height: 300px;
-        }
-
         .hero-grid {
           min-height: auto;
         }
 
-        h1,
-        html[lang="ja"] h1 {
+        h1 {
           font-size: clamp(39px, 12vw, 68px);
           white-space: normal;
           letter-spacing: -0.02em;
         }
 
+        html[lang="ja"] h1 {
+          font-size: clamp(36px, 10.4vw, 60px);
+          letter-spacing: 0;
+        }
+
         .visual {
           width: 100%;
-          margin-top: 36px;
-          margin-left: 0;
+          margin: 36px 0 0;
           padding: 0 0 36px 28px;
         }
 
@@ -714,17 +696,24 @@
           display: none;
         }
 
-        h2,
-        html[lang="ja"] h2 {
-          font-size: clamp(62px, 17vw, 94px);
-          width: 100%;
+        .giant {
+          font-size: clamp(40px, 13vw, 60px);
+        }
+
+        html[lang="ja"] .giant {
+          font-size: clamp(30px, 9.6vw, 44px);
         }
 
         .section-copy {
           grid-template-columns: 48px minmax(0, 1fr);
           gap: 14px;
           margin-left: 0;
-          padding-top: 86px;
+          margin-top: 26px;
+        }
+
+        .steps {
+          margin-left: 0;
+          margin-top: 26px;
         }
 
         .section-icon {
@@ -738,6 +727,7 @@
         }
 
         .proof {
+          grid-template-columns: 1fr;
           margin-top: 54px;
         }
 
@@ -745,8 +735,12 @@
           min-height: auto;
         }
 
+        .proof-item h3 {
+          font-size: 21px;
+        }
+
         .step {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
           gap: 8px;
         }
 
@@ -811,9 +805,9 @@
       </div>
       <div class="hero-grid">
         <div class="hero-text">
-          <p class="kicker" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーユーティリティ">macOS menu-bar utility</p>
-          <h1 data-i18n data-en="Round the screen." data-ja="画面の角を丸くする。">Round the screen.</h1>
-          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや古い MacBook の角を、画面上のオーバーレイで丸く見せるメニューバーアプリです。アクセシビリティ権限と画面収録権限は使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
+          <p class="kicker" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーアプリ">macOS menu-bar utility</p>
+          <h1 data-i18n data-en="Round the screen." data-ja="画面の角を、<wbr>丸くする。">Round the screen.</h1>
+          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや<wbr>古い&nbsp;MacBook&nbsp;の角を、<wbr>画面上のオーバーレイで<wbr>丸く見せる<wbr>メニューバーアプリです。<wbr>アクセシビリティ権限も<wbr>画面収録権限も<wbr>使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
           <div class="actions">
             <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
             <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
@@ -828,8 +822,8 @@
 
     <main>
       <section class="section">
-        <div class="section-grid">
-          <h2 data-i18n data-en="Sharp corners are a small daily mismatch." data-ja="外部ディスプレイの<br>角を整える。">Sharp corners are a small daily mismatch.</h2>
+        <div class="section-inner">
+          <h2 class="giant" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
           <div class="section-copy">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
@@ -844,53 +838,53 @@
             </span>
             <div class="section-copy-text">
               <p class="section-label" data-i18n data-en="What it does" data-ja="できること">What it does</p>
-              <p class="body-large" data-i18n data-en="Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way." data-ja="Rounder は画面の四隅に小さなオーバーレイウィンドウを重ねます。設定はローカルに保存され、操作の邪魔にならないようメニューバーから使えます。">Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way.</p>
+              <p class="body-large" data-i18n data-en="Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar." data-ja="Rounder&nbsp;は<wbr>画面の四隅に<wbr>小さなオーバーレイを重ねて、<wbr>角だけを丸く見せます。<wbr>設定はローカルに保存され、<wbr>メニューバーから<wbr>静かに使えます。">Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar.</p>
             </div>
           </div>
-        </div>
-        <div class="proof">
-          <div class="proof-item">
-            <span>01</span>
-            <h3 data-i18n data-en="No extra privacy permissions" data-ja="追加のプライバシー権限なし">No extra privacy permissions</h3>
-            <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、自動化、ネットワークアクセスは不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
-          </div>
-          <div class="proof-item">
-            <span>02</span>
-            <h3 data-i18n data-en="Live settings" data-ja="即時反映">Live settings</h3>
-            <p data-i18n data-en="Radius, color, corner selection, presets, and glow changes apply while running." data-ja="半径、色、角の選択、プリセット、発光設定は起動中にそのまま反映されます。">Radius, color, corner selection, presets, and glow changes apply while running.</p>
-          </div>
-          <div class="proof-item">
-            <span>03</span>
-            <h3 data-i18n data-en="Multi-display" data-ja="マルチディスプレイ">Multi-display</h3>
-            <p data-i18n data-en="Choose which displays get rounded and keep external monitor desks consistent." data-ja="角丸にするディスプレイを選び、外部モニター環境の見た目を揃えられます。">Choose which displays get rounded and keep external monitor desks consistent.</p>
+          <div class="proof">
+            <div class="proof-item">
+              <span>01</span>
+              <h3 data-i18n data-en="No extra privacy permissions" data-ja="追加のプライバシー<wbr>権限なし">No extra privacy permissions</h3>
+              <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、<wbr>自動化、<wbr>ネットワークアクセスは<wbr>不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
+            </div>
+            <div class="proof-item">
+              <span>02</span>
+              <h3 data-i18n data-en="Live settings" data-ja="即時反映">Live settings</h3>
+              <p data-i18n data-en="Radius, color, corner selection, presets, and glow changes apply while running." data-ja="半径、色、角の選択、<wbr>プリセット、発光設定は<wbr>起動中に<wbr>そのまま反映されます。">Radius, color, corner selection, presets, and glow changes apply while running.</p>
+            </div>
+            <div class="proof-item">
+              <span>03</span>
+              <h3 data-i18n data-en="Multi-display" data-ja="マルチディスプレイ">Multi-display</h3>
+              <p data-i18n data-en="Choose which displays get rounded and keep external monitor desks consistent." data-ja="角丸にするディスプレイを選び、<wbr>外部モニター環境の<wbr>見た目を揃えられます。">Choose which displays get rounded and keep external monitor desks consistent.</p>
+            </div>
           </div>
         </div>
       </section>
 
       <section class="section black">
-        <div class="section-grid">
-          <h2 data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
+        <div class="section-inner">
+          <h2 class="giant" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps">
             <p class="section-label" data-i18n data-en="Controls" data-ja="設定項目">Controls</p>
             <div class="step">
               <strong data-i18n data-en="SET" data-ja="設定">SET</strong>
-              <p data-i18n data-en="Pick the displays, radius, shape, and corners you want." data-ja="対象ディスプレイ、半径、形状、表示する角を選びます。">Pick the displays, radius, shape, and corners you want.</p>
+              <p data-i18n data-en="Pick the displays, radius, shape, and corners you want." data-ja="対象ディスプレイ、半径、形状、<wbr>表示する角を選びます。">Pick the displays, radius, shape, and corners you want.</p>
             </div>
             <div class="step">
               <strong data-i18n data-en="SAVE" data-ja="保存">SAVE</strong>
-              <p data-i18n data-en="Use presets for subtle corners, all corners, or gaming glow setups." data-ja="保存した角丸設定をプリセットとして切り替えられます。">Use presets for subtle corners, all corners, or gaming glow setups.</p>
+              <p data-i18n data-en="Use presets for subtle corners, all corners, or gaming glow setups." data-ja="保存した角丸設定を<wbr>プリセットとして<wbr>切り替えられます。">Use presets for subtle corners, all corners, or gaming glow setups.</p>
             </div>
             <div class="step">
               <strong data-i18n data-en="LEAVE" data-ja="常駐">LEAVE</strong>
-              <p data-i18n data-en="Keep it in the menu bar. No Dock icon after setup." data-ja="セットアップ後は Dock に出ず、メニューバーに静かに常駐します。">Keep it in the menu bar. No Dock icon after setup.</p>
+              <p data-i18n data-en="Keep it in the menu bar. No Dock icon after setup." data-ja="セットアップ後は Dock に出ず、<wbr>メニューバーに<wbr>静かに常駐します。">Keep it in the menu bar. No Dock icon after setup.</p>
             </div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-grid">
-          <h2 data-i18n data-en="Install once. Open from the menu bar." data-ja="ダウンロードして<br>Applicationsへ。">Install once. Open from the menu bar.</h2>
+        <div class="section-inner">
+          <h2 class="giant" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
           <div class="section-copy">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
@@ -902,7 +896,7 @@
             </span>
             <div class="section-copy-text">
               <p class="section-label" data-i18n data-en="Install" data-ja="インストール">Install</p>
-              <p class="body-large" data-i18n data-en="Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature." data-ja="最新版をダウンロードし、Rounder.app をアプリケーションフォルダへ移動してください。初回起動時は右クリックして「開く」を選びます。有料 Developer ID 署名なしで配布しています。">Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature.</p>
+              <p class="body-large" data-i18n data-en="Download the latest release and move Rounder.app to Applications. The app is unsigned, so Gatekeeper asks once on first launch &mdash; right-click and choose Open." data-ja="最新リリースを<wbr>ダウンロードし、<wbr>Rounder.app&nbsp;を<wbr>アプリケーションフォルダへ<wbr>移動します。<wbr>未署名のため<wbr>初回のみ&nbsp;Gatekeeper&nbsp;の<wbr>確認が表示されます。<wbr>右クリックして<wbr>「開く」を選んでください。">Download the latest release and move Rounder.app to Applications. The app is unsigned, so Gatekeeper asks once on first launch &mdash; right-click and choose Open.</p>
               <div class="actions">
                 <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Latest release" data-ja="最新リリース">Latest release</a>
                 <a class="button" href="#faq" data-faq-open>FAQ</a>
@@ -914,7 +908,7 @@
 
       <section class="section faq-panel" id="faq" aria-live="polite">
         <div class="faq-header">
-          <h2>FAQ</h2>
+          <h2 class="giant">FAQ</h2>
           <button class="button ghost-button" type="button" data-faq-close data-i18n data-en="Close FAQ" data-ja="FAQを閉じる">Close FAQ</button>
         </div>
         <article class="faq-content" data-faq-content>Loading FAQ.md...</article>
