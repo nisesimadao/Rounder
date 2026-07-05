@@ -11,6 +11,7 @@
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#f7f4ee">
     <link rel="icon" href="assets/rounder-icon.png">
+    <script>document.documentElement.classList.add("js");</script>
     <style>
       :root {
         color-scheme: light;
@@ -758,6 +759,29 @@
         }
       }
 
+      /* Scroll-triggered reveal. Hidden state only applies when JS runs;
+         translateY only, so it can never cause horizontal overflow. */
+      html.js .reveal {
+        opacity: 0;
+        transform: translateY(26px);
+        transition:
+          opacity 700ms ease var(--reveal-delay, 0ms),
+          transform 700ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+      }
+
+      html.js .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html.js .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
       @keyframes marquee {
         from {
           transform: translateX(0);
@@ -805,15 +829,15 @@
       </div>
       <div class="hero-grid">
         <div class="hero-text">
-          <p class="kicker" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーアプリ">macOS menu-bar utility</p>
-          <h1 data-i18n data-en="Round the screen." data-ja="画面の角を、<wbr>丸くする。">Round the screen.</h1>
-          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや<wbr>古い&nbsp;MacBook&nbsp;の角を、<wbr>画面上のオーバーレイで<wbr>丸く見せる<wbr>メニューバーアプリです。<wbr>アクセシビリティ権限も<wbr>画面収録権限も<wbr>使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
-          <div class="actions">
+          <p class="kicker reveal" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーアプリ">macOS menu-bar utility</p>
+          <h1 class="reveal" style="--reveal-delay: 90ms" data-i18n data-en="Round the screen." data-ja="画面の角を、<wbr>丸くする。">Round the screen.</h1>
+          <p class="hero-copy reveal" style="--reveal-delay: 180ms" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや<wbr>古い&nbsp;MacBook&nbsp;の角を、<wbr>画面上のオーバーレイで<wbr>丸く見せる<wbr>メニューバーアプリです。<wbr>アクセシビリティ権限も<wbr>画面収録権限も<wbr>使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
+          <div class="actions reveal" style="--reveal-delay: 260ms">
             <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
             <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
           </div>
         </div>
-        <figure class="visual">
+        <figure class="visual reveal" style="--reveal-delay: 220ms">
           <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
           <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
         </figure>
@@ -823,8 +847,8 @@
     <main>
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
-          <div class="section-copy">
+          <h2 class="giant reveal" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
+          <div class="section-copy reveal" style="--reveal-delay: 140ms">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
                 <rect x="4" y="7" width="24" height="16" rx="2"></rect>
@@ -842,17 +866,17 @@
             </div>
           </div>
           <div class="proof">
-            <div class="proof-item">
+            <div class="proof-item reveal">
               <span>01</span>
               <h3 data-i18n data-en="No extra privacy permissions" data-ja="追加のプライバシー<wbr>権限なし">No extra privacy permissions</h3>
               <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、<wbr>自動化、<wbr>ネットワークアクセスは<wbr>不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
             </div>
-            <div class="proof-item">
+            <div class="proof-item reveal" style="--reveal-delay: 110ms">
               <span>02</span>
               <h3 data-i18n data-en="Live settings" data-ja="即時反映">Live settings</h3>
               <p data-i18n data-en="Radius, color, corner selection, presets, and glow changes apply while running." data-ja="半径、色、角の選択、<wbr>プリセット、発光設定は<wbr>起動中に<wbr>そのまま反映されます。">Radius, color, corner selection, presets, and glow changes apply while running.</p>
             </div>
-            <div class="proof-item">
+            <div class="proof-item reveal" style="--reveal-delay: 220ms">
               <span>03</span>
               <h3 data-i18n data-en="Multi-display" data-ja="マルチディスプレイ">Multi-display</h3>
               <p data-i18n data-en="Choose which displays get rounded and keep external monitor desks consistent." data-ja="角丸にするディスプレイを選び、<wbr>外部モニター環境の<wbr>見た目を揃えられます。">Choose which displays get rounded and keep external monitor desks consistent.</p>
@@ -863,8 +887,8 @@
 
       <section class="section black">
         <div class="section-inner">
-          <h2 class="giant" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
-          <div class="steps">
+          <h2 class="giant reveal" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
+          <div class="steps reveal" style="--reveal-delay: 140ms">
             <p class="section-label" data-i18n data-en="Controls" data-ja="設定項目">Controls</p>
             <div class="step">
               <strong data-i18n data-en="SET" data-ja="設定">SET</strong>
@@ -884,8 +908,8 @@
 
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
-          <div class="section-copy">
+          <h2 class="giant reveal" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
+          <div class="section-copy reveal" style="--reveal-delay: 140ms">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
                 <path d="M16 5v14"></path>
@@ -1054,6 +1078,20 @@
       });
 
       if (location.hash === "#faq") openFaq();
+
+      const revealElements = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+          });
+        }, { rootMargin: "0px 0px -10% 0px", threshold: 0.05 });
+        revealElements.forEach((element) => revealObserver.observe(element));
+      } else {
+        revealElements.forEach((element) => element.classList.add("is-visible"));
+      }
     </script>
   </body>
 </html>
