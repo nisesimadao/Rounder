@@ -531,31 +531,35 @@
         flex: none;
       }
 
+      /* The visible curve's nearest point to the true page corner sits on
+         the 45deg diagonal at 30px + mark-size * (1 - 1/sqrt(2)) -- not at
+         a flat inset -- since these arcs are gentle (large radius), a fixed
+         offset lands well inside empty space instead of touching the line. */
       .corner-mark-label--tl {
-        top: 26px;
-        left: 26px;
+        top: calc(30px + 0.2929 * var(--mark-size, 260px));
+        left: calc(30px + 0.2929 * var(--mark-size, 260px));
         transform: rotate(-45deg);
         transform-origin: left center;
       }
 
       .corner-mark-label--tr {
-        top: 26px;
-        right: 26px;
+        top: calc(30px + 0.2929 * var(--mark-size, 260px));
+        right: calc(30px + 0.2929 * var(--mark-size, 260px));
         flex-direction: row-reverse;
         transform: rotate(45deg);
         transform-origin: right center;
       }
 
       .corner-mark-label--bl {
-        bottom: 26px;
-        left: 26px;
+        bottom: calc(30px + 0.2929 * var(--mark-size, 260px));
+        left: calc(30px + 0.2929 * var(--mark-size, 260px));
         transform: rotate(45deg);
         transform-origin: left center;
       }
 
       .corner-mark-label--br {
-        bottom: 26px;
-        right: 26px;
+        bottom: calc(30px + 0.2929 * var(--mark-size, 260px));
+        right: calc(30px + 0.2929 * var(--mark-size, 260px));
         flex-direction: row-reverse;
         transform: rotate(-45deg);
         transform-origin: right center;
@@ -580,10 +584,10 @@
         .corner-mark--bl { border-radius: 0 0 0 calc(var(--mark-size, 260px) * 0.6); }
         .corner-mark--br { border-radius: 0 0 calc(var(--mark-size, 260px) * 0.6) 0; }
 
-        .corner-mark-label--tl { top: 18px; left: 18px; }
-        .corner-mark-label--tr { top: 18px; right: 18px; }
-        .corner-mark-label--bl { bottom: 18px; left: 18px; }
-        .corner-mark-label--br { bottom: 18px; right: 18px; }
+        .corner-mark-label--tl { top: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); left: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); }
+        .corner-mark-label--tr { top: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); right: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); }
+        .corner-mark-label--bl { bottom: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); left: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); }
+        .corner-mark-label--br { bottom: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); right: calc(30px + 0.2929 * 0.6 * var(--mark-size, 260px)); }
       }
 
       .section-inner {
@@ -1192,7 +1196,7 @@
     <main>
       <section class="section section-rounded">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 260px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 24</span>
+        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 260px" aria-hidden="true">R 24</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1234,7 +1238,7 @@
 
       <section class="section black section-rounded section-tucked">
         <div class="corner-mark corner-mark--bl" style="--mark-size: 320px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 40</span>
+        <span class="corner-mark-label corner-mark-label--bl" style="--mark-size: 320px" aria-hidden="true">R 40</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Under the hood." data-ja="仕組みの話。">Under the hood.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1277,7 +1281,7 @@
 
       <section class="section section-rounded section-tucked">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 220px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 8</span>
+        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 220px" aria-hidden="true">R 8</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Nothing leaves this Mac." data-ja="データは、<wbr>外に出ない。">Nothing leaves this Mac.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1304,7 +1308,7 @@
 
       <section class="section black section-rounded section-tucked">
         <div class="corner-mark corner-mark--bl" style="--mark-size: 300px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 32</span>
+        <span class="corner-mark-label corner-mark-label--bl" style="--mark-size: 300px" aria-hidden="true">R 32</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps reveal" style="--reveal-delay: 140ms">
@@ -1327,7 +1331,7 @@
 
       <section class="section section-rounded section-tucked">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 240px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 20</span>
+        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 240px" aria-hidden="true">R 20</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Changelog." data-ja="更新履歴。">Changelog.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1353,7 +1357,7 @@
 
       <section class="section section-tucked">
         <div class="corner-mark corner-mark--br" style="--mark-size: 280px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--br" aria-hidden="true">R 16</span>
+        <span class="corner-mark-label corner-mark-label--br" style="--mark-size: 280px" aria-hidden="true">R 16</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1586,6 +1590,62 @@
         revealElements.forEach((element) => revealObserver.observe(element));
       } else {
         revealElements.forEach((element) => element.classList.add("is-visible"));
+      }
+
+      // Wheel-driven momentum scroll: mouse wheels move the page in coarse,
+      // discrete notches by default, unlike a trackpad's native inertia.
+      // This smooths every wheel input to the same eased, continuous feel
+      // without touching touch scrolling (no wheel events there) or
+      // keyboard scrolling (untouched, still native).
+      if (!reducedMotion.matches) {
+        let currentScroll = window.scrollY;
+        let targetScroll = currentScroll;
+        let momentumActive = false;
+        const ease = 0.14;
+
+        function maxScrollTop() {
+          return document.documentElement.scrollHeight - window.innerHeight;
+        }
+
+        function normalizeWheelDelta(event) {
+          let delta = event.deltaY;
+          if (event.deltaMode === 1) delta *= 18;
+          else if (event.deltaMode === 2) delta *= window.innerHeight;
+          return Math.max(-140, Math.min(140, delta));
+        }
+
+        function stepMomentum() {
+          currentScroll += (targetScroll - currentScroll) * ease;
+          if (Math.abs(targetScroll - currentScroll) < 0.5) {
+            currentScroll = targetScroll;
+            window.scrollTo({ top: currentScroll, left: 0, behavior: "auto" });
+            momentumActive = false;
+            return;
+          }
+          window.scrollTo({ top: currentScroll, left: 0, behavior: "auto" });
+          requestAnimationFrame(stepMomentum);
+        }
+
+        window.addEventListener(
+          "wheel",
+          (event) => {
+            if (event.ctrlKey || event.target.closest("pre")) return;
+            if (!momentumActive) {
+              // Nothing of ours is animating, so anything could have moved
+              // the page since (keyboard, an anchor jump, scrollIntoView) --
+              // resync fully instead of accumulating onto a stale target.
+              currentScroll = window.scrollY;
+              targetScroll = currentScroll;
+            }
+            targetScroll = Math.max(0, Math.min(maxScrollTop(), targetScroll + normalizeWheelDelta(event)));
+            event.preventDefault();
+            if (!momentumActive) {
+              momentumActive = true;
+              requestAnimationFrame(stepMomentum);
+            }
+          },
+          { passive: false }
+        );
       }
     </script>
   </body>
