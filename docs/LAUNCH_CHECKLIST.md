@@ -18,12 +18,12 @@ Use this before sharing a new Rounder release publicly.
 - [ ] Capture one before/after screenshot on an external monitor.
 - [ ] Capture one short demo clip or GIF showing live radius changes.
 - [ ] Capture one gaming-mode clip if promoting the fun angle.
-- [ ] Follow `docs/DEMO_ASSETS.md` and keep final assets small enough to load quickly on GitHub.
+- [ ] Follow `DEMO_ASSETS.md` and keep final assets small enough to load quickly on GitHub.
 - [ ] Update `Rounder/SCREENSHOT.png` only if the current UI changed materially.
 
 ## Release Notes
 
-- [ ] Draft the GitHub release body from `docs/RELEASE_NOTES_TEMPLATE.md`.
+- [ ] Draft the GitHub release body from `RELEASE_NOTES_TEMPLATE.md`.
 - [ ] Include the unsigned-app Gatekeeper note.
 - [ ] Mention the macOS version tested locally.
 
@@ -38,7 +38,7 @@ Use this before sharing a new Rounder release publicly.
 
 ## Posting
 
-- [ ] Use `docs/SOCIAL_POSTS.md` as the starting point.
+- [ ] Use `SOCIAL_POSTS.md` as the starting point.
 - [ ] Lead with the problem: external monitors still have sharp corners.
 - [ ] Mention no Accessibility or Screen Recording permission.
 - [ ] Include the download link.

@@ -1,4 +1,4 @@
-Rounder 開発仕様書.md
+/Rounder 開発仕様書.md
 /Build
 /build
 tmp/
@@ -7,4 +7,4 @@ tmp/
 showhn.md
 hn_success_guide.md
 Rounder/rounderapp_old.swift
-UPGRADE_GUIDE.md
+/UPGRADE_GUIDE.md

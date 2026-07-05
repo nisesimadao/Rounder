@@ -3,195 +3,723 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rounder</title>
-    <meta name="description" content="Rounder adds software rounded corners to macOS external displays and older Macs.">
+    <title>Rounder - Rounded corners for macOS displays</title>
+    <meta name="description" content="Rounder is a small macOS menu-bar app that adds software rounded corners to external displays and older Macs.">
     <meta property="og:title" content="Rounder">
-    <meta property="og:description" content="A small menu-bar app for rounded macOS screen corners.">
+    <meta property="og:description" content="Rounded screen corners for macOS. No Accessibility permission. No Screen Recording.">
     <meta property="og:image" content="https://nisesimadao.github.io/Rounder/assets/rounder-social-preview.png">
     <meta property="og:type" content="website">
+    <meta name="theme-color" content="#111417">
+    <link rel="icon" href="assets/rounder-icon.png">
     <style>
       :root {
-        color-scheme: light dark;
-        --bg: #f7f7f4;
-        --text: #191b1f;
-        --muted: #5e636b;
-        --line: #d9d7cf;
-        --accent: #1d6f8f;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #151619;
-          --text: #f1f1ec;
-          --muted: #b1b4b9;
-          --line: #34373d;
-          --accent: #80c7dc;
-        }
+        color-scheme: light;
+        --ink: #111417;
+        --soft-ink: #2d3339;
+        --muted: #68717a;
+        --paper: #f3efe6;
+        --paper-2: #e7e1d5;
+        --line: #d3cbbd;
+        --cyan: #00a4bd;
+        --pink: #d952ad;
+        --cream: #fffaf0;
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.55;
-      }
-
-      main {
-        width: min(960px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 48px 0 56px;
-      }
-
-      header {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-        gap: 40px;
-        align-items: center;
-        padding-bottom: 40px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      h1 {
-        margin: 0 0 16px;
-        font-size: clamp(42px, 8vw, 72px);
-        line-height: 1;
-        letter-spacing: 0;
-      }
-
-      h2 {
-        margin: 36px 0 12px;
-        font-size: 22px;
-      }
-
-      p {
-        margin: 0 0 18px;
-        color: var(--muted);
-        font-size: 18px;
-      }
-
-      ul {
-        margin: 0;
-        padding-left: 20px;
-        color: var(--muted);
-      }
-
-      li + li {
-        margin-top: 8px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", system-ui, sans-serif;
+        line-height: 1.5;
       }
 
       a {
-        color: var(--accent);
-        text-decoration-thickness: 1px;
-        text-underline-offset: 3px;
+        color: inherit;
+      }
+
+      .topbar {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px clamp(18px, 4vw, 58px);
+        color: var(--cream);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 24px;
+        font-size: 14px;
+        font-weight: 800;
+        color: rgba(255, 250, 240, 0.82);
+      }
+
+      .nav a {
+        text-decoration: none;
+      }
+
+      .hero {
+        min-height: 94svh;
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        align-items: center;
+        background:
+          radial-gradient(circle at 78% 30%, rgba(0, 164, 189, 0.28), transparent 27rem),
+          radial-gradient(circle at 90% 82%, rgba(217, 82, 173, 0.20), transparent 22rem),
+          linear-gradient(135deg, #101317, #1b2025 62%, #182329);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 18svh;
+        background: linear-gradient(0deg, var(--paper), transparent);
+      }
+
+      .hero-inner {
+        position: relative;
+        z-index: 2;
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 120px 0 86px;
+        display: grid;
+        grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr);
+        gap: clamp(36px, 6vw, 90px);
+        align-items: center;
+      }
+
+      .eyebrow {
+        margin: 0 0 20px;
+        color: #83e8f3;
+        font-size: 13px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--cream);
+        font-size: clamp(64px, 11vw, 138px);
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 560px;
+        margin: 28px 0 0;
+        color: rgba(255, 250, 240, 0.78);
+        font-size: clamp(19px, 2.2vw, 27px);
       }
 
       .actions {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin-top: 24px;
+        margin-top: 34px;
       }
 
       .button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 44px;
-        padding: 0 16px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        color: var(--text);
+        min-height: 46px;
+        padding: 0 18px;
+        border: 1px solid rgba(255, 250, 240, 0.26);
+        border-radius: 8px;
+        color: var(--cream);
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 850;
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 250, 240, 0.62);
       }
 
       .button.primary {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: #fff;
+        background: var(--cream);
+        color: var(--ink);
+        border-color: var(--cream);
       }
 
-      .preview {
-        width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 8px;
+      .display-demo {
+        position: relative;
+        aspect-ratio: 1.42;
+        min-height: 390px;
+        animation: riseIn 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .hero-shot {
+        position: relative;
+        margin: 0;
+        animation: riseIn 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .hero-shot::before {
+        content: "";
+        position: absolute;
+        inset: 12% -5% -9% 10%;
+        border-radius: 38px;
+        background: linear-gradient(135deg, rgba(0, 164, 189, 0.32), rgba(217, 82, 173, 0.22));
+        filter: blur(34px);
+      }
+
+      .hero-shot img {
+        position: relative;
         display: block;
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 22px;
+        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
       }
 
-      .grid {
+      .hero-shot figcaption {
+        position: relative;
+        margin-top: 14px;
+        color: rgba(255, 250, 240, 0.58);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .display {
+        position: absolute;
+        inset: 8% 0 8% 4%;
+        border-radius: 30px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 36%),
+          #0a0d10;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
+        overflow: hidden;
+      }
+
+      .display::before {
+        content: "";
+        position: absolute;
+        inset: 54px 58px 58px;
+        border: 3px solid #77dce9;
+        border-radius: 3px;
+        opacity: 0.9;
+      }
+
+      .display::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 28%;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.55), transparent);
+      }
+
+      .corner {
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        z-index: 2;
+        border: 6px solid transparent;
+        filter: drop-shadow(0 0 14px rgba(255, 250, 240, 0.18));
+      }
+
+      .corner::before {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border: 3px solid transparent;
+        opacity: 0.72;
+      }
+
+      .tl,
+      .tl::before {
+        border-top-color: var(--cream);
+        border-left-color: var(--cream);
+        border-top-left-radius: 34px;
+      }
+
+      .tr,
+      .tr::before {
+        border-top-color: var(--cream);
+        border-right-color: var(--cream);
+        border-top-right-radius: 34px;
+      }
+
+      .bl,
+      .bl::before {
+        border-bottom-color: var(--cream);
+        border-left-color: var(--cream);
+        border-bottom-left-radius: 34px;
+      }
+
+      .br,
+      .br::before {
+        border-right-color: var(--cream);
+        border-bottom-color: var(--cream);
+        border-bottom-right-radius: 34px;
+      }
+
+      .tl,
+      .bl {
+        left: 58px;
+      }
+
+      .tr,
+      .br {
+        right: 58px;
+      }
+
+      .tl,
+      .tr {
+        top: 54px;
+      }
+
+      .bl,
+      .br {
+        bottom: 58px;
+      }
+
+      .tl::before,
+      .tr::before,
+      .bl::before,
+      .br::before {
+        border-color: transparent;
+      }
+
+      .tl::before {
+        border-top-color: var(--cyan);
+        border-left-color: var(--cyan);
+      }
+
+      .tr::before {
+        border-top-color: var(--cyan);
+        border-right-color: var(--cyan);
+      }
+
+      .bl::before {
+        border-bottom-color: var(--cyan);
+        border-left-color: var(--cyan);
+      }
+
+      .br::before {
+        border-right-color: var(--cyan);
+        border-bottom-color: var(--cyan);
+      }
+
+      .tl,
+      .tr,
+      .bl,
+      .br {
+        z-index: 2;
+      }
+
+      .corner::after {
+        display: none;
+      }
+
+      .settings-panel {
+        position: absolute;
+        right: 28px;
+        bottom: 0;
+        z-index: 3;
+        width: min(330px, 56%);
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        background: rgba(28, 33, 38, 0.88);
+        color: var(--cream);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      }
+
+      .panel-title {
+        margin: 0 0 18px;
+        font-size: 15px;
+        font-weight: 850;
+      }
+
+      .control-row {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 32px;
+        grid-template-columns: 74px 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-top: 14px;
+        color: rgba(255, 250, 240, 0.72);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .track {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        overflow: hidden;
+      }
+
+      .fill {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--cyan), var(--pink));
+      }
+
+      main {
+        position: relative;
+        z-index: 3;
+      }
+
+      .section {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 82px 0;
+      }
+
+      .intro {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: clamp(32px, 7vw, 96px);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(34px, 5vw, 62px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(18px, 2vw, 23px);
+      }
+
+      .rule-list {
+        display: grid;
+        gap: 22px;
+        margin-top: 34px;
+      }
+
+      .rule {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 22px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      .rule strong {
+        color: var(--accent, #007f99);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .rule p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .band {
+        background: #111417;
+        color: var(--cream);
+      }
+
+      .band-inner {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 82px 0;
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: clamp(32px, 7vw, 92px);
+        align-items: center;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .feature {
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 250, 240, 0.18);
+      }
+
+      .feature h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .feature p {
+        margin: 0;
+        color: rgba(255, 250, 240, 0.68);
+      }
+
+      .install {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: center;
+        padding-bottom: 92px;
+      }
+
+      .terminal {
+        margin: 0;
+        padding: 24px;
+        background: #191d22;
+        color: #d8f8ff;
+        border-radius: 8px;
+        overflow: auto;
+        white-space: pre-wrap;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
       }
 
       code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.95em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        font-size: 14px;
       }
 
       footer {
-        margin-top: 40px;
-        padding-top: 24px;
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 26px 0 40px;
         border-top: 1px solid var(--line);
         color: var(--muted);
         font-size: 14px;
       }
 
-      @media (max-width: 760px) {
-        main {
-          width: min(100% - 28px, 960px);
-          padding-top: 28px;
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(18px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 1ms !important;
+          scroll-behavior: auto !important;
+          transition-duration: 1ms !important;
+        }
+      }
+
+      @media (max-width: 880px) {
+        .topbar {
+          position: absolute;
         }
 
-        header,
-        .grid {
+        .nav {
+          display: none;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .hero-inner,
+        .intro,
+        .band-inner,
+        .install {
           grid-template-columns: 1fr;
         }
 
-        header {
-          gap: 24px;
+        .hero-inner {
+          width: min(100% - 28px, 1120px);
+          padding: 118px 0 70px;
+        }
+
+        .display-demo {
+          min-height: 310px;
+          order: -1;
+          margin-top: 18px;
+        }
+
+        .settings-panel {
+          width: 74%;
+          right: 10px;
+        }
+
+        .section,
+        .band-inner,
+        footer {
+          width: min(100% - 28px, 1120px);
+        }
+
+        .section,
+        .band-inner {
+          padding: 60px 0;
+        }
+
+        .rule {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .display-demo {
+          min-height: 260px;
+        }
+
+        .display {
+          inset: 8% 0 10%;
+        }
+
+        .display::before {
+          inset: 38px 34px 48px;
+        }
+
+        .corner {
+          width: 66px;
+          height: 66px;
+          border-width: 4px;
+        }
+
+        .tl,
+        .tr {
+          top: 38px;
+        }
+
+        .bl,
+        .br {
+          bottom: 48px;
+        }
+
+        .tl,
+        .bl {
+          left: 34px;
+        }
+
+        .tr,
+        .br {
+          right: 34px;
+        }
+
+        .settings-panel {
+          display: none;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <header>
+    <nav class="topbar" aria-label="Primary navigation">
+      <a class="brand" href="#">
+        <img src="assets/rounder-icon.png" alt="">
+        <span>Rounder</span>
+      </a>
+      <div class="nav">
+        <a href="#why">Why</a>
+        <a href="#details">Details</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/nisesimadao/Rounder">GitHub</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-inner">
         <div>
+          <p class="eyebrow">macOS menu-bar utility</p>
           <h1>Rounder</h1>
-          <p>A small macOS menu-bar app that adds software rounded corners to external displays and older Macs.</p>
+          <p class="hero-copy">Software rounded corners for external displays and older Macs. No Accessibility permission, no Screen Recording, no restart.</p>
           <div class="actions">
-            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest">Download</a>
-            <a class="button" href="https://github.com/nisesimadao/Rounder">Source</a>
+            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest">Download Rounder</a>
+            <a class="button" href="https://github.com/nisesimadao/Rounder">View source</a>
           </div>
         </div>
-        <img class="preview" src="assets/rounder-social-preview.png" alt="Rounder preview image">
-      </header>
 
-      <section class="grid" aria-label="Project details">
+        <figure class="hero-shot">
+          <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
+          <figcaption>Actual display corner with Rounder enabled.</figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <main>
+      <section class="section intro" id="why">
         <div>
-          <h2>What It Does</h2>
-          <ul>
-            <li>Rounds screen corners without Accessibility or Screen Recording permission.</li>
-            <li>Supports external monitors and multi-display setups.</li>
-            <li>Applies radius, color, corner, preset, and gaming glow changes live.</li>
-          </ul>
+          <h2>Sharp display corners, softened in software.</h2>
         </div>
         <div>
-          <h2>Install</h2>
-          <p>Download <code>Rounder.zip</code>, unzip it, and move <code>Rounder.app</code> to Applications.</p>
-          <p>The app is unsigned. On first launch, right-click the app and choose <strong>Open</strong>.</p>
+          <p class="lead">Rounder draws lightweight overlay windows at the screen corners. It is built for external monitors, multi-display desks, and older MacBooks that do not have physically rounded panels.</p>
+          <div class="rule-list">
+            <div class="rule">
+              <strong>Private</strong>
+              <p>Runs locally and stores settings in UserDefaults. No telemetry, no network dependency.</p>
+            </div>
+            <div class="rule">
+              <strong>Instant</strong>
+              <p>Radius, color, corner selection, presets, and gaming glow update while the app is running.</p>
+            </div>
+            <div class="rule">
+              <strong>Quiet</strong>
+              <p>Lives in the menu bar and keeps out of the Dock after setup.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <footer>
-        macOS 14.6 or later. Built with SwiftUI and AppKit.
-      </footer>
+      <section class="band" id="details">
+        <div class="band-inner">
+          <h2>Small surface area, enough control.</h2>
+          <div class="feature-list">
+            <div class="feature">
+              <h3>Per-corner control</h3>
+              <p>Enable only the corners you need, then tune radius and shape from one settings window.</p>
+            </div>
+            <div class="feature">
+              <h3>Multi-monitor aware</h3>
+              <p>Choose the displays Rounder covers. Newly connected monitors are picked up automatically.</p>
+            </div>
+            <div class="feature">
+              <h3>Gaming glow</h3>
+              <p>A controlled rainbow glow mode for setups where subtle is not the point.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section install" id="install">
+        <div>
+          <h2>Install the app, open once, then leave it in the menu bar.</h2>
+        </div>
+        <pre class="terminal"><code>1. Download Rounder.zip
+2. Move Rounder.app to Applications
+3. Right-click and choose Open on first launch</code></pre>
+      </section>
     </main>
+
+    <footer>
+      macOS 14.6 or later. Built with SwiftUI and AppKit.
+    </footer>
   </body>
 </html>

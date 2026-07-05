@@ -27,7 +27,7 @@ Download the latest build from [Releases](https://github.com/nisesimadao/Rounder
 
 - `Rounder.zip` — the app
 
-Rounder is currently distributed as an unsigned app. If macOS blocks the first launch, right-click `Rounder.app`, choose **Open**, then **Open** again. See [FAQ](./FAQ.md) for details.
+Rounder is currently distributed as an unsigned app. If macOS blocks the first launch, right-click `Rounder.app`, choose **Open**, then **Open** again. See [FAQ](./docs/FAQ.md) for details.
 
 ## Why Rounder?
 
@@ -126,11 +126,11 @@ Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/re
 
 ## Project Docs
 
-- [Changelog](./CHANGELOG.md)
-- [FAQ](./FAQ.md)
-- [Privacy](./PRIVACY.md)
-- [Security](./SECURITY.md)
-- [Contributing](./CONTRIBUTING.md)
+- [Changelog](./docs/CHANGELOG.md)
+- [FAQ](./docs/FAQ.md)
+- [Privacy](./docs/PRIVACY.md)
+- [Security](./docs/SECURITY.md)
+- [Contributing](./docs/CONTRIBUTING.md)
 - [Demo asset checklist](./docs/DEMO_ASSETS.md)
 - [Launch checklist](./docs/LAUNCH_CHECKLIST.md)
 - [License](./LICENSE)

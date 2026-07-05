@@ -27,7 +27,7 @@ Notch導入以前のMacBookや、角が直線的な外部モニターに、ソ�
 
 - `Rounder.zip` — アプリ本体
 
-Rounder は現在、有料 Developer ID 署名なしで配布しています。初回起動時に macOS にブロックされた場合は、`Rounder.app` を右クリックして **開く** → **開く** を選んでください。詳しくは [FAQ](./FAQ.md) を参照してください。
+Rounder は現在、有料 Developer ID 署名なしで配布しています。初回起動時に macOS にブロックされた場合は、`Rounder.app` を右クリックして **開く** → **開く** を選んでください。詳しくは [FAQ](./docs/FAQ.md) を参照してください。
 
 ## Rounder の良さ
 
@@ -126,11 +126,11 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 
 ## プロジェクト文書
 
-- [Changelog](./CHANGELOG.md)
-- [FAQ](./FAQ.md)
-- [Privacy](./PRIVACY.md)
-- [Security](./SECURITY.md)
-- [Contributing](./CONTRIBUTING.md)
+- [Changelog](./docs/CHANGELOG.md)
+- [FAQ](./docs/FAQ.md)
+- [Privacy](./docs/PRIVACY.md)
+- [Security](./docs/SECURITY.md)
+- [Contributing](./docs/CONTRIBUTING.md)
 - [Demo asset checklist](./docs/DEMO_ASSETS.md)
 - [Launch checklist](./docs/LAUNCH_CHECKLIST.md)
 - [License](./LICENSE)

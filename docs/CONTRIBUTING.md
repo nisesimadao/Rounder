@@ -40,4 +40,3 @@ Before opening a PR:
 ## Release Notes
 
 User-facing changes should update `CHANGELOG.md`.
-

@@ -27,4 +27,4 @@ Rounder is currently distributed without a paid Developer ID signature.
 ## Links
 
 - README: https://github.com/nisesimadao/Rounder
-- Changelog: https://github.com/nisesimadao/Rounder/blob/main/CHANGELOG.md
+- Changelog: https://github.com/nisesimadao/Rounder/blob/main/docs/CHANGELOG.md
