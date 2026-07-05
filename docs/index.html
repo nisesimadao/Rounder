@@ -313,7 +313,7 @@
         cursor: pointer;
       }
 
-      /* ---- Hero visual: monitor mock with four software-rounded corners ---- */
+      /* ---- Hero visual: the actual photographed corner ---- */
       .visual {
         position: relative;
         margin: -64px 0 0 auto;
@@ -322,7 +322,7 @@
       }
 
       .visual::before {
-        content: "SOFTWARE CORNER MASKS";
+        content: "ACTUAL DISPLAY CORNER";
         position: absolute;
         top: 16px;
         left: 0;
@@ -337,7 +337,7 @@
       }
 
       .visual::after {
-        content: "GLOW OPTIONAL / LIVE SETTINGS";
+        content: "NO EXTRA PRIVACY PERMISSIONS / LIVE SETTINGS";
         position: absolute;
         right: 18px;
         bottom: 18px;
@@ -351,81 +351,19 @@
       }
 
       html[lang="ja"] .visual::before {
-        content: "ソフトウェアの角丸マスク";
+        content: "実際の画面角";
       }
 
       html[lang="ja"] .visual::after {
-        content: "発光はオプション / 即時反映";
+        content: "追加のプライバシー権限なし / 即時反映";
       }
 
-      .mock-screen {
-        --r: clamp(36px, 5.4vw, 68px);
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 16 / 10;
+      .visual img {
+        display: block;
+        width: 100%;
         border: 2px solid var(--ink);
-        background: #0d1727;
         box-shadow: 18px 18px 0 var(--mist);
       }
-
-      .mock-wallpaper {
-        position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(115% 95% at 18% -5%, rgba(80, 158, 188, 0.5), transparent 56%),
-          radial-gradient(130% 110% at 85% 108%, rgba(56, 106, 184, 0.55), transparent 62%),
-          linear-gradient(160deg, #20344c, #0d1727);
-      }
-
-      .mock-menubar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        height: clamp(18px, 2.4vw, 28px);
-        padding: 0 14px;
-        background: rgba(255, 255, 255, 0.12);
-      }
-
-      .mock-menubar i {
-        display: block;
-        height: 5px;
-        border-radius: 3px;
-        background: rgba(255, 255, 255, 0.4);
-      }
-
-      .mock-menubar i:nth-child(1) { width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); }
-      .mock-menubar i:nth-child(2) { width: 32px; }
-      .mock-menubar i:nth-child(3) { width: 20px; }
-      .mock-menubar i:nth-child(4) { width: 24px; }
-
-      .mock-menubar .spacer {
-        flex: 1;
-      }
-
-      .mock-menubar .status {
-        width: 9px;
-        height: 9px;
-        border-radius: 3px;
-        background: #8ce9f3;
-        box-shadow: 0 0 8px rgba(140, 233, 243, 0.8);
-      }
-
-      .mock-corner {
-        position: absolute;
-        z-index: 3;
-        width: var(--r);
-        height: var(--r);
-      }
-
-      .mock-corner.tl { top: 0; left: 0; background: radial-gradient(circle var(--r) at 100% 100%, transparent calc(var(--r) - 8px), rgba(140, 233, 243, 0.55) calc(var(--r) - 6px), rgba(140, 233, 243, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
-      .mock-corner.tr { top: 0; right: 0; background: radial-gradient(circle var(--r) at 0% 100%, transparent calc(var(--r) - 8px), rgba(140, 233, 243, 0.55) calc(var(--r) - 6px), rgba(140, 233, 243, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
-      .mock-corner.bl { bottom: 0; left: 0; background: radial-gradient(circle var(--r) at 100% 0%, transparent calc(var(--r) - 8px), rgba(140, 233, 243, 0.55) calc(var(--r) - 6px), rgba(140, 233, 243, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
-      .mock-corner.br { bottom: 0; right: 0; background: radial-gradient(circle var(--r) at 0% 0%, transparent calc(var(--r) - 8px), rgba(140, 233, 243, 0.55) calc(var(--r) - 6px), rgba(140, 233, 243, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
 
       .visual figcaption {
         margin: 14px 0 0;
@@ -485,16 +423,6 @@
         font-weight: 700;
       }
 
-      .duo {
-        position: relative;
-        z-index: 1;
-        display: grid;
-        grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-        gap: clamp(28px, 5vw, 72px);
-        align-items: center;
-        margin-top: clamp(-64px, -3.5vw, -16px);
-      }
-
       .section-label {
         margin: 0 0 22px;
         color: var(--cyan);
@@ -502,45 +430,6 @@
         font-weight: 950;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-      }
-
-      .real-shot {
-        position: relative;
-        margin: 0;
-        padding: 0 0 24px 54px;
-      }
-
-      .real-shot::before {
-        content: "ACTUAL DISPLAY CORNER";
-        position: absolute;
-        top: 16px;
-        left: 0;
-        z-index: 3;
-        padding: 10px 12px;
-        background: var(--paper);
-        writing-mode: vertical-rl;
-        color: var(--ink);
-        font-size: 13px;
-        font-weight: 950;
-        letter-spacing: 0.08em;
-      }
-
-      html[lang="ja"] .real-shot::before {
-        content: "実際の画面角";
-      }
-
-      .real-shot img {
-        display: block;
-        width: 100%;
-        border: 2px solid var(--ink);
-        box-shadow: 14px 14px 0 var(--mist);
-      }
-
-      .real-shot figcaption {
-        margin: 14px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 800;
       }
 
       .proof {
@@ -816,8 +705,7 @@
           padding: 0 0 36px 28px;
         }
 
-        .visual::before,
-        .real-shot::before {
+        .visual::before {
           left: -2px;
           font-size: 10px;
         }
@@ -828,8 +716,7 @@
           font-size: 10px;
         }
 
-        .mock-screen {
-          --r: clamp(30px, 8.4vw, 44px);
+        .visual img {
           box-shadow: 10px 10px 0 var(--mist);
         }
 
@@ -847,19 +734,6 @@
 
         html[lang="ja"] .giant {
           font-size: clamp(30px, 9.6vw, 44px);
-        }
-
-        .duo {
-          grid-template-columns: minmax(0, 1fr);
-          margin-top: 26px;
-        }
-
-        .real-shot {
-          padding: 0 0 24px 28px;
-        }
-
-        .real-shot img {
-          box-shadow: 10px 10px 0 var(--mist);
         }
 
         .section-copy {
@@ -972,19 +846,8 @@
           </div>
         </div>
         <figure class="visual reveal" style="--reveal-delay: 220ms">
-          <div class="mock-screen" aria-hidden="true">
-            <div class="mock-wallpaper"></div>
-            <div class="mock-menubar">
-              <i></i><i></i><i></i><i></i>
-              <span class="spacer"></span>
-              <span class="status"></span>
-            </div>
-            <span class="mock-corner tl"></span>
-            <span class="mock-corner tr"></span>
-            <span class="mock-corner bl"></span>
-            <span class="mock-corner br"></span>
-          </div>
-          <figcaption data-i18n data-en="Corner masks drawn as lightweight overlay windows." data-ja="軽量なオーバーレイウィンドウとして描画される角丸マスク。">Corner masks drawn as lightweight overlay windows.</figcaption>
+          <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
+          <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
         </figure>
       </div>
     </header>
@@ -992,16 +855,23 @@
     <main>
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant" data-slide="left" data-i18n data-en="The real corner." data-ja="これが実際の<wbr>画面の角。">The real corner.</h2>
-          <div class="duo">
-            <div class="reveal">
+          <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
+          <div class="section-copy reveal" style="--reveal-delay: 140ms">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <rect x="4" y="7" width="24" height="16" rx="2"></rect>
+                <path d="M11 27h10"></path>
+                <path d="M16 23v4"></path>
+                <path d="M9 11h6"></path>
+                <path d="M9 11v6"></path>
+                <path d="M23 19h-6"></path>
+                <path d="M23 19v-6"></path>
+              </svg>
+            </span>
+            <div class="section-copy-text">
               <p class="section-label" data-i18n data-en="What it does" data-ja="できること">What it does</p>
               <p class="body-large" data-i18n data-en="Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar." data-ja="Rounder&nbsp;は<wbr>画面の四隅に<wbr>小さなオーバーレイを重ねて、<wbr>角だけを丸く見せます。<wbr>設定はローカルに保存され、<wbr>メニューバーから<wbr>静かに使えます。">Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar.</p>
             </div>
-            <figure class="real-shot reveal" style="--reveal-delay: 140ms">
-              <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
-              <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
-            </figure>
           </div>
           <div class="proof">
             <div class="proof-item reveal">
