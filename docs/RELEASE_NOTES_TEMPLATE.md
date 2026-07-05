@@ -9,13 +9,6 @@
 ## Download
 
 - `Rounder.zip`
-- `Rounder.zip.sha256`
-
-Verify the download:
-
-```bash
-shasum -a 256 -c Rounder.zip.sha256
-```
 
 ## Install
 

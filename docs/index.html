@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rounder</title>
+    <meta name="description" content="Rounder adds software rounded corners to macOS external displays and older Macs.">
+    <meta property="og:title" content="Rounder">
+    <meta property="og:description" content="A small menu-bar app for rounded macOS screen corners.">
+    <meta property="og:image" content="https://nisesimadao.github.io/Rounder/assets/rounder-social-preview.png">
+    <meta property="og:type" content="website">
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f4;
+        --text: #191b1f;
+        --muted: #5e636b;
+        --line: #d9d7cf;
+        --accent: #1d6f8f;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #151619;
+          --text: #f1f1ec;
+          --muted: #b1b4b9;
+          --line: #34373d;
+          --accent: #80c7dc;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      main {
+        width: min(960px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 48px 0 56px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+        gap: 40px;
+        align-items: center;
+        padding-bottom: 40px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(42px, 8vw, 72px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 36px 0 12px;
+        font-size: 22px;
+      }
+
+      p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--muted);
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .preview {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: block;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 32px;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.95em;
+      }
+
+      footer {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: min(100% - 28px, 960px);
+          padding-top: 28px;
+        }
+
+        header,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          gap: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Rounder</h1>
+          <p>A small macOS menu-bar app that adds software rounded corners to external displays and older Macs.</p>
+          <div class="actions">
+            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest">Download</a>
+            <a class="button" href="https://github.com/nisesimadao/Rounder">Source</a>
+          </div>
+        </div>
+        <img class="preview" src="assets/rounder-social-preview.png" alt="Rounder preview image">
+      </header>
+
+      <section class="grid" aria-label="Project details">
+        <div>
+          <h2>What It Does</h2>
+          <ul>
+            <li>Rounds screen corners without Accessibility or Screen Recording permission.</li>
+            <li>Supports external monitors and multi-display setups.</li>
+            <li>Applies radius, color, corner, preset, and gaming glow changes live.</li>
+          </ul>
+        </div>
+        <div>
+          <h2>Install</h2>
+          <p>Download <code>Rounder.zip</code>, unzip it, and move <code>Rounder.app</code> to Applications.</p>
+          <p>The app is unsigned. On first launch, right-click the app and choose <strong>Open</strong>.</p>
+        </div>
+      </section>
+
+      <footer>
+        macOS 14.6 or later. Built with SwiftUI and AppKit.
+      </footer>
+    </main>
+  </body>
+</html>

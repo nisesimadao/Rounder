@@ -6,14 +6,8 @@ Use this before sharing a new Rounder release publicly.
 
 - [ ] Confirm `CHANGELOG.md` includes the release highlights.
 - [ ] Push a `vX.Y.Z` tag.
-- [ ] Wait for GitHub Actions to publish `Rounder.zip` and `Rounder.zip.sha256`.
-- [ ] Download both release assets from GitHub.
-- [ ] Verify the checksum:
-
-```bash
-shasum -a 256 -c Rounder.zip.sha256
-```
-
+- [ ] Wait for GitHub Actions to publish `Rounder.zip`.
+- [ ] Download `Rounder.zip` from GitHub.
 - [ ] Install the downloaded app into `/Applications`.
 - [ ] Launch it from `/Applications`.
 - [ ] Confirm macOS Gatekeeper instructions in `README.md` still match the first-launch behavior.
@@ -30,7 +24,6 @@ shasum -a 256 -c Rounder.zip.sha256
 ## Release Notes
 
 - [ ] Draft the GitHub release body from `docs/RELEASE_NOTES_TEMPLATE.md`.
-- [ ] Include the checksum verification command.
 - [ ] Include the unsigned-app Gatekeeper note.
 - [ ] Mention the macOS version tested locally.
 
@@ -42,8 +35,6 @@ shasum -a 256 -c Rounder.zip.sha256
 - [ ] Confirm issue templates appear when creating a new issue.
 - [ ] Add repository topics such as `macos`, `swift`, `swiftui`, `appkit`, `menubar`, `utility`, `rounded-corners`.
 - [ ] Add a social preview image in repository settings.
-- [ ] Confirm `brew info --cask nisesimadao/rounder/rounder` shows the latest release.
-- [ ] Confirm `brew fetch --cask nisesimadao/rounder/rounder` verifies the latest checksum.
 
 ## Posting
 

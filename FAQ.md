@@ -24,9 +24,8 @@ No. Rounder does not collect telemetry or analytics. Settings are stored locally
 
 ## How do I verify a download?
 
-Releases include `Rounder.zip.sha256`. Download both files and run:
+GitHub shows a SHA-256 digest for uploaded release assets. Open the latest release, expand the `Rounder.zip` asset details, and compare the digest shown by GitHub with a local checksum:
 
 ```bash
-shasum -a 256 -c Rounder.zip.sha256
+shasum -a 256 Rounder.zip
 ```
-

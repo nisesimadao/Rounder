@@ -26,14 +26,6 @@ Notch導入以前のMacBookや、角が直線的な外部モニターに、ソ�
 [Releases](https://github.com/nisesimadao/Rounder/releases/latest) から最新版をダウンロードできます。
 
 - `Rounder.zip` — アプリ本体
-- `Rounder.zip.sha256` — ダウンロード検証用チェックサム
-
-Homebrew でもインストールできます:
-
-```bash
-brew tap nisesimadao/rounder
-brew install --cask rounder
-```
 
 Rounder は現在、有料 Developer ID 署名なしで配布しています。初回起動時に macOS にブロックされた場合は、`Rounder.app` を右クリックして **開く** → **開く** を選んでください。詳しくは [FAQ](./FAQ.md) を参照してください。
 
@@ -66,24 +58,13 @@ Rounder は現在、有料 Developer ID 署名なしで配布しています。�
 
 ## インストール
 
-### Homebrew
-
-```bash
-brew tap nisesimadao/rounder
-brew install --cask rounder
-```
-
-### ビルド済みアプリ（推奨）
+### ビルド済みアプリ
 
 1. [最新リリース](https://github.com/nisesimadao/Rounder/releases/latest) から `Rounder.zip` をダウンロードして解凍。
 2. `Rounder.app` をアプリケーションフォルダへ移動。
 3. **有料のDeveloper ID署名は付いていない**ため、初回起動時にGatekeeperがブロックすることがあります。アプリを右クリック →**開く**→**開く**、または次を実行してください:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Rounder.app
-   ```
-4. 任意: チェックサムファイルでダウンロードを検証できます:
-   ```bash
-   shasum -a 256 -c Rounder.zip.sha256
    ```
 
 ### ソースからビルド
@@ -141,7 +122,7 @@ xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release bui
 
 ## リリース / CI
 
-`vX.Y.Z` タグを push すると、GitHub Actions（`.github/workflows/release.yml`）がアプリをビルドし、`Rounder.zip` と `Rounder.zip.sha256` を [Releases](https://github.com/nisesimadao/Rounder/releases) に自動で公開します。
+`vX.Y.Z` タグを push すると、GitHub Actions（`.github/workflows/release.yml`）がアプリをビルドし、`Rounder.zip` を [Releases](https://github.com/nisesimadao/Rounder/releases) に自動で公開します。
 
 ## プロジェクト文書
 

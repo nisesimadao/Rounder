@@ -26,14 +26,6 @@ Rounder gives modern rounded corners to older MacBooks and external monitors tha
 Download the latest build from [Releases](https://github.com/nisesimadao/Rounder/releases/latest).
 
 - `Rounder.zip` — the app
-- `Rounder.zip.sha256` — checksum for verifying the download
-
-Or install with Homebrew:
-
-```bash
-brew tap nisesimadao/rounder
-brew install --cask rounder
-```
 
 Rounder is currently distributed as an unsigned app. If macOS blocks the first launch, right-click `Rounder.app`, choose **Open**, then **Open** again. See [FAQ](./FAQ.md) for details.
 
@@ -66,24 +58,13 @@ Rounder is currently distributed as an unsigned app. If macOS blocks the first l
 
 ## Installation
 
-### Homebrew
-
-```bash
-brew tap nisesimadao/rounder
-brew install --cask rounder
-```
-
-### Prebuilt App (Recommended)
+### Prebuilt App
 
 1. Download `Rounder.zip` from the [latest release](https://github.com/nisesimadao/Rounder/releases/latest) and unzip it.
 2. Move `Rounder.app` to your Applications folder.
 3. The build is **not signed with a paid Developer ID**, so on first launch macOS Gatekeeper may block it. Right-click the app → **Open** → **Open**, or run:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Rounder.app
-   ```
-4. Optional: verify the download with the checksum file:
-   ```bash
-   shasum -a 256 -c Rounder.zip.sha256
    ```
 
 ### Build from Source
@@ -141,7 +122,7 @@ A short setup appears: **Welcome → basic settings (radius & color) → done**.
 
 ## Releases / CI
 
-Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/release.yml`) that builds the app and publishes `Rounder.zip` plus `Rounder.zip.sha256` to [Releases](https://github.com/nisesimadao/Rounder/releases) automatically.
+Pushing a `vX.Y.Z` tag triggers a GitHub Actions workflow (`.github/workflows/release.yml`) that builds the app and publishes `Rounder.zip` to [Releases](https://github.com/nisesimadao/Rounder/releases) automatically.
 
 ## Project Docs
 
