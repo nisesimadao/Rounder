@@ -60,6 +60,7 @@
       html[lang="ja"] .proof-item h3,
       html[lang="ja"] .proof-item p,
       html[lang="ja"] .step p,
+      html[lang="ja"] .sheet-row p,
       html[lang="ja"] .faq-content h2 {
         word-break: keep-all;
         line-break: strict;
@@ -91,6 +92,11 @@
         width: 34px;
         height: 34px;
         border-radius: 6px;
+        transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .brand:hover img {
+        transform: rotate(-8deg) scale(1.08);
       }
 
       .top-actions {
@@ -124,6 +130,14 @@
         cursor: pointer;
       }
 
+      .language-switch button {
+        transition: background-color 160ms ease, color 160ms ease;
+      }
+
+      .language-switch button:hover:not([aria-pressed="true"]) {
+        background: var(--mist);
+      }
+
       .language-switch button:last-child {
         border-right: 0;
       }
@@ -147,6 +161,12 @@
         font-weight: 900;
         text-decoration: none;
         letter-spacing: 0.03em;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .nav-button:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 var(--ink);
       }
 
       .side-note {
@@ -298,6 +318,17 @@
         text-decoration: none;
         font-size: 13px;
         font-weight: 950;
+        transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+      }
+
+      .button:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 var(--ink);
+      }
+
+      .button:active {
+        transform: translate(0, 0);
+        box-shadow: none;
       }
 
       .button.primary {
@@ -363,6 +394,12 @@
         width: 100%;
         border: 2px solid var(--ink);
         box-shadow: 18px 18px 0 var(--mist);
+        transition: transform 260ms ease, box-shadow 260ms ease;
+      }
+
+      .visual:hover img {
+        transform: translate(-4px, -4px);
+        box-shadow: 24px 24px 0 var(--mist);
       }
 
       .visual figcaption {
@@ -446,6 +483,20 @@
         min-height: 210px;
         padding: 26px;
         background: var(--paper);
+        transition: background-color 240ms ease, color 240ms ease;
+      }
+
+      .proof-item:hover {
+        background: var(--ink);
+        color: var(--cream);
+      }
+
+      .proof-item:hover p {
+        color: rgba(255, 250, 240, 0.72);
+      }
+
+      .proof-item:hover span {
+        color: #8ce9f3;
       }
 
       .proof-item span {
@@ -468,6 +519,42 @@
         color: var(--muted);
         font-size: 16px;
         font-weight: 650;
+        transition: color 240ms ease;
+      }
+
+      /* Dark variant of the proof grid, used inside .black sections. */
+      .proof-dark {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 64px;
+        background: rgba(255, 250, 240, 0.16);
+        border-color: rgba(255, 250, 240, 0.16);
+      }
+
+      .proof-dark .proof-item {
+        min-height: 170px;
+        background: var(--ink);
+        color: var(--cream);
+      }
+
+      .proof-dark .proof-item span {
+        color: #8ce9f3;
+      }
+
+      .proof-dark .proof-item p {
+        color: rgba(255, 250, 240, 0.66);
+      }
+
+      .proof-dark .proof-item:hover {
+        background: var(--cream);
+        color: var(--ink);
+      }
+
+      .proof-dark .proof-item:hover span {
+        color: var(--cyan);
+      }
+
+      .proof-dark .proof-item:hover p {
+        color: var(--muted);
       }
 
       .black {
@@ -481,6 +568,16 @@
 
       .black .section-label {
         color: #8ce9f3;
+      }
+
+      .black .body-large {
+        color: rgba(255, 250, 240, 0.8);
+      }
+
+      .black .section-icon {
+        border-color: rgba(255, 250, 240, 0.4);
+        background: var(--ink);
+        color: var(--cream);
       }
 
       .steps {
@@ -501,6 +598,11 @@
         gap: 26px;
         padding: 24px;
         background: var(--ink);
+        transition: background-color 200ms ease;
+      }
+
+      .step:hover {
+        background: #232323;
       }
 
       .steps > .section-label {
@@ -520,6 +622,57 @@
         color: rgba(255, 250, 240, 0.78);
         font-size: 18px;
         font-weight: 700;
+      }
+
+      /* Light spec-sheet table (privacy, changelog): same bones as .steps. */
+      .sheet {
+        position: relative;
+        z-index: 1;
+        width: min(680px, 100%);
+        margin-left: auto;
+        margin-top: clamp(-72px, -4vw, -20px);
+        display: grid;
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+      }
+
+      .sheet > .section-label {
+        margin: 0;
+        padding: 24px;
+        background: var(--paper);
+      }
+
+      .sheet-row {
+        display: grid;
+        grid-template-columns: 110px minmax(0, 1fr);
+        gap: 26px;
+        padding: 24px;
+        background: var(--paper);
+        transition: background-color 200ms ease;
+      }
+
+      .sheet-row:hover {
+        background: var(--mist);
+      }
+
+      .sheet-row strong {
+        color: var(--cyan);
+        font-size: 14px;
+        letter-spacing: 0.1em;
+      }
+
+      .sheet-row p {
+        margin: 0;
+        color: #2d3032;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .sheet-actions {
+        width: min(680px, 100%);
+        margin-left: auto;
+        margin-top: 20px;
       }
 
       .section-copy {
@@ -758,7 +911,8 @@
           height: 18px;
         }
 
-        .proof {
+        .proof,
+        .proof-dark {
           grid-template-columns: minmax(0, 1fr);
           margin-top: 54px;
         }
@@ -771,9 +925,15 @@
           font-size: 21px;
         }
 
-        .step {
+        .step,
+        .sheet-row {
           grid-template-columns: minmax(0, 1fr);
           gap: 8px;
+        }
+
+        .sheet {
+          margin-left: 0;
+          margin-top: 26px;
         }
 
         footer {
@@ -895,6 +1055,72 @@
 
       <section class="section black">
         <div class="section-inner">
+          <h2 class="giant" data-slide="right" data-i18n data-en="Under the hood." data-ja="仕組みの話。">Under the hood.</h2>
+          <div class="section-copy reveal" style="--reveal-delay: 140ms">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <path d="M16 5 28 11 16 17 4 11Z"></path>
+                <path d="m4 16 12 6 12-6"></path>
+                <path d="m4 21 12 6 12-6"></path>
+              </svg>
+            </span>
+            <div class="section-copy-text">
+              <p class="section-label" data-i18n data-en="Engineering" data-ja="実装">Engineering</p>
+              <p class="body-large" data-i18n data-en="The overlays sit above the menu bar and Notification Center, so the very edge of the screen rounds cleanly." data-ja="オーバーレイは<wbr>メニューバーや<wbr>通知センターよりも<wbr>上のレイヤーに描画されます。<wbr>だから画面のいちばん外側まで、<wbr>きれいに丸く見えます。">The overlays sit above the menu bar and Notification Center, so the very edge of the screen rounds cleanly.</p>
+            </div>
+          </div>
+          <div class="proof proof-dark">
+            <div class="proof-item reveal">
+              <span>01</span>
+              <h3 data-i18n data-en="Clicks pass through" data-ja="クリックは素通り">Clicks pass through</h3>
+              <p data-i18n data-en="The overlays ignore mouse events. Menus and buttons under the corners keep working." data-ja="オーバーレイは<wbr>マウスイベントを受け取りません。<wbr>角の下にあるメニューやボタンも<wbr>そのまま操作できます。">The overlays ignore mouse events. Menus and buttons under the corners keep working.</p>
+            </div>
+            <div class="proof-item reveal" style="--reveal-delay: 110ms">
+              <span>02</span>
+              <h3 data-i18n data-en="Survives fullscreen" data-ja="全画面でも消えない">Survives fullscreen</h3>
+              <p data-i18n data-en="Corners stay attached across Spaces, desktop switches, and full-screen apps." data-ja="Space の切り替えや<wbr>フルスクリーン再生でも、<wbr>角は表示されたままです。">Corners stay attached across Spaces, desktop switches, and full-screen apps.</p>
+            </div>
+            <div class="proof-item reveal" style="--reveal-delay: 180ms">
+              <span>03</span>
+              <h3 data-i18n data-en="Draws only the corners" data-ja="描くのは四隅だけ">Draws only the corners</h3>
+              <p data-i18n data-en="Four tiny windows instead of a full-screen sheet, with paths cached for low CPU use." data-ja="画面全体を覆わず、<wbr>四隅に小さなウィンドウを<wbr>4 枚置くだけ。<wbr>描画パスはキャッシュされ、<wbr>CPU をほとんど使いません。">Four tiny windows instead of a full-screen sheet, with paths cached for low CPU use.</p>
+            </div>
+            <div class="proof-item reveal" style="--reveal-delay: 250ms">
+              <span>04</span>
+              <h3 data-i18n data-en="Follows your displays" data-ja="つなぎ替えに追従">Follows your displays</h3>
+              <p data-i18n data-en="Recalculates positions when the resolution changes or displays are plugged in." data-ja="解像度の変更や<wbr>ディスプレイの接続を検知して、<wbr>位置を自動で再計算します。">Recalculates positions when the resolution changes or displays are plugged in.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-inner">
+          <h2 class="giant" data-slide="left" data-i18n data-en="Nothing leaves this Mac." data-ja="データは、<wbr>外に出ない。">Nothing leaves this Mac.</h2>
+          <div class="sheet reveal" style="--reveal-delay: 140ms">
+            <p class="section-label" data-i18n data-en="Privacy" data-ja="プライバシー">Privacy</p>
+            <div class="sheet-row">
+              <strong data-i18n data-en="COLLECTED" data-ja="収集">COLLECTED</strong>
+              <p data-i18n data-en="Nothing. No telemetry, analytics, or crash reports." data-ja="なし。テレメトリ、解析、<wbr>クラッシュレポートも<wbr>送信しません。">Nothing. No telemetry, analytics, or crash reports.</p>
+            </div>
+            <div class="sheet-row">
+              <strong data-i18n data-en="STORAGE" data-ja="保存先">STORAGE</strong>
+              <p data-i18n data-en="Settings live in local macOS UserDefaults &mdash; radius, colors, corners, and presets." data-ja="設定は macOS の UserDefaults に<wbr>ローカル保存。<wbr>半径、色、角、プリセットまで<wbr>すべてこの中です。">Settings live in local macOS UserDefaults &mdash; radius, colors, corners, and presets.</p>
+            </div>
+            <div class="sheet-row">
+              <strong data-i18n data-en="NETWORK" data-ja="通信">NETWORK</strong>
+              <p data-i18n data-en="No network access." data-ja="ネットワークアクセスは<wbr>ありません。">No network access.</p>
+            </div>
+            <div class="sheet-row">
+              <strong data-i18n data-en="PERMISSIONS" data-ja="権限">PERMISSIONS</strong>
+              <p data-i18n data-en="None &mdash; including Location, Camera, and Microphone." data-ja="不要。位置情報、カメラ、<wbr>マイクも使いません。">None &mdash; including Location, Camera, and Microphone.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section black">
+        <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps reveal" style="--reveal-delay: 140ms">
             <p class="section-label" data-i18n data-en="Controls" data-ja="設定項目">Controls</p>
@@ -916,7 +1142,31 @@
 
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant" data-slide="left" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
+          <h2 class="giant" data-slide="left" data-i18n data-en="Changelog." data-ja="更新履歴。">Changelog.</h2>
+          <div class="sheet reveal" style="--reveal-delay: 140ms">
+            <p class="section-label" data-i18n data-en="Recent releases" data-ja="最近のリリース">Recent releases</p>
+            <div class="sheet-row">
+              <strong>v2.1.4</strong>
+              <p data-i18n data-en="Better Space-transition handling, tag-driven CI builds, safer preset serialization, and gaming-glow rendering fixes." data-ja="Space 切替時の追従を改善。<wbr>タグ連動の CI ビルド、<wbr>プリセット保存の安全化、<wbr>ゲーミング発光の描画修正。">Better Space-transition handling, tag-driven CI builds, safer preset serialization, and gaming-glow rendering fixes.</p>
+            </div>
+            <div class="sheet-row">
+              <strong>v2.1.3</strong>
+              <p data-i18n data-en="Fixed corners appearing on only one side during Space transition animations." data-ja="Space 切替アニメーション中に<wbr>角が片側だけ表示される<wbr>問題を修正。">Fixed corners appearing on only one side during Space transition animations.</p>
+            </div>
+            <div class="sheet-row">
+              <strong>v2.1.2</strong>
+              <p data-i18n data-en="Improved overlay recovery when entering fullscreen Spaces." data-ja="フルスクリーン Space に入る際の<wbr>オーバーレイ復帰を改善。">Improved overlay recovery when entering fullscreen Spaces.</p>
+            </div>
+          </div>
+          <div class="actions sheet-actions reveal" style="--reveal-delay: 220ms">
+            <a class="button" href="https://github.com/nisesimadao/Rounder/releases" data-i18n data-en="All releases" data-ja="すべてのリリース">All releases</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-inner">
+          <h2 class="giant" data-slide="right" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
@@ -940,7 +1190,7 @@
 
       <section class="section faq-panel" id="faq" aria-live="polite">
         <div class="faq-header">
-          <h2 class="giant" data-slide="right">FAQ</h2>
+          <h2 class="giant" data-slide="left">FAQ</h2>
           <button class="button ghost-button" type="button" data-faq-close data-i18n data-en="Close FAQ" data-ja="FAQを閉じる">Close FAQ</button>
         </div>
         <article class="faq-content" data-faq-content>Loading FAQ.md...</article>
@@ -949,7 +1199,7 @@
 
     <footer>
       <span data-i18n data-en="macOS 14.6 or later. Built with SwiftUI and AppKit." data-ja="macOS 14.6 以降。SwiftUI と AppKit で開発。">macOS 14.6 or later. Built with SwiftUI and AppKit.</span>
-      <span>Rounder / nisesimadao</span>
+      <span>MIT License &mdash; Rounder / nisesimadao</span>
     </footer>
     <script>
       const preferredLanguage = (() => {
