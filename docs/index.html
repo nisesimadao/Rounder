@@ -21,6 +21,8 @@
         --mist: #ebe5da;
         --cyan: #0097a9;
         --cream: #fffaf0;
+        --font-en: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        --font-ja: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
       }
 
       * {
@@ -35,8 +37,12 @@
         margin: 0;
         background: var(--paper);
         color: var(--ink);
-        font-family: "Avenir Next", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+        font-family: var(--font-en);
         line-height: 1.5;
+      }
+
+      html[lang="ja"] body {
+        font-family: var(--font-ja);
       }
 
       a {
@@ -195,7 +201,7 @@
         margin: 0;
         max-width: 720px;
         font-size: clamp(76px, 13vw, 170px);
-        font-weight: 950;
+        font-weight: 900;
         line-height: 0.78;
         letter-spacing: -0.02em;
         text-transform: uppercase;
@@ -207,6 +213,8 @@
 
       html[lang="ja"] h1,
       html[lang="ja"] h2 {
+        font-family: var(--font-ja);
+        font-weight: 800;
         letter-spacing: 0;
         line-height: 0.95;
       }
@@ -320,7 +328,7 @@
       h2 {
         margin: 0;
         font-size: clamp(44px, 7vw, 96px);
-        font-weight: 950;
+        font-weight: 900;
         line-height: 0.9;
         letter-spacing: -0.015em;
         text-transform: uppercase;
