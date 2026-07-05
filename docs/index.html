@@ -9,19 +9,17 @@
     <meta property="og:description" content="Rounded screen corners for macOS. No Accessibility permission. No Screen Recording.">
     <meta property="og:image" content="https://nisesimadao.github.io/Rounder/assets/rounder-social-preview.png">
     <meta property="og:type" content="website">
-    <meta name="theme-color" content="#111417">
+    <meta name="theme-color" content="#f7f4ee">
     <link rel="icon" href="assets/rounder-icon.png">
     <style>
       :root {
         color-scheme: light;
-        --ink: #111417;
-        --soft-ink: #2d3339;
-        --muted: #68717a;
-        --paper: #f3efe6;
-        --paper-2: #e7e1d5;
-        --line: #d3cbbd;
-        --cyan: #00a4bd;
-        --pink: #d952ad;
+        --paper: #f7f4ee;
+        --ink: #151515;
+        --muted: #666a6d;
+        --line: #d9d2c6;
+        --mist: #ebe5da;
+        --cyan: #0097a9;
         --cream: #fffaf0;
       }
 
@@ -37,7 +35,7 @@
         margin: 0;
         background: var(--paper);
         color: var(--ink);
-        font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", system-ui, sans-serif;
+        font-family: "Avenir Next", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
         line-height: 1.5;
       }
 
@@ -45,97 +43,189 @@
         color: inherit;
       }
 
-      .topbar {
-        position: absolute;
-        inset: 0 0 auto;
-        z-index: 5;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 24px clamp(18px, 4vw, 58px);
-        color: var(--cream);
+      .frame-nav {
+        position: fixed;
+        inset: 0;
+        z-index: 12;
+        pointer-events: none;
       }
 
       .brand {
+        position: fixed;
+        top: 28px;
+        left: 30px;
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        font-weight: 850;
+        color: var(--ink);
+        font-weight: 900;
+        line-height: 1;
         text-decoration: none;
+        pointer-events: auto;
       }
 
       .brand img {
-        width: 38px;
-        height: 38px;
-        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
       }
 
-      .nav {
+      .top-actions {
+        position: fixed;
+        top: 26px;
+        right: 32px;
         display: flex;
-        gap: 24px;
-        font-size: 14px;
-        font-weight: 800;
-        color: rgba(255, 250, 240, 0.82);
+        gap: 10px;
+        pointer-events: auto;
       }
 
-      .nav a {
+      .language-switch {
+        display: inline-flex;
+        border: 1px solid var(--ink);
+        border-radius: 6px;
+        background: var(--paper);
+        overflow: hidden;
+      }
+
+      .language-switch button {
+        min-height: 40px;
+        padding: 0 12px;
+        border: 0;
+        border-right: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.03em;
+        cursor: pointer;
+      }
+
+      .language-switch button:last-child {
+        border-right: 0;
+      }
+
+      .language-switch button[aria-pressed="true"] {
+        background: var(--ink);
+        color: var(--cream);
+      }
+
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 16px;
+        border: 1px solid var(--ink);
+        border-radius: 6px;
+        background: var(--ink);
+        color: var(--cream);
+        font-size: 12px;
+        font-weight: 900;
         text-decoration: none;
+        letter-spacing: 0.03em;
+      }
+
+      .side-note {
+        position: fixed;
+        top: 50%;
+        right: 17px;
+        transform: translateY(-50%);
+        writing-mode: vertical-rl;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        pointer-events: none;
+      }
+
+      .scroll-note {
+        position: fixed;
+        right: 17px;
+        bottom: 34px;
+        writing-mode: vertical-rl;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.13em;
+        pointer-events: none;
       }
 
       .hero {
-        min-height: 94svh;
         position: relative;
+        min-height: 100svh;
+        padding: 118px clamp(26px, 6vw, 88px) 84px;
         overflow: hidden;
-        display: grid;
-        align-items: center;
-        background:
-          radial-gradient(circle at 78% 30%, rgba(0, 164, 189, 0.28), transparent 27rem),
-          radial-gradient(circle at 90% 82%, rgba(217, 82, 173, 0.20), transparent 22rem),
-          linear-gradient(135deg, #101317, #1b2025 62%, #182329);
       }
 
-      .hero::after {
-        content: "";
+      .ghost {
         position: absolute;
-        inset: auto 0 0;
-        height: 18svh;
-        background: linear-gradient(0deg, var(--paper), transparent);
+        inset: -6vw -4vw auto;
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.075);
+        font-size: clamp(76px, 13vw, 198px);
+        font-weight: 950;
+        line-height: 0.85;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        user-select: none;
+        pointer-events: none;
       }
 
-      .hero-inner {
+      .hero-grid {
         position: relative;
         z-index: 2;
-        width: min(1180px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 120px 0 86px;
         display: grid;
-        grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr);
-        gap: clamp(36px, 6vw, 90px);
-        align-items: center;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: clamp(34px, 6vw, 84px);
+        align-items: end;
+        min-height: calc(100svh - 202px);
       }
 
-      .eyebrow {
-        margin: 0 0 20px;
-        color: #83e8f3;
+      .kicker {
+        margin: 0 0 26px;
+        color: var(--cyan);
         font-size: 13px;
-        font-weight: 850;
-        letter-spacing: 0.08em;
+        font-weight: 950;
+        letter-spacing: 0.13em;
         text-transform: uppercase;
       }
 
       h1 {
         margin: 0;
-        color: var(--cream);
-        font-size: clamp(64px, 11vw, 138px);
-        line-height: 0.9;
+        max-width: 720px;
+        font-size: clamp(76px, 13vw, 170px);
+        font-weight: 950;
+        line-height: 0.78;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+
+      [data-i18n] {
+        transition: opacity 140ms ease;
+      }
+
+      html[lang="ja"] h1,
+      html[lang="ja"] h2 {
         letter-spacing: 0;
+        line-height: 0.95;
+      }
+
+      html[lang="ja"] .hero-copy,
+      html[lang="ja"] .body-large,
+      html[lang="ja"] .proof-item p,
+      html[lang="ja"] .step p {
+        line-break: strict;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
       }
 
       .hero-copy {
         max-width: 560px;
-        margin: 28px 0 0;
-        color: rgba(255, 250, 240, 0.78);
-        font-size: clamp(19px, 2.2vw, 27px);
+        margin: 34px 0 0;
+        color: #2d3032;
+        font-size: clamp(19px, 2.1vw, 27px);
+        font-weight: 700;
       }
 
       .actions {
@@ -150,576 +240,393 @@
         align-items: center;
         justify-content: center;
         min-height: 46px;
-        padding: 0 18px;
-        border: 1px solid rgba(255, 250, 240, 0.26);
-        border-radius: 8px;
-        color: var(--cream);
+        padding: 0 20px;
+        border: 1px solid var(--ink);
+        border-radius: 6px;
+        color: var(--ink);
         text-decoration: none;
-        font-weight: 850;
-        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-      }
-
-      .button:hover {
-        transform: translateY(-2px);
-        border-color: rgba(255, 250, 240, 0.62);
+        font-size: 13px;
+        font-weight: 950;
       }
 
       .button.primary {
-        background: var(--cream);
-        color: var(--ink);
-        border-color: var(--cream);
+        background: var(--ink);
+        color: var(--cream);
       }
 
-      .display-demo {
-        position: relative;
-        aspect-ratio: 1.42;
-        min-height: 390px;
-        animation: riseIn 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-      }
-
-      .hero-shot {
+      .visual {
         position: relative;
         margin: 0;
-        animation: riseIn 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        padding: 0 0 52px 54px;
       }
 
-      .hero-shot::before {
-        content: "";
+      .visual::before {
+        content: "ACTUAL DISPLAY CORNER";
         position: absolute;
-        inset: 12% -5% -9% 10%;
-        border-radius: 38px;
-        background: linear-gradient(135deg, rgba(0, 164, 189, 0.32), rgba(217, 82, 173, 0.22));
-        filter: blur(34px);
+        top: 16px;
+        left: 0;
+        z-index: 3;
+        padding: 10px 12px;
+        background: var(--paper);
+        writing-mode: vertical-rl;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
       }
 
-      .hero-shot img {
-        position: relative;
+      .visual::after {
+        content: "NO PERMISSIONS / LIVE SETTINGS";
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        z-index: 3;
+        padding: 8px 12px;
+        background: var(--paper);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+      }
+
+      .visual img {
         display: block;
         width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 22px;
-        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
+        border: 2px solid var(--ink);
+        box-shadow: 18px 18px 0 var(--mist);
       }
 
-      .hero-shot figcaption {
-        position: relative;
-        margin-top: 14px;
-        color: rgba(255, 250, 240, 0.58);
+      .visual figcaption {
+        margin: 14px 0 0;
+        color: var(--muted);
         font-size: 13px;
-        font-weight: 750;
-      }
-
-      .display {
-        position: absolute;
-        inset: 8% 0 8% 4%;
-        border-radius: 30px;
-        background:
-          linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 36%),
-          #0a0d10;
-        border: 1px solid rgba(255, 255, 255, 0.13);
-        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
-        overflow: hidden;
-      }
-
-      .display::before {
-        content: "";
-        position: absolute;
-        inset: 54px 58px 58px;
-        border: 3px solid #77dce9;
-        border-radius: 3px;
-        opacity: 0.9;
-      }
-
-      .display::after {
-        content: "";
-        position: absolute;
-        inset: auto 0 0;
-        height: 28%;
-        background: linear-gradient(0deg, rgba(0, 0, 0, 0.55), transparent);
-      }
-
-      .corner {
-        position: absolute;
-        width: 96px;
-        height: 96px;
-        z-index: 2;
-        border: 6px solid transparent;
-        filter: drop-shadow(0 0 14px rgba(255, 250, 240, 0.18));
-      }
-
-      .corner::before {
-        content: "";
-        position: absolute;
-        inset: 12px;
-        border: 3px solid transparent;
-        opacity: 0.72;
-      }
-
-      .tl,
-      .tl::before {
-        border-top-color: var(--cream);
-        border-left-color: var(--cream);
-        border-top-left-radius: 34px;
-      }
-
-      .tr,
-      .tr::before {
-        border-top-color: var(--cream);
-        border-right-color: var(--cream);
-        border-top-right-radius: 34px;
-      }
-
-      .bl,
-      .bl::before {
-        border-bottom-color: var(--cream);
-        border-left-color: var(--cream);
-        border-bottom-left-radius: 34px;
-      }
-
-      .br,
-      .br::before {
-        border-right-color: var(--cream);
-        border-bottom-color: var(--cream);
-        border-bottom-right-radius: 34px;
-      }
-
-      .tl,
-      .bl {
-        left: 58px;
-      }
-
-      .tr,
-      .br {
-        right: 58px;
-      }
-
-      .tl,
-      .tr {
-        top: 54px;
-      }
-
-      .bl,
-      .br {
-        bottom: 58px;
-      }
-
-      .tl::before,
-      .tr::before,
-      .bl::before,
-      .br::before {
-        border-color: transparent;
-      }
-
-      .tl::before {
-        border-top-color: var(--cyan);
-        border-left-color: var(--cyan);
-      }
-
-      .tr::before {
-        border-top-color: var(--cyan);
-        border-right-color: var(--cyan);
-      }
-
-      .bl::before {
-        border-bottom-color: var(--cyan);
-        border-left-color: var(--cyan);
-      }
-
-      .br::before {
-        border-right-color: var(--cyan);
-        border-bottom-color: var(--cyan);
-      }
-
-      .tl,
-      .tr,
-      .bl,
-      .br {
-        z-index: 2;
-      }
-
-      .corner::after {
-        display: none;
-      }
-
-      .settings-panel {
-        position: absolute;
-        right: 28px;
-        bottom: 0;
-        z-index: 3;
-        width: min(330px, 56%);
-        padding: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 14px;
-        background: rgba(28, 33, 38, 0.88);
-        color: var(--cream);
-        backdrop-filter: blur(18px);
-        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
-      }
-
-      .panel-title {
-        margin: 0 0 18px;
-        font-size: 15px;
-        font-weight: 850;
-      }
-
-      .control-row {
-        display: grid;
-        grid-template-columns: 74px 1fr;
-        gap: 14px;
-        align-items: center;
-        margin-top: 14px;
-        color: rgba(255, 250, 240, 0.72);
-        font-size: 12px;
-        font-weight: 750;
-      }
-
-      .track {
-        height: 8px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.16);
-        overflow: hidden;
-      }
-
-      .fill {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--cyan), var(--pink));
-      }
-
-      main {
-        position: relative;
-        z-index: 3;
+        font-weight: 800;
       }
 
       .section {
-        width: min(1120px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 82px 0;
+        position: relative;
+        padding: 110px clamp(26px, 6vw, 88px);
+        border-top: 1px solid var(--line);
       }
 
-      .intro {
+      .section-grid {
         display: grid;
-        grid-template-columns: 0.95fr 1.05fr;
-        gap: clamp(32px, 7vw, 96px);
+        grid-template-columns: 0.85fr 1.15fr;
+        gap: clamp(34px, 7vw, 106px);
+        max-width: 1180px;
+        margin: 0 auto;
       }
 
       h2 {
         margin: 0;
-        font-size: clamp(34px, 5vw, 62px);
-        line-height: 1;
-        letter-spacing: 0;
-      }
-
-      .lead {
-        margin: 0;
-        color: var(--muted);
-        font-size: clamp(18px, 2vw, 23px);
-      }
-
-      .rule-list {
-        display: grid;
-        gap: 22px;
-        margin-top: 34px;
-      }
-
-      .rule {
-        display: grid;
-        grid-template-columns: 92px 1fr;
-        gap: 22px;
-        padding-top: 22px;
-        border-top: 1px solid var(--line);
-      }
-
-      .rule strong {
-        color: var(--accent, #007f99);
-        font-size: 13px;
-        letter-spacing: 0.08em;
+        font-size: clamp(44px, 7vw, 96px);
+        font-weight: 950;
+        line-height: 0.9;
+        letter-spacing: -0.015em;
         text-transform: uppercase;
       }
 
-      .rule p {
+      .body-large {
         margin: 0;
-        color: var(--muted);
-        font-size: 18px;
+        color: #323639;
+        font-size: clamp(20px, 2.2vw, 30px);
+        font-weight: 700;
       }
 
-      .band {
-        background: #111417;
+      .proof {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        max-width: 1180px;
+        margin: 86px auto 0;
+        background: var(--line);
+        border: 1px solid var(--line);
+      }
+
+      .proof-item {
+        min-height: 210px;
+        padding: 26px;
+        background: var(--paper);
+      }
+
+      .proof-item span {
+        display: block;
+        margin-bottom: 44px;
+        color: var(--cyan);
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+      }
+
+      .proof-item h3 {
+        margin: 0 0 12px;
+        font-size: 24px;
+        line-height: 1.05;
+      }
+
+      .proof-item p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .black {
+        background: var(--ink);
         color: var(--cream);
       }
 
-      .band-inner {
-        width: min(1120px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 82px 0;
-        display: grid;
-        grid-template-columns: 0.9fr 1.1fr;
-        gap: clamp(32px, 7vw, 92px);
+      .black .section-grid {
         align-items: center;
       }
 
-      .feature-list {
+      .black h2 {
+        color: var(--cream);
+      }
+
+      .black .body-large {
+        color: rgba(255, 250, 240, 0.78);
+      }
+
+      .steps {
         display: grid;
-        gap: 18px;
+        gap: 1px;
+        background: rgba(255, 250, 240, 0.16);
+        border: 1px solid rgba(255, 250, 240, 0.16);
       }
 
-      .feature {
-        padding-top: 18px;
-        border-top: 1px solid rgba(255, 250, 240, 0.18);
-      }
-
-      .feature h3 {
-        margin: 0 0 8px;
-        font-size: 22px;
-      }
-
-      .feature p {
-        margin: 0;
-        color: rgba(255, 250, 240, 0.68);
-      }
-
-      .install {
+      .step {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 48px;
-        align-items: center;
-        padding-bottom: 92px;
-      }
-
-      .terminal {
-        margin: 0;
+        grid-template-columns: 74px 1fr;
+        gap: 26px;
         padding: 24px;
-        background: #191d22;
-        color: #d8f8ff;
-        border-radius: 8px;
-        overflow: auto;
-        white-space: pre-wrap;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        background: var(--ink);
       }
 
-      code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      .step strong {
+        color: #8ce9f3;
         font-size: 14px;
+        letter-spacing: 0.1em;
+      }
+
+      .step p {
+        margin: 0;
+        color: rgba(255, 250, 240, 0.78);
+        font-size: 18px;
+        font-weight: 700;
       }
 
       footer {
-        width: min(1120px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 26px 0 40px;
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 34px clamp(26px, 6vw, 88px);
         border-top: 1px solid var(--line);
         color: var(--muted);
-        font-size: 14px;
+        font-size: 13px;
+        font-weight: 750;
       }
 
-      @keyframes riseIn {
-        from {
-          opacity: 0;
-          transform: translateY(18px) scale(0.985);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 1ms !important;
-          scroll-behavior: auto !important;
-          transition-duration: 1ms !important;
-        }
-      }
-
-      @media (max-width: 880px) {
-        .topbar {
-          position: absolute;
+      @media (max-width: 900px) {
+        .brand {
+          top: 20px;
+          left: 16px;
         }
 
-        .nav {
+        .side-note,
+        .scroll-note {
+          display: none;
+        }
+
+        .top-actions {
+          top: 18px;
+          right: 14px;
+        }
+
+        .nav-button {
           display: none;
         }
 
         .hero {
+          padding: 94px 16px 60px;
+        }
+
+        .hero-grid,
+        .section-grid,
+        .proof {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-grid {
           min-height: auto;
         }
 
-        .hero-inner,
-        .intro,
-        .band-inner,
-        .install {
-          grid-template-columns: 1fr;
+        h1 {
+          font-size: clamp(62px, 22vw, 104px);
         }
 
-        .hero-inner {
-          width: min(100% - 28px, 1120px);
-          padding: 118px 0 70px;
+        .visual {
+          padding: 0 0 36px 28px;
         }
 
-        .display-demo {
-          min-height: 310px;
-          order: -1;
-          margin-top: 18px;
+        .visual::before {
+          left: -2px;
+          font-size: 10px;
         }
 
-        .settings-panel {
-          width: 74%;
-          right: 10px;
+        .visual::after {
+          right: 6px;
+          bottom: 10px;
+          font-size: 10px;
         }
 
-        .section,
-        .band-inner,
-        footer {
-          width: min(100% - 28px, 1120px);
+        .section {
+          padding: 70px 16px;
         }
 
-        .section,
-        .band-inner {
-          padding: 60px 0;
+        .proof {
+          margin-top: 54px;
         }
 
-        .rule {
+        .proof-item {
+          min-height: auto;
+        }
+
+        .step {
           grid-template-columns: 1fr;
           gap: 8px;
         }
-      }
 
-      @media (max-width: 520px) {
-        .display-demo {
-          min-height: 260px;
-        }
-
-        .display {
-          inset: 8% 0 10%;
-        }
-
-        .display::before {
-          inset: 38px 34px 48px;
-        }
-
-        .corner {
-          width: 66px;
-          height: 66px;
-          border-width: 4px;
-        }
-
-        .tl,
-        .tr {
-          top: 38px;
-        }
-
-        .bl,
-        .br {
-          bottom: 48px;
-        }
-
-        .tl,
-        .bl {
-          left: 34px;
-        }
-
-        .tr,
-        .br {
-          right: 34px;
-        }
-
-        .settings-panel {
-          display: none;
+        footer {
+          display: block;
+          padding: 28px 16px;
         }
       }
     </style>
   </head>
   <body>
-    <nav class="topbar" aria-label="Primary navigation">
+    <div class="frame-nav">
       <a class="brand" href="#">
         <img src="assets/rounder-icon.png" alt="">
         <span>Rounder</span>
       </a>
-      <div class="nav">
-        <a href="#why">Why</a>
-        <a href="#details">Details</a>
-        <a href="#install">Install</a>
-        <a href="https://github.com/nisesimadao/Rounder">GitHub</a>
+      <div class="top-actions">
+        <div class="language-switch" aria-label="Language">
+          <button type="button" data-lang-button="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang-button="ja" aria-pressed="false">JP</button>
+        </div>
+        <a class="nav-button" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="DOWNLOAD" data-ja="ダウンロード">DOWNLOAD</a>
       </div>
-    </nav>
+      <div class="side-note" data-i18n data-en="EXTERNAL DISPLAY / OLDER MACS / MENU BAR" data-ja="外部ディスプレイ / 古いMac / メニューバー">EXTERNAL DISPLAY / OLDER MACS / MENU BAR</div>
+      <div class="scroll-note" data-i18n data-en="SCROLL" data-ja="スクロール">SCROLL</div>
+    </div>
 
     <header class="hero">
-      <div class="hero-inner">
+      <div class="ghost" data-i18n data-en="ROUNDED<br>CORNERS<br>NO PERMISSION" data-ja="角を<br>丸く<br>権限なし">ROUNDED<br>CORNERS<br>NO PERMISSION</div>
+      <div class="hero-grid">
         <div>
-          <p class="eyebrow">macOS menu-bar utility</p>
-          <h1>Rounder</h1>
-          <p class="hero-copy">Software rounded corners for external displays and older Macs. No Accessibility permission, no Screen Recording, no restart.</p>
+          <p class="kicker" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーユーティリティ">macOS menu-bar utility</p>
+          <h1 data-i18n data-en="Round<br>the<br>screen." data-ja="画面の<br>角を<br>丸く。">Round<br>the<br>screen.</h1>
+          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local, quiet, and permission-light." data-ja="Rounder は、外部ディスプレイや古い MacBook の直線的な角を、小さなオーバーレイアプリでやわらかく整えます。ローカルで静かに動き、強い権限を求めません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local, quiet, and permission-light.</p>
           <div class="actions">
-            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest">Download Rounder</a>
-            <a class="button" href="https://github.com/nisesimadao/Rounder">View source</a>
+            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
+            <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
           </div>
         </div>
-
-        <figure class="hero-shot">
+        <figure class="visual">
           <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
-          <figcaption>Actual display corner with Rounder enabled.</figcaption>
+          <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
         </figure>
       </div>
     </header>
 
     <main>
-      <section class="section intro" id="why">
-        <div>
-          <h2>Sharp display corners, softened in software.</h2>
+      <section class="section">
+        <div class="section-grid">
+          <h2 data-i18n data-en="Sharp corners are a small daily mismatch." data-ja="直線的な角は、毎日少しだけ気になる。">Sharp corners are a small daily mismatch.</h2>
+          <p class="body-large" data-i18n data-en="Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way." data-ja="Rounder は Mac の操作を邪魔せず、画面の端だけを整えます。デスクトップの上にボーダーレスの角オーバーレイを描き、あとはメニューバーで静かに待機します。">Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way.</p>
         </div>
-        <div>
-          <p class="lead">Rounder draws lightweight overlay windows at the screen corners. It is built for external monitors, multi-display desks, and older MacBooks that do not have physically rounded panels.</p>
-          <div class="rule-list">
-            <div class="rule">
-              <strong>Private</strong>
-              <p>Runs locally and stores settings in UserDefaults. No telemetry, no network dependency.</p>
+        <div class="proof">
+          <div class="proof-item">
+            <span>01</span>
+            <h3 data-i18n data-en="No invasive permissions" data-ja="強い権限なし">No invasive permissions</h3>
+            <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、自動化、ネットワークアクセスは不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
+          </div>
+          <div class="proof-item">
+            <span>02</span>
+            <h3 data-i18n data-en="Live settings" data-ja="即時反映">Live settings</h3>
+            <p data-i18n data-en="Radius, color, corner selection, presets, and glow changes apply while running." data-ja="半径、色、角の選択、プリセット、発光設定は起動中にそのまま反映されます。">Radius, color, corner selection, presets, and glow changes apply while running.</p>
+          </div>
+          <div class="proof-item">
+            <span>03</span>
+            <h3 data-i18n data-en="Multi-display" data-ja="マルチディスプレイ">Multi-display</h3>
+            <p data-i18n data-en="Choose which displays get rounded and keep external monitor desks consistent." data-ja="角丸にするディスプレイを選び、外部モニター環境の見た目を揃えられます。">Choose which displays get rounded and keep external monitor desks consistent.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section black">
+        <div class="section-grid">
+          <h2 data-i18n data-en="Small app. Specific job." data-ja="小さなアプリ。役割はひとつ。">Small app. Specific job.</h2>
+          <div class="steps">
+            <div class="step">
+              <strong data-i18n data-en="SET" data-ja="設定">SET</strong>
+              <p data-i18n data-en="Pick the displays, radius, shape, and corners you want." data-ja="対象ディスプレイ、半径、形状、表示する角を選びます。">Pick the displays, radius, shape, and corners you want.</p>
             </div>
-            <div class="rule">
-              <strong>Instant</strong>
-              <p>Radius, color, corner selection, presets, and gaming glow update while the app is running.</p>
+            <div class="step">
+              <strong data-i18n data-en="SAVE" data-ja="保存">SAVE</strong>
+              <p data-i18n data-en="Use presets for subtle corners, all corners, or gaming glow setups." data-ja="控えめな角丸、全角、ゲーミング発光などをプリセットで切り替えられます。">Use presets for subtle corners, all corners, or gaming glow setups.</p>
             </div>
-            <div class="rule">
-              <strong>Quiet</strong>
-              <p>Lives in the menu bar and keeps out of the Dock after setup.</p>
+            <div class="step">
+              <strong data-i18n data-en="LEAVE" data-ja="常駐">LEAVE</strong>
+              <p data-i18n data-en="Keep it in the menu bar. No Dock icon after setup." data-ja="セットアップ後は Dock に出ず、メニューバーに静かに常駐します。">Keep it in the menu bar. No Dock icon after setup.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="band" id="details">
-        <div class="band-inner">
-          <h2>Small surface area, enough control.</h2>
-          <div class="feature-list">
-            <div class="feature">
-              <h3>Per-corner control</h3>
-              <p>Enable only the corners you need, then tune radius and shape from one settings window.</p>
-            </div>
-            <div class="feature">
-              <h3>Multi-monitor aware</h3>
-              <p>Choose the displays Rounder covers. Newly connected monitors are picked up automatically.</p>
-            </div>
-            <div class="feature">
-              <h3>Gaming glow</h3>
-              <p>A controlled rainbow glow mode for setups where subtle is not the point.</p>
+      <section class="section">
+        <div class="section-grid">
+          <h2 data-i18n data-en="Install once. Open from the menu bar." data-ja="一度入れて、あとはメニューバーから。">Install once. Open from the menu bar.</h2>
+          <div>
+            <p class="body-large" data-i18n data-en="Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature." data-ja="最新版をダウンロードし、Rounder.app をアプリケーションフォルダへ移動してください。初回起動時は右クリックして「開く」を選びます。有料 Developer ID 署名なしで配布しています。">Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature.</p>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Latest release" data-ja="最新リリース">Latest release</a>
+              <a class="button" href="https://github.com/nisesimadao/Rounder/blob/main/docs/FAQ.md">FAQ</a>
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="section install" id="install">
-        <div>
-          <h2>Install the app, open once, then leave it in the menu bar.</h2>
-        </div>
-        <pre class="terminal"><code>1. Download Rounder.zip
-2. Move Rounder.app to Applications
-3. Right-click and choose Open on first launch</code></pre>
       </section>
     </main>
 
     <footer>
-      macOS 14.6 or later. Built with SwiftUI and AppKit.
+      <span data-i18n data-en="macOS 14.6 or later. Built with SwiftUI and AppKit." data-ja="macOS 14.6 以降。SwiftUI と AppKit で開発。">macOS 14.6 or later. Built with SwiftUI and AppKit.</span>
+      <span>Rounder / nisesimadao</span>
     </footer>
+    <script>
+      const preferredLanguage = (() => {
+        const stored = localStorage.getItem("rounder-language");
+        if (stored === "en" || stored === "ja") return stored;
+        return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
+      })();
+
+      function applyLanguage(language) {
+        document.documentElement.lang = language;
+        localStorage.setItem("rounder-language", language);
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          const value = element.dataset[language];
+          if (value) element.innerHTML = value;
+        });
+        document.querySelectorAll("[data-lang-button]").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.langButton === language));
+        });
+      }
+
+      document.querySelectorAll("[data-lang-button]").forEach((button) => {
+        button.addEventListener("click", () => applyLanguage(button.dataset.langButton));
+      });
+
+      applyLanguage(preferredLanguage);
+    </script>
   </body>
 </html>
