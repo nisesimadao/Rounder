@@ -375,6 +375,8 @@
         position: relative;
         padding: 110px clamp(26px, 6vw, 88px);
         border-top: 1px solid var(--line);
+        overflow-x: hidden;
+        overflow-x: clip;
       }
 
       .section-inner {
@@ -782,6 +784,13 @@
         }
       }
 
+      /* Giants slide in horizontally, driven by scroll position (JS sets
+         transform per frame; transition must not fight those updates). */
+      html.js .giant[data-slide] {
+        transition: none;
+        will-change: transform, opacity;
+      }
+
       @keyframes marquee {
         from {
           transform: translateX(0);
@@ -847,7 +856,7 @@
     <main>
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant reveal" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
+          <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
@@ -887,7 +896,7 @@
 
       <section class="section black">
         <div class="section-inner">
-          <h2 class="giant reveal" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
+          <h2 class="giant" data-slide="right" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps reveal" style="--reveal-delay: 140ms">
             <p class="section-label" data-i18n data-en="Controls" data-ja="設定項目">Controls</p>
             <div class="step">
@@ -908,7 +917,7 @@
 
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant reveal" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
+          <h2 class="giant" data-slide="left" data-i18n data-en="Install once." data-ja="ダウンロードして、<wbr>開くだけ。">Install once.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
             <span class="section-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32">
@@ -932,7 +941,7 @@
 
       <section class="section faq-panel" id="faq" aria-live="polite">
         <div class="faq-header">
-          <h2 class="giant">FAQ</h2>
+          <h2 class="giant" data-slide="right">FAQ</h2>
           <button class="button ghost-button" type="button" data-faq-close data-i18n data-en="Close FAQ" data-ja="FAQを閉じる">Close FAQ</button>
         </div>
         <article class="faq-content" data-faq-content>Loading FAQ.md...</article>
@@ -965,6 +974,7 @@
           if (!value) return;
           row.innerHTML = `<span>${value}</span><span>${value}</span><span>${value}</span>`;
         });
+        if (typeof queueGiants === "function") queueGiants();
       }
 
       document.querySelectorAll("[data-lang-button]").forEach((button) => {
@@ -1055,7 +1065,10 @@
             content.innerHTML = `<p class="faq-error">${escapeHtml(error.message)}</p>`;
           });
 
-        requestAnimationFrame(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }));
+        requestAnimationFrame(() => {
+          panel.scrollIntoView({ behavior: "smooth", block: "start" });
+          queueGiants();
+        });
       }
 
       document.querySelector("[data-faq-open]").addEventListener("click", (event) => {
@@ -1078,6 +1091,50 @@
       });
 
       if (location.hash === "#faq") openFaq();
+
+      // Scroll-linked slide for the giant background headings: they travel
+      // in from the side and land exactly at their natural position as the
+      // section arrives in view.
+      const slideGiants = Array.from(document.querySelectorAll(".giant[data-slide]"));
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      function updateGiants() {
+        if (reducedMotion.matches) {
+          slideGiants.forEach((giant) => {
+            giant.style.transform = "";
+            giant.style.opacity = "";
+          });
+          return;
+        }
+        const viewportHeight = window.innerHeight;
+        const start = viewportHeight;         // heading top at bottom edge -> fully offset
+        const end = viewportHeight * 0.42;    // heading top at 42% of viewport -> in place
+        const maxOffset = Math.min(240, window.innerWidth * 0.18);
+        slideGiants.forEach((giant) => {
+          // translateX never changes rect.top, so this cannot feed back.
+          const top = giant.getBoundingClientRect().top;
+          const progress = Math.min(1, Math.max(0, (start - top) / (start - end)));
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const direction = giant.dataset.slide === "right" ? 1 : -1;
+          giant.style.transform = `translateX(${(direction * (1 - eased) * maxOffset).toFixed(1)}px)`;
+          giant.style.opacity = (0.15 + 0.85 * eased).toFixed(3);
+        });
+      }
+
+      var giantsQueued = false;
+      function queueGiants() {
+        if (giantsQueued) return;
+        giantsQueued = true;
+        requestAnimationFrame(() => {
+          updateGiants();
+          giantsQueued = false;
+        });
+      }
+
+      window.addEventListener("scroll", queueGiants, { passive: true });
+      window.addEventListener("resize", queueGiants, { passive: true });
+      reducedMotion.addEventListener?.("change", queueGiants);
+      updateGiants();
 
       const revealElements = document.querySelectorAll(".reveal");
       if ("IntersectionObserver" in window) {
