@@ -503,29 +503,70 @@
         border-radius: 0 0 var(--mark-size, 260px) 0;
       }
 
+      /* Radius callout: reads like a dimension line off the arc (a short
+         tick pointing at the page edge, then the value) rather than a
+         standalone badge -- tilted to run along the arc's own diagonal. */
       .corner-mark-label {
         position: absolute;
         z-index: 0;
-        color: rgba(21, 21, 21, 0.24);
-        font-family: var(--font-en);
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 0.1em;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: rgba(21, 21, 21, 0.22);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
         pointer-events: none;
         user-select: none;
       }
 
-      .corner-mark-label--tl { top: 14px; left: 14px; }
-      .corner-mark-label--tr { top: 14px; right: 14px; }
-      .corner-mark-label--bl { bottom: 14px; left: 14px; }
-      .corner-mark-label--br { bottom: 14px; right: 14px; }
+      .corner-mark-label::before {
+        content: "";
+        width: 12px;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.7;
+        flex: none;
+      }
+
+      .corner-mark-label--tl {
+        top: 26px;
+        left: 26px;
+        transform: rotate(-45deg);
+        transform-origin: left center;
+      }
+
+      .corner-mark-label--tr {
+        top: 26px;
+        right: 26px;
+        flex-direction: row-reverse;
+        transform: rotate(45deg);
+        transform-origin: right center;
+      }
+
+      .corner-mark-label--bl {
+        bottom: 26px;
+        left: 26px;
+        transform: rotate(45deg);
+        transform-origin: left center;
+      }
+
+      .corner-mark-label--br {
+        bottom: 26px;
+        right: 26px;
+        flex-direction: row-reverse;
+        transform: rotate(-45deg);
+        transform-origin: right center;
+      }
 
       .black .corner-mark {
         border-color: rgba(255, 250, 240, 0.14);
       }
 
       .black .corner-mark-label {
-        color: rgba(255, 250, 240, 0.3);
+        color: rgba(255, 250, 240, 0.26);
       }
 
       @media (max-width: 900px) {
@@ -538,6 +579,11 @@
         .corner-mark--tr { border-radius: 0 calc(var(--mark-size, 260px) * 0.6) 0 0; }
         .corner-mark--bl { border-radius: 0 0 0 calc(var(--mark-size, 260px) * 0.6); }
         .corner-mark--br { border-radius: 0 0 calc(var(--mark-size, 260px) * 0.6) 0; }
+
+        .corner-mark-label--tl { top: 18px; left: 18px; }
+        .corner-mark-label--tr { top: 18px; right: 18px; }
+        .corner-mark-label--bl { bottom: 18px; left: 18px; }
+        .corner-mark-label--br { bottom: 18px; right: 18px; }
       }
 
       .section-inner {
