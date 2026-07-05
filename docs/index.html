@@ -4,24 +4,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Rounder - Rounded corners for macOS displays</title>
-    <meta name="description" content="Rounder is a small macOS menu-bar app that adds software rounded corners to external displays and older Macs.">
+    <meta name="description" content="Rounder is a small macOS menu-bar app that adds smooth macOS-style rounded corners to external monitors and older Macs.">
     <meta property="og:title" content="Rounder">
     <meta property="og:description" content="Rounded screen corners for macOS. No Accessibility permission. No Screen Recording.">
     <meta property="og:image" content="https://nisesimadao.github.io/Rounder/assets/rounder-social-preview.png">
     <meta property="og:type" content="website">
-    <meta name="theme-color" content="#f7f4ee">
+    <meta name="theme-color" content="#0a0b0f">
     <link rel="icon" href="assets/rounder-icon.png">
     <script>document.documentElement.classList.add("js");</script>
     <style>
       :root {
-        color-scheme: light;
-        --paper: #f7f4ee;
-        --ink: #151515;
-        --muted: #666a6d;
-        --line: #d9d2c6;
-        --mist: #ebe5da;
-        --cyan: #0097a9;
-        --cream: #fffaf0;
+        color-scheme: dark;
+        --bg: #0a0b0f;
+        --panel: #10131a;
+        --panel-deep: #0d0f15;
+        --text: #f2f4f7;
+        --muted: #9aa3ad;
+        --line: rgba(255, 255, 255, 0.1);
+        --accent: #7fe3f0;
         --font-en: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         --font-ja: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
       }
@@ -36,10 +36,10 @@
 
       body {
         margin: 0;
-        background: var(--paper);
-        color: var(--ink);
+        background: var(--bg);
+        color: var(--text);
         font-family: var(--font-en);
-        line-height: 1.5;
+        line-height: 1.6;
         overflow-x: hidden;
       }
 
@@ -75,28 +75,28 @@
 
       .brand {
         position: fixed;
-        top: 28px;
+        top: 26px;
         left: 30px;
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        color: var(--ink);
-        font-weight: 900;
+        color: var(--text);
+        font-weight: 800;
         line-height: 1;
         text-decoration: none;
         pointer-events: auto;
       }
 
       .brand img {
-        width: 34px;
-        height: 34px;
-        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
       }
 
       .top-actions {
         position: fixed;
-        top: 26px;
-        right: 32px;
+        top: 24px;
+        right: 30px;
         display: flex;
         gap: 10px;
         pointer-events: auto;
@@ -104,22 +104,22 @@
 
       .language-switch {
         display: inline-flex;
-        border: 1px solid var(--ink);
-        border-radius: 6px;
-        background: var(--paper);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 10px;
+        background: rgba(10, 11, 15, 0.7);
         overflow: hidden;
       }
 
       .language-switch button {
         min-height: 40px;
-        padding: 0 12px;
+        padding: 0 13px;
         border: 0;
-        border-right: 1px solid var(--ink);
+        border-right: 1px solid rgba(255, 255, 255, 0.16);
         background: transparent;
-        color: var(--ink);
+        color: var(--text);
         font: inherit;
         font-size: 12px;
-        font-weight: 950;
+        font-weight: 800;
         letter-spacing: 0.03em;
         cursor: pointer;
       }
@@ -129,8 +129,8 @@
       }
 
       .language-switch button[aria-pressed="true"] {
-        background: var(--ink);
-        color: var(--cream);
+        background: var(--text);
+        color: var(--bg);
       }
 
       .nav-button {
@@ -138,242 +138,191 @@
         align-items: center;
         justify-content: center;
         min-height: 40px;
-        padding: 0 16px;
-        border: 1px solid var(--ink);
-        border-radius: 6px;
-        background: var(--ink);
-        color: var(--cream);
+        padding: 0 18px;
+        border: 1px solid var(--text);
+        border-radius: 10px;
+        background: var(--text);
+        color: var(--bg);
         font-size: 12px;
-        font-weight: 900;
+        font-weight: 800;
         text-decoration: none;
         letter-spacing: 0.03em;
       }
 
-      .side-note {
-        position: fixed;
-        top: 50%;
-        right: 17px;
-        transform: translateY(-50%);
-        writing-mode: vertical-rl;
-        color: var(--ink);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        pointer-events: none;
-      }
-
-      .scroll-note {
-        position: fixed;
-        right: 17px;
-        bottom: 34px;
-        writing-mode: vertical-rl;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 0.13em;
-        pointer-events: none;
-      }
-
       .hero {
         position: relative;
-        min-height: 100svh;
-        padding: 118px clamp(26px, 6vw, 88px) 84px;
-        overflow: hidden;
-      }
-
-      .marquee-bg {
-        position: absolute;
-        inset: 76px 0 auto;
-        display: grid;
-        gap: 10px;
-        overflow: hidden;
-        width: 100%;
-        max-width: 100%;
-        contain: paint;
-        user-select: none;
-        pointer-events: none;
-      }
-
-      .marquee-row {
-        display: flex;
-        width: max-content;
-        color: rgba(21, 21, 21, 0.035);
-        font-size: clamp(66px, 10vw, 154px);
-        font-weight: 950;
-        line-height: 0.9;
-        letter-spacing: 0;
-        text-transform: uppercase;
-        white-space: nowrap;
-        animation: marquee 34s linear infinite;
-      }
-
-      .marquee-row:nth-child(2) {
-        animation-duration: 42s;
-        animation-direction: reverse;
-        transform: translateX(-10%);
-      }
-
-      .marquee-row:nth-child(3) {
-        animation-duration: 38s;
-        transform: translateX(-22%);
-      }
-
-      .marquee-row span {
-        padding-right: 0.35em;
-      }
-
-      html[lang="ja"] .marquee-row {
-        font-size: clamp(52px, 8vw, 120px);
-        text-transform: none;
-      }
-
-      .hero-grid {
-        position: relative;
-        z-index: 2;
-        display: block;
-        min-height: calc(100svh - 202px);
-      }
-
-      .hero-text {
-        max-width: 100%;
+        padding: 150px clamp(22px, 6vw, 88px) 90px;
+        text-align: center;
+        overflow-x: hidden;
+        overflow-x: clip;
       }
 
       .kicker {
-        margin: 0 0 26px;
-        color: var(--cyan);
+        margin: 0 0 24px;
+        color: var(--accent);
         font-size: 13px;
-        font-weight: 950;
-        letter-spacing: 0.13em;
+        font-weight: 800;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
       }
 
       h1 {
-        margin: 0;
-        font-size: clamp(52px, 8vw, 130px);
-        font-weight: 900;
-        line-height: 0.9;
-        letter-spacing: -0.035em;
-        text-transform: uppercase;
-        white-space: nowrap;
+        margin: 0 auto;
+        max-width: 17em;
+        font-size: clamp(44px, 7vw, 108px);
+        font-weight: 800;
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+      }
+
+      html[lang="ja"] h1 {
+        font-family: var(--font-ja);
+        max-width: none;
+        font-size: clamp(34px, 5.2vw, 76px);
+        font-weight: 700;
+        line-height: 1.22;
+        letter-spacing: 0.01em;
       }
 
       [data-i18n] {
         transition: opacity 140ms ease;
       }
 
-      html[lang="ja"] h1 {
-        font-family: var(--font-ja);
-        font-size: clamp(42px, 6.4vw, 92px);
-        font-weight: 800;
-        line-height: 1.08;
-        letter-spacing: 0;
-        text-transform: none;
-        white-space: normal;
-      }
-
       .hero-copy {
-        max-width: 560px;
-        margin: 34px 0 0;
-        color: #2d3032;
-        font-size: clamp(19px, 2.1vw, 27px);
-        font-weight: 700;
+        max-width: 620px;
+        margin: 28px auto 0;
+        color: var(--muted);
+        font-size: clamp(16px, 1.6vw, 20px);
+        font-weight: 500;
       }
 
       .actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 34px;
+        gap: 14px;
+        margin-top: 36px;
+      }
+
+      .hero .actions {
+        justify-content: center;
       }
 
       .button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 46px;
-        padding: 0 20px;
-        border: 1px solid var(--ink);
-        border-radius: 6px;
-        color: var(--ink);
+        min-height: 50px;
+        padding: 0 26px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 12px;
+        color: var(--text);
         text-decoration: none;
-        font-size: 13px;
-        font-weight: 950;
+        font-size: 14px;
+        font-weight: 700;
       }
 
       .button.primary {
-        background: var(--ink);
-        color: var(--cream);
+        border-color: var(--text);
+        background: var(--text);
+        color: var(--bg);
+        font-weight: 800;
       }
 
       .button.ghost-button {
         background: transparent;
         font: inherit;
-        font-size: 13px;
-        font-weight: 950;
+        font-size: 14px;
+        font-weight: 700;
         cursor: pointer;
       }
 
-      .visual {
+      /* ---- Monitor mock: four software-rounded corners with a soft glow ---- */
+      .mock {
+        width: min(960px, 100%);
+        margin: 72px auto 0;
+      }
+
+      .mock-screen {
+        --r: clamp(46px, 9vw, 92px);
         position: relative;
-        margin: -84px 0 0 auto;
-        width: min(55vw, 720px);
-        padding: 0 0 52px 54px;
+        overflow: hidden;
+        aspect-ratio: 16 / 10;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 10px;
+        background: #05070c;
+        box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
       }
 
-      .visual::before {
-        content: "ACTUAL DISPLAY CORNER";
+      .mock-wallpaper {
         position: absolute;
-        top: 16px;
+        inset: 0;
+        background:
+          radial-gradient(115% 95% at 18% -5%, rgba(80, 158, 188, 0.5), transparent 56%),
+          radial-gradient(130% 110% at 85% 108%, rgba(56, 106, 184, 0.55), transparent 62%),
+          linear-gradient(160deg, #20344c, #0d1727);
+      }
+
+      .mock-menubar {
+        position: absolute;
+        top: 0;
         left: 0;
-        z-index: 3;
-        padding: 10px 12px;
-        background: var(--paper);
-        writing-mode: vertical-rl;
-        color: var(--ink);
-        font-size: 13px;
-        font-weight: 950;
-        letter-spacing: 0.08em;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: clamp(20px, 3.4vw, 32px);
+        padding: 0 16px;
+        background: rgba(255, 255, 255, 0.07);
       }
 
-      .visual::after {
-        content: "NO EXTRA PRIVACY PERMISSIONS / LIVE SETTINGS";
-        position: absolute;
-        right: 18px;
-        bottom: 18px;
-        z-index: 3;
-        padding: 8px 12px;
-        background: var(--paper);
-        color: var(--ink);
-        font-size: 12px;
-        font-weight: 950;
-        letter-spacing: 0.08em;
-      }
-
-      html[lang="ja"] .visual::before {
-        content: "実際の画面角";
-      }
-
-      html[lang="ja"] .visual::after {
-        content: "追加のプライバシー権限なし / 即時反映";
-      }
-
-      .visual img {
+      .mock-menubar i {
         display: block;
-        width: 100%;
-        border: 2px solid var(--ink);
-        box-shadow: 18px 18px 0 var(--mist);
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.3);
       }
 
-      .visual figcaption {
-        margin: 14px 0 0;
+      .mock-menubar i:nth-child(1) { width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); }
+      .mock-menubar i:nth-child(2) { width: 34px; }
+      .mock-menubar i:nth-child(3) { width: 22px; }
+      .mock-menubar i:nth-child(4) { width: 26px; }
+
+      .mock-menubar .spacer {
+        flex: 1;
+      }
+
+      .mock-menubar .status {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        background: var(--accent);
+        box-shadow: 0 0 8px rgba(127, 227, 240, 0.7);
+      }
+
+      .mock-corner {
+        position: absolute;
+        z-index: 3;
+        width: var(--r);
+        height: var(--r);
+      }
+
+      .mock-corner.tl { top: 0; left: 0; background: radial-gradient(circle var(--r) at 100% 100%, transparent calc(var(--r) - 9px), rgba(127, 227, 240, 0.5) calc(var(--r) - 7px), rgba(127, 227, 240, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
+      .mock-corner.tr { top: 0; right: 0; background: radial-gradient(circle var(--r) at 0% 100%, transparent calc(var(--r) - 9px), rgba(127, 227, 240, 0.5) calc(var(--r) - 7px), rgba(127, 227, 240, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
+      .mock-corner.bl { bottom: 0; left: 0; background: radial-gradient(circle var(--r) at 100% 0%, transparent calc(var(--r) - 9px), rgba(127, 227, 240, 0.5) calc(var(--r) - 7px), rgba(127, 227, 240, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
+      .mock-corner.br { bottom: 0; right: 0; background: radial-gradient(circle var(--r) at 0% 0%, transparent calc(var(--r) - 9px), rgba(127, 227, 240, 0.5) calc(var(--r) - 7px), rgba(127, 227, 240, 0.1) calc(var(--r) - 3px), #000 var(--r)); }
+
+      .mock-caption {
+        margin: 18px auto 0;
         color: var(--muted);
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 600;
       }
 
       .section {
         position: relative;
-        padding: 110px clamp(26px, 6vw, 88px);
+        padding: 110px clamp(22px, 6vw, 88px);
         border-top: 1px solid var(--line);
         overflow-x: hidden;
         overflow-x: clip;
@@ -391,9 +340,9 @@
         margin: 0;
         max-width: 100%;
         color: transparent;
-        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.1);
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 0.11);
         font-size: clamp(64px, 11vw, 168px);
-        font-weight: 950;
+        font-weight: 900;
         line-height: 0.92;
         letter-spacing: -0.03em;
         text-transform: uppercase;
@@ -410,19 +359,142 @@
         text-transform: none;
       }
 
+      html.js .giant[data-slide] {
+        transition: none;
+        will-change: transform, opacity;
+      }
+
       .body-large {
         margin: 0;
-        color: #323639;
-        font-size: clamp(20px, 2.2vw, 30px);
+        color: var(--text);
+        font-size: clamp(19px, 2vw, 27px);
+        font-weight: 600;
+        line-height: 1.55;
+      }
+
+      .duo {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+        gap: clamp(28px, 5vw, 72px);
+        align-items: center;
+        margin-top: clamp(-64px, -3.5vw, -16px);
+      }
+
+      .section-label {
+        margin: 0 0 20px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .real-shot {
+        margin: 0;
+      }
+
+      .real-shot img {
+        display: block;
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        box-shadow: 0 30px 70px -35px rgba(0, 0, 0, 0.9);
+      }
+
+      .real-shot figcaption {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .proof {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin: 72px auto 0;
+      }
+
+      .proof-item {
+        min-height: 200px;
+        padding: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+
+      .proof-item span {
+        display: block;
+        margin-bottom: 40px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+      }
+
+      .proof-item h3 {
+        margin: 0 0 10px;
+        font-size: 22px;
         font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .proof-item p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .steps {
+        position: relative;
+        z-index: 1;
+        width: min(640px, 100%);
+        margin-left: auto;
+        margin-top: clamp(-72px, -4vw, -20px);
+        display: grid;
+        gap: 1px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr);
+        gap: 26px;
+        padding: 24px;
+        background: var(--panel-deep);
+      }
+
+      .steps > .section-label {
+        margin: 0;
+        padding: 24px;
+        background: var(--panel-deep);
+      }
+
+      .step strong {
+        color: var(--accent);
+        font-size: 14px;
+        letter-spacing: 0.1em;
+      }
+
+      .step p {
+        margin: 0;
+        color: rgba(242, 244, 247, 0.78);
+        font-size: 17px;
+        font-weight: 600;
       }
 
       .section-copy {
         position: relative;
         z-index: 1;
-        width: min(620px, 100%);
+        width: min(640px, 100%);
         margin-left: auto;
-        margin-top: clamp(-72px, -4vw, -20px);
+        margin-top: clamp(-64px, -3.5vw, -16px);
         display: grid;
         grid-template-columns: 62px minmax(0, 1fr);
         gap: 22px;
@@ -437,137 +509,34 @@
         width: 54px;
         height: 54px;
         margin-top: 4px;
-        border: 2px solid var(--ink);
-        border-radius: 6px;
-        background: var(--paper);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+        background: var(--panel);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: var(--ink);
+        color: var(--text);
       }
 
       .section-icon svg {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
         stroke: currentColor;
-        stroke-width: 2.3;
+        stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
         fill: none;
-      }
-
-      .section-label {
-        margin: 0 0 22px;
-        color: var(--cyan);
-        font-size: 13px;
-        font-weight: 950;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-      }
-
-      .proof {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1px;
-        max-width: 1180px;
-        margin: 86px auto 0;
-        background: var(--line);
-        border: 1px solid var(--line);
-      }
-
-      .proof-item {
-        min-height: 210px;
-        padding: 26px;
-        background: var(--paper);
-      }
-
-      .proof-item span {
-        display: block;
-        margin-bottom: 44px;
-        color: var(--cyan);
-        font-size: 13px;
-        font-weight: 950;
-        letter-spacing: 0.12em;
-      }
-
-      .proof-item h3 {
-        margin: 0 0 12px;
-        font-size: 24px;
-        line-height: 1.15;
-      }
-
-      .proof-item p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 16px;
-        font-weight: 650;
-      }
-
-      .black {
-        background: var(--ink);
-        color: var(--cream);
-      }
-
-      .black .giant {
-        -webkit-text-stroke-color: rgba(255, 250, 240, 0.16);
-      }
-
-      .black .body-large {
-        color: rgba(255, 250, 240, 0.78);
-      }
-
-      .black .section-label {
-        color: #8ce9f3;
-      }
-
-      .steps {
-        position: relative;
-        z-index: 1;
-        width: min(620px, 100%);
-        margin-left: auto;
-        margin-top: clamp(-72px, -4vw, -20px);
-        display: grid;
-        gap: 1px;
-        background: rgba(255, 250, 240, 0.16);
-        border: 1px solid rgba(255, 250, 240, 0.16);
-      }
-
-      .step {
-        display: grid;
-        grid-template-columns: 74px minmax(0, 1fr);
-        gap: 26px;
-        padding: 24px;
-        background: var(--ink);
-      }
-
-      .steps > .section-label {
-        margin: 0;
-        padding: 24px;
-        background: var(--ink);
-      }
-
-      .step strong {
-        color: #8ce9f3;
-        font-size: 14px;
-        letter-spacing: 0.1em;
-      }
-
-      .step p {
-        margin: 0;
-        color: rgba(255, 250, 240, 0.78);
-        font-size: 18px;
-        font-weight: 700;
       }
 
       footer {
         display: flex;
         justify-content: space-between;
         gap: 24px;
-        padding: 34px clamp(26px, 6vw, 88px);
+        padding: 34px clamp(22px, 6vw, 88px);
         border-top: 1px solid var(--line);
         color: var(--muted);
         font-size: 13px;
-        font-weight: 750;
+        font-weight: 600;
       }
 
       .faq-panel {
@@ -600,11 +569,12 @@
         margin: 0;
         padding: 34px 0 14px;
         border-top: 1px solid var(--line);
-        font-size: clamp(24px, 3.4vw, 38px);
-        line-height: 1.2;
+        font-size: clamp(22px, 3.2vw, 34px);
+        font-weight: 700;
+        line-height: 1.25;
       }
 
-      .faq-content h2:first-child {
+      .faq-content h2:first-of-type {
         border-top: 0;
         padding-top: 0;
       }
@@ -612,8 +582,8 @@
       .faq-content p {
         margin: 0 0 22px;
         color: var(--muted);
-        font-size: 18px;
-        font-weight: 650;
+        font-size: 17px;
+        font-weight: 500;
       }
 
       .faq-content pre {
@@ -621,9 +591,9 @@
         padding: 18px;
         overflow: auto;
         border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--ink);
-        color: #d8f8ff;
+        border-radius: 12px;
+        background: #05070c;
+        color: #cdeef6;
       }
 
       .faq-content code {
@@ -632,133 +602,7 @@
       }
 
       .faq-error {
-        color: #9a1b1b;
-      }
-
-      @media (max-width: 900px) {
-        .brand {
-          top: 20px;
-          left: 16px;
-        }
-
-        .side-note,
-        .scroll-note {
-          display: none;
-        }
-
-        .top-actions {
-          top: 18px;
-          right: 14px;
-        }
-
-        .nav-button {
-          display: none;
-        }
-
-        .hero {
-          padding: 94px 16px 60px;
-        }
-
-        .hero-grid {
-          min-height: auto;
-        }
-
-        h1 {
-          font-size: clamp(39px, 12vw, 68px);
-          white-space: normal;
-          letter-spacing: -0.02em;
-        }
-
-        html[lang="ja"] h1 {
-          font-size: clamp(36px, 10.4vw, 60px);
-          letter-spacing: 0;
-        }
-
-        .visual {
-          width: 100%;
-          margin: 36px 0 0;
-          padding: 0 0 36px 28px;
-        }
-
-        .visual::before {
-          left: -2px;
-          font-size: 10px;
-        }
-
-        .visual::after {
-          right: 6px;
-          bottom: 10px;
-          font-size: 10px;
-        }
-
-        .section {
-          padding: 70px 16px;
-        }
-
-        .marquee-bg {
-          display: none;
-        }
-
-        .giant {
-          font-size: clamp(40px, 13vw, 60px);
-        }
-
-        html[lang="ja"] .giant {
-          font-size: clamp(30px, 9.6vw, 44px);
-        }
-
-        .section-copy {
-          grid-template-columns: 48px minmax(0, 1fr);
-          gap: 14px;
-          margin-left: 0;
-          margin-top: 26px;
-        }
-
-        .steps {
-          margin-left: 0;
-          margin-top: 26px;
-        }
-
-        .section-icon {
-          width: 42px;
-          height: 42px;
-        }
-
-        .section-icon svg {
-          width: 18px;
-          height: 18px;
-        }
-
-        .proof {
-          grid-template-columns: 1fr;
-          margin-top: 54px;
-        }
-
-        .proof-item {
-          min-height: auto;
-        }
-
-        .proof-item h3 {
-          font-size: 21px;
-        }
-
-        .step {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 8px;
-        }
-
-        footer {
-          display: block;
-          padding: 28px 16px;
-        }
-
-        .faq-header {
-          display: block;
-        }
-
-        .faq-header .button {
-          margin-top: 20px;
-        }
+        color: #ff9f9f;
       }
 
       /* Scroll-triggered reveal. Hidden state only applies when JS runs;
@@ -784,25 +628,105 @@
         }
       }
 
-      /* Giants slide in horizontally, driven by scroll position (JS sets
-         transform per frame; transition must not fight those updates). */
-      html.js .giant[data-slide] {
-        transition: none;
-        will-change: transform, opacity;
-      }
-
-      @keyframes marquee {
-        from {
-          transform: translateX(0);
+      @media (max-width: 900px) {
+        .brand {
+          top: 20px;
+          left: 16px;
         }
-        to {
-          transform: translateX(-33.333%);
-        }
-      }
 
-      @media (prefers-reduced-motion: reduce) {
-        .marquee-row {
-          animation: none;
+        .top-actions {
+          top: 18px;
+          right: 14px;
+        }
+
+        .nav-button {
+          display: none;
+        }
+
+        .hero {
+          padding: 118px 18px 64px;
+        }
+
+        h1 {
+          font-size: clamp(38px, 11vw, 64px);
+        }
+
+        html[lang="ja"] h1 {
+          font-size: clamp(29px, 8.2vw, 48px);
+        }
+
+        .mock {
+          margin-top: 44px;
+        }
+
+        .section {
+          padding: 70px 18px;
+        }
+
+        .giant {
+          font-size: clamp(40px, 13vw, 60px);
+        }
+
+        html[lang="ja"] .giant {
+          font-size: clamp(30px, 9.6vw, 44px);
+        }
+
+        .duo {
+          grid-template-columns: minmax(0, 1fr);
+          margin-top: 26px;
+        }
+
+        .section-copy {
+          grid-template-columns: 48px minmax(0, 1fr);
+          gap: 14px;
+          margin-left: 0;
+          margin-top: 26px;
+        }
+
+        .steps {
+          margin-left: 0;
+          margin-top: 26px;
+        }
+
+        .section-icon {
+          width: 42px;
+          height: 42px;
+        }
+
+        .section-icon svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .proof {
+          grid-template-columns: minmax(0, 1fr);
+          margin-top: 44px;
+        }
+
+        .proof-item {
+          min-height: auto;
+        }
+
+        .proof-item h3 {
+          font-size: 20px;
+        }
+
+        .step {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 8px;
+        }
+
+        footer {
+          display: block;
+          padding: 28px 18px;
+        }
+
+        .faq-header {
+          display: block;
+        }
+
+        .faq-header .button {
+          margin-top: 20px;
         }
       }
     </style>
@@ -820,69 +744,56 @@
         </div>
         <a class="nav-button" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="DOWNLOAD" data-ja="ダウンロード">DOWNLOAD</a>
       </div>
-      <div class="side-note" data-i18n data-en="Round display corners without extra privacy permissions." data-ja="追加のプライバシー権限なしで画面の角を丸く表示します。">Round display corners without extra privacy permissions.</div>
-      <div class="scroll-note" data-i18n data-en="SCROLL" data-ja="スクロール">SCROLL</div>
     </div>
 
     <header class="hero">
-      <div class="marquee-bg" aria-hidden="true">
-        <div class="marquee-row" data-marquee data-en="Round screen corners without extra privacy permissions. " data-ja="追加のプライバシー権限なしで画面の角を丸く表示します。">
-          <span>Round screen corners without extra privacy permissions. </span><span>Round screen corners without extra privacy permissions. </span><span>Round screen corners without extra privacy permissions. </span>
-        </div>
-        <div class="marquee-row" data-marquee data-en="Use it for external displays and older Macs. " data-ja="外部ディスプレイや古いMacで使えます。">
-          <span>Use it for external displays and older Macs. </span><span>Use it for external displays and older Macs. </span><span>Use it for external displays and older Macs. </span>
-        </div>
-        <div class="marquee-row" data-marquee data-en="Set radius, color, displays, and presets from the menu bar. " data-ja="半径、色、対象ディスプレイ、プリセットを設定できます。">
-          <span>Set radius, color, displays, and presets from the menu bar. </span><span>Set radius, color, displays, and presets from the menu bar. </span><span>Set radius, color, displays, and presets from the menu bar. </span>
-        </div>
+      <p class="kicker reveal" data-i18n data-en="macOS menu-bar app" data-ja="macOS メニューバーアプリ">macOS menu-bar app</p>
+      <h1 class="reveal" style="--reveal-delay: 90ms" data-i18n data-en="Make every display feel softer." data-ja="外部ディスプレイを、<wbr>少しだけ&nbsp;Mac&nbsp;らしく。">Make every display feel softer.</h1>
+      <p class="hero-copy reveal" style="--reveal-delay: 180ms" data-i18n data-en="Rounder adds smooth macOS-style corners to external monitors and older Macs &mdash; without Screen Recording, Accessibility, or extra privacy permissions." data-ja="Rounder&nbsp;は、<wbr>角ばった画面に<wbr>やわらかい丸みを足す<wbr>小さなメニューバーアプリです。<wbr>画面収録権限も<wbr>アクセシビリティ権限も<wbr>必要ありません。">Rounder adds smooth macOS-style corners to external monitors and older Macs &mdash; without Screen Recording, Accessibility, or extra privacy permissions.</p>
+      <div class="actions reveal" style="--reveal-delay: 260ms">
+        <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
+        <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
       </div>
-      <div class="hero-grid">
-        <div class="hero-text">
-          <p class="kicker reveal" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーアプリ">macOS menu-bar utility</p>
-          <h1 class="reveal" style="--reveal-delay: 90ms" data-i18n data-en="Round the screen." data-ja="画面の角を、<wbr>丸くする。">Round the screen.</h1>
-          <p class="hero-copy reveal" style="--reveal-delay: 180ms" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや<wbr>古い&nbsp;MacBook&nbsp;の角を、<wbr>画面上のオーバーレイで<wbr>丸く見せる<wbr>メニューバーアプリです。<wbr>アクセシビリティ権限も<wbr>画面収録権限も<wbr>使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
-          <div class="actions reveal" style="--reveal-delay: 260ms">
-            <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
-            <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
+      <div class="mock reveal" style="--reveal-delay: 220ms" aria-hidden="true">
+        <div class="mock-screen">
+          <div class="mock-wallpaper"></div>
+          <div class="mock-menubar">
+            <i></i><i></i><i></i><i></i>
+            <span class="spacer"></span>
+            <span class="status"></span>
           </div>
+          <span class="mock-corner tl"></span>
+          <span class="mock-corner tr"></span>
+          <span class="mock-corner bl"></span>
+          <span class="mock-corner br"></span>
         </div>
-        <figure class="visual reveal" style="--reveal-delay: 220ms">
-          <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
-          <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
-        </figure>
+        <p class="mock-caption" data-i18n data-en="Corner masks drawn as lightweight overlay windows. Glow is optional." data-ja="軽量なオーバーレイウィンドウとして描画される角丸マスク。発光はオプションです。">Corner masks drawn as lightweight overlay windows. Glow is optional.</p>
       </div>
     </header>
 
     <main>
       <section class="section">
         <div class="section-inner">
-          <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
-          <div class="section-copy reveal" style="--reveal-delay: 140ms">
-            <span class="section-icon" aria-hidden="true">
-              <svg viewBox="0 0 32 32">
-                <rect x="4" y="7" width="24" height="16" rx="2"></rect>
-                <path d="M11 27h10"></path>
-                <path d="M16 23v4"></path>
-                <path d="M9 11h6"></path>
-                <path d="M9 11v6"></path>
-                <path d="M23 19h-6"></path>
-                <path d="M23 19v-6"></path>
-              </svg>
-            </span>
-            <div class="section-copy-text">
+          <h2 class="giant" data-slide="left" data-i18n data-en="The real corner." data-ja="これが実際の<wbr>画面の角。">The real corner.</h2>
+          <div class="duo">
+            <div class="reveal">
               <p class="section-label" data-i18n data-en="What it does" data-ja="できること">What it does</p>
               <p class="body-large" data-i18n data-en="Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar." data-ja="Rounder&nbsp;は<wbr>画面の四隅に<wbr>小さなオーバーレイを重ねて、<wbr>角だけを丸く見せます。<wbr>設定はローカルに保存され、<wbr>メニューバーから<wbr>静かに使えます。">Rounder draws borderless corner overlays above the desktop, then gets out of the way. Settings stay local, and everything lives in the menu bar.</p>
             </div>
+            <figure class="real-shot reveal" style="--reveal-delay: 140ms">
+              <img src="assets/rounder-screenshot.png" alt="A macOS display corner with Rounder enabled">
+              <figcaption data-i18n data-en="Actual monitor corner with Rounder enabled." data-ja="Rounder を有効にした実際のモニター角。">Actual monitor corner with Rounder enabled.</figcaption>
+            </figure>
           </div>
           <div class="proof">
             <div class="proof-item reveal">
               <span>01</span>
-              <h3 data-i18n data-en="No extra privacy permissions" data-ja="追加のプライバシー<wbr>権限なし">No extra privacy permissions</h3>
+              <h3 data-i18n data-en="No permissions" data-ja="追加権限なし">No permissions</h3>
               <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、<wbr>自動化、<wbr>ネットワークアクセスは<wbr>不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
             </div>
             <div class="proof-item reveal" style="--reveal-delay: 110ms">
               <span>02</span>
-              <h3 data-i18n data-en="Live settings" data-ja="即時反映">Live settings</h3>
+              <h3 data-i18n data-en="Live tuning" data-ja="その場で調整">Live tuning</h3>
               <p data-i18n data-en="Radius, color, corner selection, presets, and glow changes apply while running." data-ja="半径、色、角の選択、<wbr>プリセット、発光設定は<wbr>起動中に<wbr>そのまま反映されます。">Radius, color, corner selection, presets, and glow changes apply while running.</p>
             </div>
             <div class="proof-item reveal" style="--reveal-delay: 220ms">
@@ -894,7 +805,7 @@
         </div>
       </section>
 
-      <section class="section black">
+      <section class="section">
         <div class="section-inner">
           <h2 class="giant" data-slide="right" data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps reveal" style="--reveal-delay: 140ms">
@@ -968,11 +879,6 @@
         });
         document.querySelectorAll("[data-lang-button]").forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.langButton === language));
-        });
-        document.querySelectorAll("[data-marquee]").forEach((row) => {
-          const value = row.dataset[language];
-          if (!value) return;
-          row.innerHTML = `<span>${value}</span><span>${value}</span><span>${value}</span>`;
         });
         if (typeof queueGiants === "function") queueGiants();
       }
