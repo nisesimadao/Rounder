@@ -39,6 +39,7 @@
         color: var(--ink);
         font-family: var(--font-en);
         line-height: 1.5;
+        overflow-x: hidden;
       }
 
       html[lang="ja"] body {
@@ -139,9 +140,9 @@
         transform: translateY(-50%);
         writing-mode: vertical-rl;
         color: var(--ink);
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 800;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         pointer-events: none;
       }
 
@@ -164,28 +165,57 @@
         overflow: hidden;
       }
 
-      .ghost {
+      .marquee-bg {
         position: absolute;
-        inset: -6vw -4vw auto;
-        color: transparent;
-        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.075);
-        font-size: clamp(76px, 13vw, 198px);
-        font-weight: 950;
-        line-height: 0.85;
-        letter-spacing: 0;
-        text-transform: uppercase;
+        inset: 76px 0 auto;
+        display: grid;
+        gap: 10px;
+        overflow: hidden;
+        width: 100%;
+        max-width: 100%;
+        contain: paint;
         user-select: none;
         pointer-events: none;
+      }
+
+      .marquee-row {
+        display: flex;
+        width: max-content;
+        color: rgba(21, 21, 21, 0.035);
+        -webkit-text-stroke: 0 transparent;
+        font-size: clamp(66px, 10vw, 154px);
+        font-weight: 950;
+        line-height: 0.9;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        white-space: nowrap;
+        animation: marquee 34s linear infinite;
+      }
+
+      .marquee-row:nth-child(2) {
+        animation-duration: 42s;
+        animation-direction: reverse;
+        transform: translateX(-10%);
+      }
+
+      .marquee-row:nth-child(3) {
+        animation-duration: 38s;
+        transform: translateX(-22%);
+      }
+
+      .marquee-row span {
+        padding-right: 0.35em;
       }
 
       .hero-grid {
         position: relative;
         z-index: 2;
-        display: grid;
-        grid-template-columns: 0.9fr 1.1fr;
-        gap: clamp(34px, 6vw, 84px);
-        align-items: end;
+        display: block;
         min-height: calc(100svh - 202px);
+      }
+
+      .hero-text {
+        max-width: 100%;
       }
 
       .kicker {
@@ -199,12 +229,13 @@
 
       h1 {
         margin: 0;
-        max-width: 720px;
-        font-size: clamp(76px, 13vw, 170px);
+        max-width: none;
+        font-size: clamp(58px, 9.8vw, 148px);
         font-weight: 900;
-        line-height: 0.78;
-        letter-spacing: -0.02em;
+        line-height: 0.9;
+        letter-spacing: -0.035em;
         text-transform: uppercase;
+        white-space: nowrap;
       }
 
       [data-i18n] {
@@ -216,7 +247,18 @@
         font-family: var(--font-ja);
         font-weight: 800;
         letter-spacing: 0;
-        line-height: 0.95;
+        line-height: 1.04;
+        text-transform: none;
+      }
+
+      html[lang="ja"] h1 {
+        max-width: none;
+        font-size: clamp(44px, 6.5vw, 92px);
+        white-space: nowrap;
+      }
+
+      html[lang="ja"] h2 {
+        font-size: clamp(42px, 5.4vw, 78px);
       }
 
       html[lang="ja"] .hero-copy,
@@ -226,6 +268,19 @@
         line-break: strict;
         word-break: keep-all;
         overflow-wrap: anywhere;
+      }
+
+      html[lang="ja"] .marquee-row {
+        font-size: clamp(52px, 8vw, 120px);
+        text-transform: none;
+      }
+
+      html[lang="ja"] .visual::before {
+        content: "実際の画面角";
+      }
+
+      html[lang="ja"] .visual::after {
+        content: "追加のプライバシー権限なし / 即時反映";
       }
 
       .hero-copy {
@@ -262,9 +317,16 @@
         color: var(--cream);
       }
 
+      .button.ghost-button {
+        background: transparent;
+      }
+
       .visual {
         position: relative;
         margin: 0;
+        width: min(55vw, 720px);
+        margin-left: auto;
+        margin-top: -84px;
         padding: 0 0 52px 54px;
       }
 
@@ -284,7 +346,7 @@
       }
 
       .visual::after {
-        content: "NO PERMISSIONS / LIVE SETTINGS";
+        content: "NO EXTRA PRIVACY PERMISSIONS / LIVE SETTINGS";
         position: absolute;
         right: 18px;
         bottom: 18px;
@@ -315,23 +377,35 @@
         position: relative;
         padding: 110px clamp(26px, 6vw, 88px);
         border-top: 1px solid var(--line);
+        overflow: hidden;
       }
 
       .section-grid {
+        position: relative;
         display: grid;
-        grid-template-columns: 0.85fr 1.15fr;
+        grid-template-columns: 1fr;
         gap: clamp(34px, 7vw, 106px);
         max-width: 1180px;
         margin: 0 auto;
+        min-height: 360px;
+        align-items: center;
       }
 
       h2 {
+        position: absolute;
+        inset: -18px auto auto 0;
+        z-index: 0;
         margin: 0;
-        font-size: clamp(44px, 7vw, 96px);
-        font-weight: 900;
-        line-height: 0.9;
-        letter-spacing: -0.015em;
+        max-width: 1120px;
+        width: min(1120px, 100%);
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(21, 21, 21, 0.09);
+        font-size: clamp(96px, 15vw, 218px);
+        font-weight: 950;
+        line-height: 0.82;
+        letter-spacing: -0.03em;
         text-transform: uppercase;
+        pointer-events: none;
       }
 
       .body-large {
@@ -339,6 +413,54 @@
         color: #323639;
         font-size: clamp(20px, 2.2vw, 30px);
         font-weight: 700;
+      }
+
+      .section-copy {
+        position: relative;
+        z-index: 1;
+        width: min(620px, 100%);
+        margin-left: auto;
+        padding-top: 74px;
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+      }
+
+      .section-copy-text {
+        min-width: 0;
+      }
+
+      .section-icon {
+        width: 54px;
+        height: 54px;
+        margin-top: 4px;
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        background: var(--paper);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink);
+      }
+
+      .section-icon svg {
+        width: 30px;
+        height: 30px;
+        stroke: currentColor;
+        stroke-width: 2.3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .section-label {
+        margin: 0 0 22px;
+        color: var(--cyan);
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
       .proof {
@@ -389,14 +511,23 @@
       }
 
       .black h2 {
-        color: var(--cream);
+        color: transparent;
+        -webkit-text-stroke-color: rgba(255, 250, 240, 0.16);
       }
 
       .black .body-large {
         color: rgba(255, 250, 240, 0.78);
       }
 
+      .black .section-label {
+        color: #8ce9f3;
+      }
+
       .steps {
+        position: relative;
+        z-index: 1;
+        width: min(620px, 100%);
+        margin-left: auto;
         display: grid;
         gap: 1px;
         background: rgba(255, 250, 240, 0.16);
@@ -408,6 +539,12 @@
         grid-template-columns: 74px 1fr;
         gap: 26px;
         padding: 24px;
+        background: var(--ink);
+      }
+
+      .steps > .section-label {
+        margin: 0;
+        padding: 24px 24px 0;
         background: var(--ink);
       }
 
@@ -433,6 +570,77 @@
         color: var(--muted);
         font-size: 13px;
         font-weight: 750;
+      }
+
+      .faq-panel {
+        display: none;
+        padding-top: 0;
+      }
+
+      .faq-panel.is-open {
+        display: block;
+      }
+
+      .faq-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+        max-width: 1180px;
+        margin: 0 auto 44px;
+      }
+
+      .faq-header h2 {
+        font-size: clamp(56px, 10vw, 144px);
+      }
+
+      .faq-content {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+
+      .faq-content h1 {
+        display: none;
+      }
+
+      .faq-content h2 {
+        margin: 0;
+        padding: 34px 0 14px;
+        border-top: 1px solid var(--line);
+        font-size: clamp(26px, 3.8vw, 42px);
+        line-height: 1.1;
+        text-transform: none;
+      }
+
+      .faq-content h2:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .faq-content p {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .faq-content pre {
+        margin: 18px 0 32px;
+        padding: 18px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--ink);
+        color: #d8f8ff;
+      }
+
+      .faq-content code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        font-size: 14px;
+      }
+
+      .faq-error {
+        color: #9a1b1b;
       }
 
       @media (max-width: 900px) {
@@ -465,15 +673,25 @@
           grid-template-columns: 1fr;
         }
 
+        .section-grid {
+          min-height: 300px;
+        }
+
         .hero-grid {
           min-height: auto;
         }
 
-        h1 {
-          font-size: clamp(62px, 22vw, 104px);
+        h1,
+        html[lang="ja"] h1 {
+          font-size: clamp(39px, 12vw, 68px);
+          white-space: normal;
+          letter-spacing: -0.02em;
         }
 
         .visual {
+          width: 100%;
+          margin-top: 36px;
+          margin-left: 0;
           padding: 0 0 36px 28px;
         }
 
@@ -490,6 +708,33 @@
 
         .section {
           padding: 70px 16px;
+        }
+
+        .marquee-bg {
+          display: none;
+        }
+
+        h2,
+        html[lang="ja"] h2 {
+          font-size: clamp(62px, 17vw, 94px);
+          width: 100%;
+        }
+
+        .section-copy {
+          grid-template-columns: 48px minmax(0, 1fr);
+          gap: 14px;
+          margin-left: 0;
+          padding-top: 86px;
+        }
+
+        .section-icon {
+          width: 42px;
+          height: 42px;
+        }
+
+        .section-icon svg {
+          width: 18px;
+          height: 18px;
         }
 
         .proof {
@@ -509,6 +754,29 @@
           display: block;
           padding: 28px 16px;
         }
+
+        .faq-header {
+          display: block;
+        }
+
+        .faq-header .button {
+          margin-top: 20px;
+        }
+      }
+
+      @keyframes marquee {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(-33.333%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .marquee-row {
+          animation: none;
+        }
       }
     </style>
   </head>
@@ -525,17 +793,27 @@
         </div>
         <a class="nav-button" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="DOWNLOAD" data-ja="ダウンロード">DOWNLOAD</a>
       </div>
-      <div class="side-note" data-i18n data-en="EXTERNAL DISPLAY / OLDER MACS / MENU BAR" data-ja="外部ディスプレイ / 古いMac / メニューバー">EXTERNAL DISPLAY / OLDER MACS / MENU BAR</div>
+      <div class="side-note" data-i18n data-en="Round display corners without extra privacy permissions." data-ja="追加のプライバシー権限なしで画面の角を丸く表示します。">Round display corners without extra privacy permissions.</div>
       <div class="scroll-note" data-i18n data-en="SCROLL" data-ja="スクロール">SCROLL</div>
     </div>
 
     <header class="hero">
-      <div class="ghost" data-i18n data-en="ROUNDED<br>CORNERS<br>NO PERMISSION" data-ja="角を<br>丸く<br>権限なし">ROUNDED<br>CORNERS<br>NO PERMISSION</div>
+      <div class="marquee-bg" aria-hidden="true">
+        <div class="marquee-row" data-marquee data-en="Round screen corners without extra privacy permissions. " data-ja="追加のプライバシー権限なしで画面の角を丸く表示します。">
+          <span>Round screen corners without extra privacy permissions. </span><span>Round screen corners without extra privacy permissions. </span><span>Round screen corners without extra privacy permissions. </span>
+        </div>
+        <div class="marquee-row" data-marquee data-en="Use it for external displays and older Macs. " data-ja="外部ディスプレイや古いMacで使えます。">
+          <span>Use it for external displays and older Macs. </span><span>Use it for external displays and older Macs. </span><span>Use it for external displays and older Macs. </span>
+        </div>
+        <div class="marquee-row" data-marquee data-en="Set radius, color, displays, and presets from the menu bar. " data-ja="半径、色、対象ディスプレイ、プリセットを設定できます。">
+          <span>Set radius, color, displays, and presets from the menu bar. </span><span>Set radius, color, displays, and presets from the menu bar. </span><span>Set radius, color, displays, and presets from the menu bar. </span>
+        </div>
+      </div>
       <div class="hero-grid">
-        <div>
+        <div class="hero-text">
           <p class="kicker" data-i18n data-en="macOS menu-bar utility" data-ja="macOS メニューバーユーティリティ">macOS menu-bar utility</p>
-          <h1 data-i18n data-en="Round<br>the<br>screen." data-ja="画面の<br>角を<br>丸く。">Round<br>the<br>screen.</h1>
-          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local, quiet, and permission-light." data-ja="Rounder は、外部ディスプレイや古い MacBook の直線的な角を、小さなオーバーレイアプリでやわらかく整えます。ローカルで静かに動き、強い権限を求めません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local, quiet, and permission-light.</p>
+          <h1 data-i18n data-en="Round the screen." data-ja="画面の角を丸くする。">Round the screen.</h1>
+          <p class="hero-copy" data-i18n data-en="Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission." data-ja="外部ディスプレイや古い MacBook の角を、画面上のオーバーレイで丸く見せるメニューバーアプリです。アクセシビリティ権限と画面収録権限は使いません。">Rounder softens sharp external displays and older MacBook corners with a tiny overlay app. It stays local and does not use Accessibility or Screen Recording permission.</p>
           <div class="actions">
             <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Download Rounder" data-ja="Rounder をダウンロード">Download Rounder</a>
             <a class="button" href="https://github.com/nisesimadao/Rounder">GitHub</a>
@@ -551,13 +829,29 @@
     <main>
       <section class="section">
         <div class="section-grid">
-          <h2 data-i18n data-en="Sharp corners are a small daily mismatch." data-ja="直線的な角は、毎日少しだけ気になる。">Sharp corners are a small daily mismatch.</h2>
-          <p class="body-large" data-i18n data-en="Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way." data-ja="Rounder は Mac の操作を邪魔せず、画面の端だけを整えます。デスクトップの上にボーダーレスの角オーバーレイを描き、あとはメニューバーで静かに待機します。">Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way.</p>
+          <h2 data-i18n data-en="Sharp corners are a small daily mismatch." data-ja="外部ディスプレイの<br>角を整える。">Sharp corners are a small daily mismatch.</h2>
+          <div class="section-copy">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <rect x="4" y="7" width="24" height="16" rx="2"></rect>
+                <path d="M11 27h10"></path>
+                <path d="M16 23v4"></path>
+                <path d="M9 11h6"></path>
+                <path d="M9 11v6"></path>
+                <path d="M23 19h-6"></path>
+                <path d="M23 19v-6"></path>
+              </svg>
+            </span>
+            <div class="section-copy-text">
+              <p class="section-label" data-i18n data-en="What it does" data-ja="できること">What it does</p>
+              <p class="body-large" data-i18n data-en="Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way." data-ja="Rounder は画面の四隅に小さなオーバーレイウィンドウを重ねます。設定はローカルに保存され、操作の邪魔にならないようメニューバーから使えます。">Rounder fixes the edge of the display without taking over the Mac. It draws borderless corner overlays above the desktop, then gets out of the way.</p>
+            </div>
+          </div>
         </div>
         <div class="proof">
           <div class="proof-item">
             <span>01</span>
-            <h3 data-i18n data-en="No invasive permissions" data-ja="強い権限なし">No invasive permissions</h3>
+            <h3 data-i18n data-en="No extra privacy permissions" data-ja="追加のプライバシー権限なし">No extra privacy permissions</h3>
             <p data-i18n data-en="No Accessibility permission, Screen Recording, Automation, or network access." data-ja="アクセシビリティ、画面収録、自動化、ネットワークアクセスは不要です。">No Accessibility permission, Screen Recording, Automation, or network access.</p>
           </div>
           <div class="proof-item">
@@ -575,15 +869,16 @@
 
       <section class="section black">
         <div class="section-grid">
-          <h2 data-i18n data-en="Small app. Specific job." data-ja="小さなアプリ。役割はひとつ。">Small app. Specific job.</h2>
+          <h2 data-i18n data-en="Small app. Specific job." data-ja="必要な設定だけ。">Small app. Specific job.</h2>
           <div class="steps">
+            <p class="section-label" data-i18n data-en="Controls" data-ja="設定項目">Controls</p>
             <div class="step">
               <strong data-i18n data-en="SET" data-ja="設定">SET</strong>
               <p data-i18n data-en="Pick the displays, radius, shape, and corners you want." data-ja="対象ディスプレイ、半径、形状、表示する角を選びます。">Pick the displays, radius, shape, and corners you want.</p>
             </div>
             <div class="step">
               <strong data-i18n data-en="SAVE" data-ja="保存">SAVE</strong>
-              <p data-i18n data-en="Use presets for subtle corners, all corners, or gaming glow setups." data-ja="控えめな角丸、全角、ゲーミング発光などをプリセットで切り替えられます。">Use presets for subtle corners, all corners, or gaming glow setups.</p>
+              <p data-i18n data-en="Use presets for subtle corners, all corners, or gaming glow setups." data-ja="保存した角丸設定をプリセットとして切り替えられます。">Use presets for subtle corners, all corners, or gaming glow setups.</p>
             </div>
             <div class="step">
               <strong data-i18n data-en="LEAVE" data-ja="常駐">LEAVE</strong>
@@ -595,15 +890,34 @@
 
       <section class="section">
         <div class="section-grid">
-          <h2 data-i18n data-en="Install once. Open from the menu bar." data-ja="一度入れて、あとはメニューバーから。">Install once. Open from the menu bar.</h2>
-          <div>
-            <p class="body-large" data-i18n data-en="Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature." data-ja="最新版をダウンロードし、Rounder.app をアプリケーションフォルダへ移動してください。初回起動時は右クリックして「開く」を選びます。有料 Developer ID 署名なしで配布しています。">Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature.</p>
-            <div class="actions">
-              <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Latest release" data-ja="最新リリース">Latest release</a>
-              <a class="button" href="https://github.com/nisesimadao/Rounder/blob/main/docs/FAQ.md">FAQ</a>
+          <h2 data-i18n data-en="Install once. Open from the menu bar." data-ja="ダウンロードして<br>Applicationsへ。">Install once. Open from the menu bar.</h2>
+          <div class="section-copy">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <path d="M16 5v14"></path>
+                <path d="m10 13 6 6 6-6"></path>
+                <rect x="6" y="21" width="20" height="6" rx="2"></rect>
+                <path d="M10 24h.01"></path>
+              </svg>
+            </span>
+            <div class="section-copy-text">
+              <p class="section-label" data-i18n data-en="Install" data-ja="インストール">Install</p>
+              <p class="body-large" data-i18n data-en="Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature." data-ja="最新版をダウンロードし、Rounder.app をアプリケーションフォルダへ移動してください。初回起動時は右クリックして「開く」を選びます。有料 Developer ID 署名なしで配布しています。">Download the latest release, move Rounder to Applications, then right-click and choose Open on first launch. The app is distributed without a paid Developer ID signature.</p>
+              <div class="actions">
+                <a class="button primary" href="https://github.com/nisesimadao/Rounder/releases/latest" data-i18n data-en="Latest release" data-ja="最新リリース">Latest release</a>
+                <a class="button" href="#faq" data-faq-open>FAQ</a>
+              </div>
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section faq-panel" id="faq" aria-live="polite">
+        <div class="faq-header">
+          <h2>FAQ</h2>
+          <button class="button ghost-button" type="button" data-faq-close data-i18n data-en="Close FAQ" data-ja="FAQを閉じる">Close FAQ</button>
+        </div>
+        <article class="faq-content" data-faq-content>Loading FAQ.md...</article>
       </section>
     </main>
 
@@ -628,6 +942,11 @@
         document.querySelectorAll("[data-lang-button]").forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.langButton === language));
         });
+        document.querySelectorAll("[data-marquee]").forEach((row) => {
+          const value = row.dataset[language];
+          if (!value) return;
+          row.innerHTML = `<span>${value}</span><span>${value}</span><span>${value}</span>`;
+        });
       }
 
       document.querySelectorAll("[data-lang-button]").forEach((button) => {
@@ -635,6 +954,112 @@
       });
 
       applyLanguage(preferredLanguage);
+
+      function escapeHtml(value) {
+        return value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function inlineMarkdown(value) {
+        return escapeHtml(value)
+          .replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      }
+
+      function renderMarkdown(markdown) {
+        const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+        const html = [];
+        let paragraph = [];
+        let code = [];
+        let inCode = false;
+
+        function flushParagraph() {
+          if (!paragraph.length) return;
+          html.push(`<p>${inlineMarkdown(paragraph.join(" "))}</p>`);
+          paragraph = [];
+        }
+
+        for (const line of lines) {
+          if (line.startsWith("```")) {
+            if (inCode) {
+              html.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
+              code = [];
+              inCode = false;
+            } else {
+              flushParagraph();
+              inCode = true;
+            }
+            continue;
+          }
+
+          if (inCode) {
+            code.push(line);
+            continue;
+          }
+
+          if (line.startsWith("# ")) {
+            flushParagraph();
+            html.push(`<h1>${inlineMarkdown(line.slice(2))}</h1>`);
+          } else if (line.startsWith("## ")) {
+            flushParagraph();
+            html.push(`<h2>${inlineMarkdown(line.slice(3))}</h2>`);
+          } else if (line.trim() === "") {
+            flushParagraph();
+          } else {
+            paragraph.push(line.trim());
+          }
+        }
+
+        flushParagraph();
+        return html.join("\n");
+      }
+
+      function openFaq() {
+        const panel = document.querySelector("[data-faq-content]").closest(".faq-panel");
+        const content = document.querySelector("[data-faq-content]");
+        const language = document.documentElement.lang === "ja" ? "ja" : "en";
+        const faqPath = language === "ja" ? "FAQ.ja.md" : "FAQ.md";
+        panel.classList.add("is-open");
+
+        content.textContent = language === "ja" ? "FAQ.md を読み込み中..." : "Loading FAQ.md...";
+        fetch(faqPath, { cache: "no-cache" })
+          .then((response) => {
+            if (!response.ok) throw new Error(`Failed to load ${faqPath} (${response.status})`);
+            return response.text();
+          })
+          .then((markdown) => {
+            content.innerHTML = renderMarkdown(markdown);
+          })
+          .catch((error) => {
+            content.innerHTML = `<p class="faq-error">${escapeHtml(error.message)}</p>`;
+          });
+
+        requestAnimationFrame(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }));
+      }
+
+      document.querySelector("[data-faq-open]").addEventListener("click", (event) => {
+        event.preventDefault();
+        history.replaceState(null, "", "#faq");
+        openFaq();
+      });
+
+      document.querySelector("[data-faq-close]").addEventListener("click", () => {
+        document.querySelector(".faq-panel").classList.remove("is-open");
+        if (location.hash === "#faq") history.replaceState(null, "", location.pathname + location.search);
+      });
+
+      document.querySelectorAll("[data-lang-button]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!document.querySelector(".faq-panel").classList.contains("is-open")) return;
+          document.querySelector("[data-faq-content]").innerHTML = "";
+          openFaq();
+        });
+      });
+
+      if (location.hash === "#faq") openFaq();
     </script>
   </body>
 </html>
