@@ -422,10 +422,40 @@
       .section {
         position: relative;
         padding: 110px clamp(26px, 6vw, 88px);
+        background: var(--paper);
         border-top: 1px solid var(--line);
         overflow-x: hidden;
         overflow-x: clip;
       }
+
+      /* Seam: each section's color block rounds into the next one, like
+         \_______/, instead of meeting at a hard ruled line -- the page's
+         own section breaks round the same way Rounder rounds a screen.
+         The earlier section keeps a higher stacking order so its rounded
+         bottom corners sit above the next section's square top, which is
+         pulled up underneath by the same amount; the next section's color
+         only shows through in the two rounded notches. */
+      :root {
+        --seam: 44px;
+      }
+
+      .section-rounded {
+        border-radius: 0 0 var(--seam) var(--seam);
+      }
+
+      .section-tucked {
+        margin-top: calc(-1 * var(--seam));
+        padding-top: calc(110px + var(--seam));
+        border-top: none;
+      }
+
+      .section:nth-of-type(1) { z-index: 7; }
+      .section:nth-of-type(2) { z-index: 6; }
+      .section:nth-of-type(3) { z-index: 5; }
+      .section:nth-of-type(4) { z-index: 4; }
+      .section:nth-of-type(5) { z-index: 3; }
+      .section:nth-of-type(6) { z-index: 2; }
+      .section:nth-of-type(7) { z-index: 1; }
 
       /* Corner-mark: a background quarter-circle bracket, drawn the same
          way an overlay corner mask is drawn (two straight sides curved by
@@ -970,6 +1000,14 @@
           padding: 70px 16px;
         }
 
+        :root {
+          --seam: 26px;
+        }
+
+        .section-tucked {
+          padding-top: calc(70px + var(--seam));
+        }
+
         .marquee-bg {
           display: none;
         }
@@ -1106,7 +1144,7 @@
     </header>
 
     <main>
-      <section class="section">
+      <section class="section section-rounded">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 260px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 24</span>
         <div class="section-inner">
@@ -1148,7 +1186,7 @@
         </div>
       </section>
 
-      <section class="section black">
+      <section class="section black section-rounded section-tucked">
         <div class="corner-mark corner-mark--bl" style="--mark-size: 320px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 40</span>
         <div class="section-inner">
@@ -1191,7 +1229,7 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-rounded section-tucked">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 220px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 8</span>
         <div class="section-inner">
@@ -1218,7 +1256,7 @@
         </div>
       </section>
 
-      <section class="section black">
+      <section class="section black section-rounded section-tucked">
         <div class="corner-mark corner-mark--bl" style="--mark-size: 300px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--bl" aria-hidden="true">R 32</span>
         <div class="section-inner">
@@ -1241,7 +1279,7 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-rounded section-tucked">
         <div class="corner-mark corner-mark--tr" style="--mark-size: 240px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--tr" aria-hidden="true">R 20</span>
         <div class="section-inner">
@@ -1267,7 +1305,7 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-tucked">
         <div class="corner-mark corner-mark--br" style="--mark-size: 280px" aria-hidden="true"></div>
         <span class="corner-mark-label corner-mark-label--br" aria-hidden="true">R 16</span>
         <div class="section-inner">
