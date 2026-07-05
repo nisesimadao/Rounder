@@ -21,6 +21,7 @@
     <meta name="twitter:image" content="https://nisesimadao.github.io/Rounder/assets/rounder-social-preview.png">
     <meta name="theme-color" content="#f7f4ee">
     <link rel="icon" href="assets/rounder-icon.png">
+    <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.25/dist/lenis.css">
     <script>document.documentElement.classList.add("js");</script>
     <style>
       :root {
@@ -38,10 +39,6 @@
 
       * {
         box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
       }
 
       body {
@@ -1388,7 +1385,17 @@
       <span data-i18n data-en="macOS 14.6 or later. Built with SwiftUI and AppKit." data-ja="macOS 14.6 以降。SwiftUI と AppKit で開発。">macOS 14.6 or later. Built with SwiftUI and AppKit.</span>
       <span>MIT License &mdash; Rounder / nisesimadao</span>
     </footer>
+    <script src="https://unpkg.com/lenis@1.3.25/dist/lenis.min.js"></script>
     <script>
+      // Real inertia (trackpad, wheel, touch unified) instead of hand-rolled
+      // wheel hijacking -- Lenis is the well-tested library sites actually
+      // ship. Skipped entirely under reduced-motion so scrolling stays
+      // fully native for anyone who asked the OS for less motion.
+      const prefersReducedMotionForScroll = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const lenis = prefersReducedMotionForScroll
+        ? null
+        : new Lenis({ autoRaf: true, lerp: 0.1, wheelMultiplier: 1, touchMultiplier: 1 });
+
       const preferredLanguage = (() => {
         const stored = localStorage.getItem("rounder-language");
         if (stored === "en" || stored === "ja") return stored;
@@ -1488,6 +1495,15 @@
         const faqPath = language === "ja" ? "FAQ.ja.md" : "FAQ.md";
         panel.classList.add("is-open");
 
+        function scrollToFaq() {
+          if (lenis) {
+            lenis.scrollTo(panel, { offset: 0, immediate: false });
+          } else {
+            panel.scrollIntoView({ behavior: prefersReducedMotionForScroll ? "auto" : "smooth", block: "start" });
+          }
+          queueGiants();
+        }
+
         content.textContent = language === "ja" ? "FAQ.md を読み込み中..." : "Loading FAQ.md...";
         fetch(faqPath, { cache: "no-cache" })
           .then((response) => {
@@ -1499,11 +1515,21 @@
           })
           .catch((error) => {
             content.innerHTML = `<p class="faq-error">${escapeHtml(error.message)}</p>`;
+          })
+          .finally(() => {
+            // The panel just grew from a short placeholder to its full
+            // height. Lenis caches the document's scrollable extent, so it
+            // needs an explicit nudge before a re-targeted scroll will
+            // actually reach the now-taller panel instead of stalling at
+            // the old (short) limit.
+            requestAnimationFrame(() => {
+              if (lenis) lenis.resize();
+              scrollToFaq();
+            });
           });
 
         requestAnimationFrame(() => {
-          panel.scrollIntoView({ behavior: "smooth", block: "start" });
-          queueGiants();
+          scrollToFaq();
         });
       }
 
