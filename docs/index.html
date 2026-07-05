@@ -1195,8 +1195,6 @@
 
     <main>
       <section class="section section-rounded">
-        <div class="corner-mark corner-mark--tr" style="--mark-size: 260px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 260px" aria-hidden="true">R 24</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Soften the corners." data-ja="外部ディスプレイの<wbr>角を、整える。">Soften the corners.</h2>
           <div class="section-copy reveal" style="--reveal-delay: 140ms">
@@ -1280,8 +1278,6 @@
       </section>
 
       <section class="section section-rounded section-tucked">
-        <div class="corner-mark corner-mark--tr" style="--mark-size: 220px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 220px" aria-hidden="true">R 8</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Nothing leaves this Mac." data-ja="データは、<wbr>外に出ない。">Nothing leaves this Mac.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1330,8 +1326,6 @@
       </section>
 
       <section class="section section-rounded section-tucked">
-        <div class="corner-mark corner-mark--tr" style="--mark-size: 240px" aria-hidden="true"></div>
-        <span class="corner-mark-label corner-mark-label--tr" style="--mark-size: 240px" aria-hidden="true">R 20</span>
         <div class="section-inner">
           <h2 class="giant" data-slide="left" data-i18n data-en="Changelog." data-ja="更新履歴。">Changelog.</h2>
           <div class="sheet reveal" style="--reveal-delay: 140ms">
@@ -1592,61 +1586,6 @@
         revealElements.forEach((element) => element.classList.add("is-visible"));
       }
 
-      // Wheel-driven momentum scroll: mouse wheels move the page in coarse,
-      // discrete notches by default, unlike a trackpad's native inertia.
-      // This smooths every wheel input to the same eased, continuous feel
-      // without touching touch scrolling (no wheel events there) or
-      // keyboard scrolling (untouched, still native).
-      if (!reducedMotion.matches) {
-        let currentScroll = window.scrollY;
-        let targetScroll = currentScroll;
-        let momentumActive = false;
-        const ease = 0.14;
-
-        function maxScrollTop() {
-          return document.documentElement.scrollHeight - window.innerHeight;
-        }
-
-        function normalizeWheelDelta(event) {
-          let delta = event.deltaY;
-          if (event.deltaMode === 1) delta *= 18;
-          else if (event.deltaMode === 2) delta *= window.innerHeight;
-          return Math.max(-140, Math.min(140, delta));
-        }
-
-        function stepMomentum() {
-          currentScroll += (targetScroll - currentScroll) * ease;
-          if (Math.abs(targetScroll - currentScroll) < 0.5) {
-            currentScroll = targetScroll;
-            window.scrollTo({ top: currentScroll, left: 0, behavior: "auto" });
-            momentumActive = false;
-            return;
-          }
-          window.scrollTo({ top: currentScroll, left: 0, behavior: "auto" });
-          requestAnimationFrame(stepMomentum);
-        }
-
-        window.addEventListener(
-          "wheel",
-          (event) => {
-            if (event.ctrlKey || event.target.closest("pre")) return;
-            if (!momentumActive) {
-              // Nothing of ours is animating, so anything could have moved
-              // the page since (keyboard, an anchor jump, scrollIntoView) --
-              // resync fully instead of accumulating onto a stale target.
-              currentScroll = window.scrollY;
-              targetScroll = currentScroll;
-            }
-            targetScroll = Math.max(0, Math.min(maxScrollTop(), targetScroll + normalizeWheelDelta(event)));
-            event.preventDefault();
-            if (!momentumActive) {
-              momentumActive = true;
-              requestAnimationFrame(stepMomentum);
-            }
-          },
-          { passive: false }
-        );
-      }
     </script>
   </body>
 </html>
