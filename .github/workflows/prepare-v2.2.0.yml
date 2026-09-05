@@ -93,4 +93,4 @@ jobs:
           git commit -m "Bump project version to 2.2.0"
           git push origin HEAD:release-prep-v2.2.0
 
-# Trigger after workflow registration.
+# Re-run after replacing the generic NSHostingView subclass.
