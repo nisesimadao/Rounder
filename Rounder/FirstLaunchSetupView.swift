@@ -77,20 +77,11 @@ struct FirstLaunchSetupView: View {
             
             Divider()
             
-            // タブコンテンツ
-            TabView(selection: $selectedTab) {
-                // タブ1: ようこそ
-                WelcomeStepView()
-                    .tag(0)
-
-                // タブ2: 初期設定
-                InitialSettingsView()
-                    .tag(1)
-
-                // タブ3: 完了
-                SetupCompleteView(setupComplete: $setupComplete)
-                    .tag(2)
-            }
+            // This is intentionally not a TabView. On macOS a normal TabView
+            // owns visible window tab chrome, while onboarding navigation is
+            // already provided by the Back / Next buttons and progress bar.
+            stepContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // フッターボタン
             HStack(spacing: 12) {
@@ -122,6 +113,18 @@ struct FirstLaunchSetupView: View {
             .background(Color(NSColor.controlBackgroundColor))
         }
         .frame(width: FirstLaunchSetupConstants.windowWidth, height: FirstLaunchSetupConstants.windowHeight)
+    }
+
+    @ViewBuilder
+    private var stepContent: some View {
+        switch selectedTab {
+        case 0:
+            WelcomeStepView()
+        case 1:
+            InitialSettingsView()
+        default:
+            SetupCompleteView(setupComplete: $setupComplete)
+        }
     }
 
     private func completeSetup() {
