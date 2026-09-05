@@ -2,17 +2,81 @@
 //  CornerGeometry.swift
 //  Rounder
 //
-//  Shared corner-path math.
+//  Shared corner-path and placement math.
 //  This file intentionally contains geometry only: no windows, persistence,
 //  menu state, or drawing side effects. The functions mirror the existing
-//  CornerOverlayView path calculations so overlay rendering and future preview
-//  icons can use the same source of truth.
+//  AppDelegate / CornerOverlayView calculations so overlay rendering and future
+//  preview icons can use the same source of truth.
 //
 
 import Cocoa
 import CoreGraphics
 
+enum ScreenCorner: CaseIterable {
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
+
+    /// CornerOverlayView uses an unflipped AppKit coordinate system, so the
+    /// physical screen corner maps to the opposite vertical CornerType.
+    var drawingCorner: CornerType {
+        switch self {
+        case .topLeft: return .bottomLeft
+        case .topRight: return .bottomRight
+        case .bottomLeft: return .topLeft
+        case .bottomRight: return .topRight
+        }
+    }
+
+    /// Position on the clockwise gaming-color loop.
+    var gamingBaseHue: Double {
+        switch self {
+        case .topLeft: return 0.0
+        case .topRight: return 0.25
+        case .bottomRight: return 0.5
+        case .bottomLeft: return 0.75
+        }
+    }
+}
+
 enum CornerGeometry {
+    /// Squircle uses a larger backing window so its diagonal depth visually
+    /// matches the rounded style. This preserves the existing 1.8x rule.
+    static func styleFactor(for style: CornerCutoutStyle) -> CGFloat {
+        style == .squircle ? 1.8 : 1.0
+    }
+
+    /// Backing-window size for one corner. Integer rounding is deliberate: the
+    /// current implementation avoids fractional right/bottom origins because
+    /// they can reveal a one-pixel seam at the display edge.
+    static func cornerSize(
+        radius: CGFloat,
+        style: CornerCutoutStyle,
+        padding: CGFloat = RounderAppConstants.cornerSizePadding
+    ) -> CGFloat {
+        (radius * styleFactor(for: style)).rounded() + padding
+    }
+
+    /// Origin for a corner window while keeping the selected physical screen
+    /// corner anchored as the window size changes.
+    static func windowOrigin(
+        in screenFrame: NSRect,
+        corner: ScreenCorner,
+        cornerSize: CGFloat
+    ) -> CGPoint {
+        switch corner {
+        case .topLeft:
+            return CGPoint(x: screenFrame.minX, y: screenFrame.maxY - cornerSize)
+        case .topRight:
+            return CGPoint(x: screenFrame.maxX - cornerSize, y: screenFrame.maxY - cornerSize)
+        case .bottomLeft:
+            return CGPoint(x: screenFrame.minX, y: screenFrame.minY)
+        case .bottomRight:
+            return CGPoint(x: screenFrame.maxX - cornerSize, y: screenFrame.minY)
+        }
+    }
+
     /// The filled quadrant used by the gaming corner layer for a rounded cutout.
     /// This is intentionally the same construction previously used by
     /// CornerOverlayView.createRoundedQuadrantPath.
