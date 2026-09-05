@@ -33,78 +33,31 @@ jobs:
           path = Path("Rounder/MenuBarPanelView.swift")
           source = path.read_text()
 
-          old_call = '''            PanelFooterButton(systemImage: "power", title: String(localized: "quit_menu")) {
-                onQuit()
-            }'''
-          new_call = '''            PanelFooterButton(
-                systemImage: "power",
-                title: String(localized: "quit_menu"),
-                isDestructive: true
-            ) {
-                onQuit()
-            }'''
+          old_call = '            PanelFooterButton(systemImage: "power", title: String(localized: "quit_menu")) {'
+          new_call = "\n".join([
+              '            PanelFooterButton(',
+              '                systemImage: "power",',
+              '                title: String(localized: "quit_menu"),',
+              '                isDestructive: true',
+              '            ) {'
+          ])
+          old_props = '    let systemImage: String\n    let title: String\n    let action: () -> Void'
+          new_props = '    let systemImage: String\n    let title: String\n    var isDestructive: Bool = false\n    let action: () -> Void'
+          old_font = '                .font(.system(size: 11))\n                .padding(.horizontal, 8)'
+          new_font = '                .font(.system(size: 11))\n                .foregroundStyle(isDestructive ? Color.red : Color.primary)\n                .padding(.horizontal, 8)'
+          old_fill = '                        .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)'
+          new_fill = '                        .fill(isHovered ? (isDestructive ? Color.red.opacity(0.12) : Color.primary.opacity(0.08)) : Color.clear)'
 
-          old_struct = '''private struct PanelFooterButton: View {
-    let systemImage: String
-    let title: String
-    let action: () -> Void
+          for old, new, label in [
+              (old_call, new_call, "Quit call"),
+              (old_props, new_props, "footer properties"),
+              (old_font, new_font, "footer foreground"),
+              (old_fill, new_fill, "footer hover fill")
+          ]:
+              if source.count(old) != 1:
+                  raise SystemExit(f"Expected exactly one {label}, found {source.count(old)}")
+              source = source.replace(old, new)
 
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.system(size: 11))
-                .padding(.horizontal, 8)
-                .frame(height: 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .animation(.easeOut(duration: 0.1), value: isHovered)
-    }
-}'''
-          new_struct = '''private struct PanelFooterButton: View {
-    let systemImage: String
-    let title: String
-    var isDestructive: Bool = false
-    let action: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.system(size: 11))
-                .foregroundStyle(isDestructive ? Color.red : Color.primary)
-                .padding(.horizontal, 8)
-                .frame(height: 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(
-                            isHovered
-                                ? (isDestructive ? Color.red.opacity(0.12) : Color.primary.opacity(0.08))
-                                : Color.clear
-                        )
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .animation(.easeOut(duration: 0.1), value: isHovered)
-    }
-}'''
-
-          if source.count(old_call) != 1:
-              raise SystemExit(f"Expected one Quit footer call, found {source.count(old_call)}")
-          if source.count(old_struct) != 1:
-              raise SystemExit(f"Expected one footer button implementation, found {source.count(old_struct)}")
-
-          source = source.replace(old_call, new_call).replace(old_struct, new_struct)
           path.write_text(source)
           PY
           git diff --check
