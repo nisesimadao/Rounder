@@ -1,7 +1,7 @@
 name: Build & Release
 
-# バージョンタグ（例: v1.2.0）を push すると、ビルドして .zip を Releases に自動で並べる。
-# 手動実行（Run workflow）でもビルドの確認だけできる（その場合はリリースを作らずアーティファクトに保存）。
+# バージョンタグ（例: v1.2.0）を push すると、テスト→ビルド→Releases公開まで自動実行。
+# 手動実行（Run workflow）でも同じ検証とビルドを行い、その場合はReleaseを作らずartifactに保存する。
 on:
   push:
     tags:
@@ -23,24 +23,44 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+
       - name: Resolve app version
         run: |
+          set -euo pipefail
+
+          BUILD_SETTINGS="$(
+            xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release -showBuildSettings
+          )"
+          PROJECT_VERSION="$(
+            printf '%s\n' "$BUILD_SETTINGS" |
+            awk -F '= ' '/MARKETING_VERSION/ { print $2; exit }'
+          )"
+          BUILD_NUMBER="$(
+            printf '%s\n' "$BUILD_SETTINGS" |
+            awk -F '= ' '/CURRENT_PROJECT_VERSION/ { print $2; exit }'
+          )"
+
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            VERSION="$(
-              xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release -showBuildSettings |
-              awk -F '= ' '/MARKETING_VERSION/ { print $2; exit }'
-            )"
+            VERSION="$PROJECT_VERSION"
           fi
 
-          if [[ -z "$VERSION" ]]; then
-            echo "::error::Failed to resolve MARKETING_VERSION"; exit 1
+          if [[ -z "$VERSION" || -z "$BUILD_NUMBER" ]]; then
+            echo "::error::Failed to resolve app version/build number"; exit 1
           fi
 
           echo "MARKETING_VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "CURRENT_PROJECT_VERSION=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
-          echo "Building Rounder $VERSION (${GITHUB_RUN_NUMBER})"
+          echo "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "Building Rounder $VERSION ($BUILD_NUMBER)"
 
       - name: Build (unsigned)
         run: |
@@ -60,6 +80,7 @@ jobs:
 
       - name: Validate app version
         run: |
+          set -euo pipefail
           APP="build/Build/Products/Release/Rounder.app"
           ACTUAL_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
           ACTUAL_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
@@ -68,6 +89,9 @@ jobs:
 
           if [[ "$ACTUAL_VERSION" != "$MARKETING_VERSION" ]]; then
             echo "::error::Expected version $MARKETING_VERSION, got $ACTUAL_VERSION"; exit 1
+          fi
+          if [[ "$ACTUAL_BUILD" != "$CURRENT_PROJECT_VERSION" ]]; then
+            echo "::error::Expected build $CURRENT_PROJECT_VERSION, got $ACTUAL_BUILD"; exit 1
           fi
 
       - name: Package
