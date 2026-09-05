@@ -1,0 +1,304 @@
+name: Verify localization polish
+
+on:
+  push:
+    branches:
+      - fix-v2.2.0-ui-polish
+    paths:
+      - .github/workflows/verify-localization-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix-v2.2.0-ui-polish
+
+      - name: Apply targeted accessibility and localization polish
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          panel_path = Path("Rounder/MenuBarPanelView.swift")
+          panel = panel_path.read_text()
+
+          replacements = [
+              (
+                  '    private let quickColors: [NSColor] = [.black, .white, .systemGray]\n',
+                  '    private let quickColors: [(color: NSColor, label: LocalizedStringKey)] = [\n'
+                  '        (.black, "color_black"),\n'
+                  '        (.white, "color_white"),\n'
+                  '        (.systemGray, "color_gray")\n'
+                  '    ]\n'
+              ),
+              (
+                  '            Toggle("", isOn: enabledBinding)\n'
+                  '                .labelsHidden()\n'
+                  '                .toggleStyle(.switch)\n'
+                  '                .controlSize(.small)\n',
+                  '            Toggle("", isOn: enabledBinding)\n'
+                  '                .labelsHidden()\n'
+                  '                .toggleStyle(.switch)\n'
+                  '                .controlSize(.small)\n'
+                  '                .accessibilityLabel(Text("enable_rounded_corners"))\n'
+              ),
+              (
+                  '                ForEach(Array(quickColors.enumerated()), id: \\.offset) { _, color in\n'
+                  '                    ColorSwatchButton(\n'
+                  '                        color: color,\n'
+                  '                        isSelected: colorsMatch(cornerNSColor, color)\n'
+                  '                    ) {\n'
+                  '                        selectColor(color)\n'
+                  '                    }\n'
+                  '                }\n',
+                  '                ForEach(Array(quickColors.enumerated()), id: \\.offset) { _, swatch in\n'
+                  '                    ColorSwatchButton(\n'
+                  '                        color: swatch.color,\n'
+                  '                        accessibilityLabel: swatch.label,\n'
+                  '                        isSelected: colorsMatch(cornerNSColor, swatch.color)\n'
+                  '                    ) {\n'
+                  '                        selectColor(swatch.color)\n'
+                  '                    }\n'
+                  '                }\n'
+              ),
+              (
+                  '            Toggle("", isOn: gamingBinding)\n'
+                  '                .labelsHidden()\n'
+                  '                .toggleStyle(.switch)\n'
+                  '                .controlSize(.small)\n',
+                  '            Toggle("", isOn: gamingBinding)\n'
+                  '                .labelsHidden()\n'
+                  '                .toggleStyle(.switch)\n'
+                  '                .controlSize(.small)\n'
+                  '                .accessibilityLabel(Text("super_gaming_mode"))\n'
+              ),
+              (
+                  'private struct ColorSwatchButton: View {\n'
+                  '    let color: NSColor\n'
+                  '    let isSelected: Bool\n',
+                  'private struct ColorSwatchButton: View {\n'
+                  '    let color: NSColor\n'
+                  '    let accessibilityLabel: LocalizedStringKey\n'
+                  '    let isSelected: Bool\n'
+              ),
+              (
+                  '        .buttonStyle(.plain)\n'
+                  '        .onHover { isHovered = $0 }\n'
+                  '        .animation(.snappy(duration: 0.16), value: isSelected)\n',
+                  '        .buttonStyle(.plain)\n'
+                  '        .onHover { isHovered = $0 }\n'
+                  '        .accessibilityLabel(Text(accessibilityLabel))\n'
+                  '        .animation(.snappy(duration: 0.16), value: isSelected)\n'
+              ),
+              (
+                  '        .accessibilityLabel(Text(accessibilityName))\n'
+                  '        .accessibilityValue(Text(isEnabled ? "On" : "Off"))\n',
+                  '        .accessibilityLabel(Text(accessibilityName))\n'
+                  '        .accessibilityValue(\n'
+                  '            Text(LocalizedStringKey(isEnabled ? "state_on" : "state_off"))\n'
+                  '        )\n'
+              ),
+          ]
+
+          for old, new in replacements:
+              count = panel.count(old)
+              if count != 1:
+                  raise SystemExit(f"MenuBarPanel replacement expected once, found {count}: {old[:80]!r}")
+              panel = panel.replace(old, new)
+
+          panel_path.write_text(panel)
+
+          loc_path = Path("Rounder/Localizable.xcstrings")
+          loc = loc_path.read_text()
+
+          def replace_value(key: str, language: str, new_value: str):
+              global loc
+              pattern = (
+                  rf'(    "{re.escape(key)}"\s*:\s*\{{.*?'
+                  rf'"{language}"\s*:\s*\{{.*?'
+                  rf'"value"\s*:\s*")([^"\\]*(?:\\.[^"\\]*)*)(")'
+              )
+              updated, count = re.subn(
+                  pattern,
+                  lambda m: m.group(1) + new_value.replace('\\', '\\\\').replace('"', '\\"') + m.group(3),
+                  loc,
+                  count=1,
+                  flags=re.S,
+              )
+              if count != 1:
+                  raise SystemExit(f"Localization value not found exactly once: {key}/{language}")
+              loc = updated
+
+          updates = {
+              "app_description": {
+                  "ja": "macOSの画面の角を美しく丸くします",
+              },
+              "app_utility_description": {
+                  "ja": "Macの画面の角を美しく丸くするユーティリティです。",
+              },
+              "background_operation_description": {
+                  "en": "When enabled, Rounder starts in the background and appears in the menu bar.",
+                  "ja": "有効にすると、Rounderがバックグラウンドで起動し、メニューバーに表示されます。",
+              },
+              "corner_shape": {
+                  "ja": "角の形状",
+              },
+              "customizable_radius_color": {
+                  "en": "Adjustable radius and color",
+                  "ja": "半径と色を自由に調整",
+              },
+              "gaming_speed": {
+                  "ja": "ゲーミング速度",
+              },
+              "open_system_preferences": {
+                  "en": "Open System Settings",
+                  "ja": "システム設定を開く",
+              },
+              "rounder_tooltip": {
+                  "en": "Rounder – Screen corner utility",
+                  "ja": "Rounder – 画面の角を丸くするユーティリティ",
+              },
+              "screen_corner_rounding": {
+                  "en": "Rounded Screen Corners",
+                  "ja": "画面の角を丸くする",
+              },
+              "settings_change_instructions": {
+                  "en": "You can change these settings later from the Rounder icon in the menu bar.",
+                  "ja": "これらの設定は、あとからメニューバーのRounderアイコンで変更できます。",
+              },
+              "settings_menu": {
+                  "en": "Settings…",
+                  "ja": "設定…",
+              },
+              "squircle_corner": {
+                  "ja": "スクワークル",
+              },
+              "super_gaming_mode": {
+                  "en": "Super Duper Gaming Mode",
+              },
+          }
+
+          for key, languages in updates.items():
+              for language, value in languages.items():
+                  replace_value(key, language, value)
+
+          insertion_marker = '    "quick_select" : {'
+          if loc.count(insertion_marker) != 1:
+              raise SystemExit("Could not find unique localization insertion point")
+
+          new_entries = '''    "color_black" : {
+              "extractionState" : "manual",
+              "localizations" : {
+                "en" : { "stringUnit" : { "state" : "translated", "value" : "Black" } },
+                "ja" : { "stringUnit" : { "state" : "translated", "value" : "黒" } }
+              }
+            },
+            "color_gray" : {
+              "extractionState" : "manual",
+              "localizations" : {
+                "en" : { "stringUnit" : { "state" : "translated", "value" : "Gray" } },
+                "ja" : { "stringUnit" : { "state" : "translated", "value" : "グレー" } }
+              }
+            },
+            "color_white" : {
+              "extractionState" : "manual",
+              "localizations" : {
+                "en" : { "stringUnit" : { "state" : "translated", "value" : "White" } },
+                "ja" : { "stringUnit" : { "state" : "translated", "value" : "白" } }
+              }
+            },
+            "state_off" : {
+              "extractionState" : "manual",
+              "localizations" : {
+                "en" : { "stringUnit" : { "state" : "translated", "value" : "Off" } },
+                "ja" : { "stringUnit" : { "state" : "translated", "value" : "オフ" } }
+              }
+            },
+            "state_on" : {
+              "extractionState" : "manual",
+              "localizations" : {
+                "en" : { "stringUnit" : { "state" : "translated", "value" : "On" } },
+                "ja" : { "stringUnit" : { "state" : "translated", "value" : "オン" } }
+              }
+            },
+          '''
+
+          for key in ("color_black", "color_gray", "color_white", "state_off", "state_on"):
+              if f'    "{key}" : {{' in loc:
+                  raise SystemExit(f"Localization key already exists unexpectedly: {key}")
+
+          loc = loc.replace(insertion_marker, new_entries + insertion_marker)
+          loc_path.write_text(loc)
+          PY
+
+          python3 -m json.tool Rounder/Localizable.xcstrings >/dev/null
+          git diff --check
+
+      - name: Verify menu and onboarding localization coverage
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("Rounder/Localizable.xcstrings").read_text())
+          strings = data["strings"]
+          required = [
+              "enable_rounded_corners", "corner_radius", "corner_shape", "corner_color",
+              "pane_corners", "super_gaming_mode", "settings_menu", "quit_menu",
+              "top_left_corner", "top_right_corner", "bottom_left_corner", "bottom_right_corner",
+              "rounded_corner", "squircle_corner", "polygon_cutout",
+              "color_black", "color_white", "color_gray", "state_on", "state_off",
+              "welcome_to_rounder", "app_description", "app_utility_description",
+              "screen_corner_rounding", "customizable_radius_color", "run_in_background",
+              "basic_settings", "custom_color", "about_settings", "settings_change_instructions",
+              "setup_complete", "setup_complete_message", "rounder_description",
+              "launch_at_login", "background_operation_description", "back", "next", "start_rounder",
+          ]
+
+          errors = []
+          for key in required:
+              item = strings.get(key)
+              if not item:
+                  errors.append(f"missing key: {key}")
+                  continue
+              localizations = item.get("localizations", {})
+              for language in ("en", "ja"):
+                  unit = localizations.get(language, {}).get("stringUnit", {})
+                  if unit.get("state") != "translated" or not unit.get("value", "").strip():
+                      errors.append(f"{key}: missing translated {language}")
+
+          if errors:
+              raise SystemExit("\n".join(errors))
+          print(f"Localization QA passed for {len(required)} menu/onboarding keys")
+          PY
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Commit verified polish
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Rounder/MenuBarPanelView.swift Rounder/Localizable.xcstrings
+          git commit -m "Polish menu accessibility and localization"
+          git push origin HEAD:fix-v2.2.0-ui-polish
