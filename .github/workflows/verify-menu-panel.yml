@@ -21,6 +21,15 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+
       - name: Build Rounder
         run: |
           set -o pipefail
