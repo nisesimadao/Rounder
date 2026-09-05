@@ -8,7 +8,7 @@ on:
       - .github/workflows/verify-v2.2.0-ui-polish.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
@@ -23,25 +23,6 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-
-      - name: Bump build number
-        run: |
-          set -euo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path("Rounder.xcodeproj/project.pbxproj")
-          source = path.read_text()
-          old = "CURRENT_PROJECT_VERSION = 32;"
-          new = "CURRENT_PROJECT_VERSION = 33;"
-
-          if source.count(old) != 2:
-              raise SystemExit(f"Expected exactly 2 build-version entries, found {source.count(old)}")
-
-          source = source.replace(old, new)
-          path.write_text(source)
-          PY
-          git diff --check
 
       - name: Test CornerGeometry
         run: |
@@ -66,7 +47,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             clean build
 
-      - name: Validate version
+      - name: Validate build
         run: |
           set -euo pipefail
           APP="build/Build/Products/Release/Rounder.app"
@@ -74,7 +55,10 @@ jobs:
           BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
           test "$VERSION" = "2.2.0"
           test "$BUILD" = "33"
-          echo "Validated Rounder $VERSION ($BUILD)"
+          ARCHS=$(lipo -archs "$APP/Contents/MacOS/Rounder")
+          [[ "$ARCHS" == *"arm64"* ]]
+          [[ "$ARCHS" == *"x86_64"* ]]
+          echo "Validated Rounder $VERSION ($BUILD): $ARCHS"
 
       - name: Smoke test startup
         run: |
@@ -93,11 +77,19 @@ jobs:
           kill "$PID" || true
           wait "$PID" || true
 
-      - name: Commit build number
+      - name: Package
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Rounder.xcodeproj/project.pbxproj
-          git commit -m "Bump build number to 33"
-          git push origin HEAD:fix-v2.2.0-ui-polish
+          APP="build/Build/Products/Release/Rounder.app"
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" Rounder.zip
+          unzip -t Rounder.zip
+          shasum -a 256 Rounder.zip
+
+      - name: Upload test RC
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rounder-v2.2.0-build33
+          path: Rounder.zip
+          if-no-files-found: error
+          retention-days: 3
