@@ -6,7 +6,7 @@ A tiny menu-bar app that beautifully rounds the corners of your macOS screen.
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#system-requirements)
 
-Rounder gives modern rounded corners to older MacBooks and external monitors that still have sharp rectangular edges. It runs quietly in the menu bar, needs **no Accessibility or Screen Recording permission**, and applies every change **instantly, with no restart**.
+Rounder gives modern rounded corners to older MacBooks and external monitors that still have sharp rectangular edges. It runs quietly in the menu bar, needs **no Accessibility or Screen Recording permission**, and lets you adjust everyday corner controls live with **no restart**.
 
 <img src="Rounder/SCREENSHOT.png" alt="Rounder settings screenshot" />
 
