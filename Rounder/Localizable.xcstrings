@@ -86,40 +86,6 @@
         }
       }
     },
-    "accessibility_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to detect screen corners and display overlays"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画面の角を検出してオーバーレイを表示するために必要です"
-          }
-        }
-      }
-    },
-    "accessibility_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accessibility Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アクセシビリティ権限"
-          }
-        }
-      }
-    },
     "add_preset" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -133,23 +99,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プリセットを追加"
-          }
-        }
-      }
-    },
-    "allow_button" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "許可する"
           }
         }
       }
@@ -252,40 +201,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ログイン時に自動的に起動します"
-          }
-        }
-      }
-    },
-    "automation_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to monitor system events and handle screen changes"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システムイベントを監視して画面変更に対応するために必要です"
-          }
-        }
-      }
-    },
-    "automation_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automation Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動化権限"
           }
         }
       }
@@ -1453,23 +1368,6 @@
         }
       }
     },
-    "open_system_preferences" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open System Settings"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システム設定を開く"
-          }
-        }
-      }
-    },
     "overlay_description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1483,159 +1381,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "オーバーレイを表示して画面コーナーを角丸にします"
-          }
-        }
-      }
-    },
-    "pending" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pending"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要確認"
-          }
-        }
-      }
-    },
-    "permission_granted" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission is granted"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限が許可されています"
-          }
-        }
-      }
-    },
-    "permission_management" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission Management"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限管理"
-          }
-        }
-      }
-    },
-    "permission_not_granted" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission is not granted"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限が許可されていません"
-          }
-        }
-      }
-    },
-    "permission_regrant_instructions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "If there are permission issues, you can re-grant them through System Preferences."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限に問題がある場合、システム環境設定から再度許可することができます。"
-          }
-        }
-      }
-    },
-    "permission_request" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission Request"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限の要求"
-          }
-        }
-      }
-    },
-    "permissions_required_message" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The following permissions are required for Rounder to function properly:"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rounderが正常に動作するために、以下の権限が必要です:"
-          }
-        }
-      }
-    },
-    "permissions_tab" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限"
-          }
-        }
-      }
-    },
-    "permissions_usage_only" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "These permissions are used only for Rounder's operation and not for any other purpose."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "これらの権限はRounderの動作にのみ使用され、他の目的では使用されません。"
           }
         }
       }
@@ -2006,40 +1751,6 @@
         }
       }
     },
-    "required_permissions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "必要な権限"
-          }
-        }
-      }
-    },
-    "reset_permissions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限の再設定"
-          }
-        }
-      }
-    },
     "restart_failed_message_with_error %1$@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2193,40 +1904,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画面の角を丸くする"
-          }
-        }
-      }
-    },
-    "screen_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to display overlays at screensaver level"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スクリーンセーバーレベルでオーバーレイを表示するために必要です"
-          }
-        }
-      }
-    },
-    "screen_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screen Recording Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画面録画権限"
           }
         }
       }
