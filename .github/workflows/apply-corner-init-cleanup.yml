@@ -126,3 +126,5 @@ jobs:
           git add Rounder/RounderApp.swift
           git commit -m "Use shared geometry for initial corner creation"
           git push origin HEAD:corner-geometry-initialization-cleanup
+
+# Triggered after the workflow exists on the branch.
