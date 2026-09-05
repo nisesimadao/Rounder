@@ -70,6 +70,11 @@ class MenuBarController: NSObject {
                 self?.quitFromPanel()
             }
         )
+        // One panel-wide tint keeps every native switch/slider aligned with the
+        // same accent color used by the custom shape and corner selectors. It
+        // also means future Toggle controls cannot accidentally fall back to the
+        // neutral gray ON appearance seen in the first menu-panel build.
+        .tint(.accentColor)
 
         let hostingView = MenuBarPanelHostingView(rootView: panelView)
         hostingView.frame.size = hostingView.fittingSize
@@ -134,8 +139,10 @@ class MenuBarController: NSObject {
 
 /// NSMenuItem custom views are frame-based rather than constrained by an Auto
 /// Layout parent. Keep the AppKit frame synchronized with SwiftUI's ideal size.
-private final class MenuBarPanelHostingView: NSHostingView<MenuBarPanelView> {
-    required init(rootView: MenuBarPanelView) {
+/// Generic Content lets the root carry environment modifiers (such as `.tint`)
+/// without forcing those concerns into MenuBarPanelView itself.
+private final class MenuBarPanelHostingView<Content: View>: NSHostingView<Content> {
+    required init(rootView: Content) {
         super.init(rootView: rootView)
     }
 
