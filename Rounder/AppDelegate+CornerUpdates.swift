@@ -2,9 +2,9 @@
 //  AppDelegate+CornerUpdates.swift
 //  Rounder
 //
-//  Lightweight updates for settings that only change existing corner geometry.
-//  Full configuration changes still go through applyOverlayConfiguration(),
-//  which rebuilds the overlay/window set as before.
+//  Lightweight updates for settings that only change existing corner geometry
+//  or appearance. Full configuration changes still go through
+//  applyOverlayConfiguration(), which rebuilds the overlay/window set as before.
 //
 
 import Cocoa
@@ -30,6 +30,21 @@ extension AppDelegate {
                 radius: CGFloat(clampedRadius),
                 cutoutStyle: cutoutStyle
             )
+        }
+    }
+
+    /// Color does not change which overlay windows exist, so update the current
+    /// views in place rather than rebuilding the WindowServer surfaces.
+    func updateCornerColor(_ color: NSColor) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.updateCornerColor(color)
+            }
+            return
+        }
+
+        for window in overlayWindows {
+            window.updateColor(color)
         }
     }
 }
