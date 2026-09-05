@@ -1,0 +1,132 @@
+name: Cleanup obsolete localizations
+
+on:
+  push:
+    branches:
+      - fix-v2.2.0-ui-polish
+    paths:
+      - .github/workflows/cleanup-obsolete-localizations.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix-v2.2.0-ui-polish
+
+      - name: Remove obsolete permission-era strings
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path("Rounder/Localizable.xcstrings")
+          text = path.read_text()
+
+          obsolete = [
+              "accessibility_description",
+              "accessibility_permission",
+              "allow_button",
+              "automation_description",
+              "automation_permission",
+              "open_system_preferences",
+              "pending",
+              "permission_granted",
+              "permission_management",
+              "permission_not_granted",
+              "permission_regrant_instructions",
+              "permission_request",
+              "permissions_required_message",
+              "permissions_tab",
+              "permissions_usage_only",
+              "required_permissions",
+              "reset_permissions",
+              "screen_description",
+              "screen_permission",
+          ]
+
+          def remove_entry(source: str, key: str) -> str:
+              marker = f'    "{key}" : {{'
+              if source.count(marker) != 1:
+                  raise SystemExit(f"Expected exactly one top-level entry for {key}")
+
+              start = source.index(marker)
+              brace = source.index("{", start)
+              depth = 0
+              in_string = False
+              escaped = False
+              end = None
+
+              for i in range(brace, len(source)):
+                  ch = source[i]
+                  if in_string:
+                      if escaped:
+                          escaped = False
+                      elif ch == "\\":
+                          escaped = True
+                      elif ch == '"':
+                          in_string = False
+                      continue
+
+                  if ch == '"':
+                      in_string = True
+                  elif ch == "{":
+                      depth += 1
+                  elif ch == "}":
+                      depth -= 1
+                      if depth == 0:
+                          end = i + 1
+                          break
+
+              if end is None:
+                  raise SystemExit(f"Could not find closing brace for {key}")
+
+              # Entries in the catalog are followed by a comma and newline.
+              if source[end:end + 2] == ",\n":
+                  end += 2
+              elif source[end:end + 1] == "\n":
+                  end += 1
+              else:
+                  raise SystemExit(f"Unexpected trailing syntax for {key}: {source[end:end+8]!r}")
+
+              return source[:start] + source[end:]
+
+          for key in obsolete:
+              text = remove_entry(text, key)
+
+          path.write_text(text)
+          print(f"Removed {len(obsolete)} obsolete localization entries")
+          PY
+
+          python3 -m json.tool Rounder/Localizable.xcstrings >/dev/null
+          python3 Tests/LocalizationTests.py
+          git diff --check
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Commit cleanup
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Rounder/Localizable.xcstrings
+          git commit -m "Remove obsolete permission localizations"
+          git pull --rebase origin fix-v2.2.0-ui-polish
+          git push origin HEAD:fix-v2.2.0-ui-polish
