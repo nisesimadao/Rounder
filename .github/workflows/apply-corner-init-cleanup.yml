@@ -1,4 +1,4 @@
-name: Apply Corner Initialization Cleanup
+name: Verify Corner Initialization Cleanup
 
 on:
   push:
@@ -8,98 +8,62 @@ on:
       - .github/workflows/apply-corner-init-cleanup.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply:
-    runs-on: ubuntu-latest
+  verify:
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
         with:
-          ref: corner-geometry-initialization-cleanup
+          xcode-version: latest-stable
 
-      - name: Apply exact geometry refactor
+      - name: Test CornerGeometry
         run: |
-          python3 <<'PY'
-          from pathlib import Path
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
 
-          path = Path("Rounder/RounderApp.swift")
-          source = path.read_text()
-
-          size_start_marker = "        // Squircle は円より角に沿って膨らむため、iOS 実機と同様に辺方向へ長く伸ばして描く。"
-          size_end_marker = "        // 選択されたディスプレイのみにオーバーレイを作成"
-          specs_start_marker = "            // 各角の「物理的な位置」と、その角を描画するときに使う CornerType の対応表。"
-          specs_end_marker = "            // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）"
-
-          for marker in [size_start_marker, size_end_marker, specs_start_marker, specs_end_marker]:
-              if source.count(marker) != 1:
-                  raise SystemExit(f"Expected marker once: {marker!r}; found {source.count(marker)}")
-
-          size_start = source.index(size_start_marker)
-          size_end = source.index(size_end_marker)
-          new_size = "\n".join([
-              "        // Initial creation and live Radius/Shape updates must use the exact same",
-              "        // sizing rule (including Squircle's 1.8x backing window and pixel rounding).",
-              "        let cornerSize = CornerGeometry.cornerSize(",
-              "            radius: CGFloat(configuration.radius),",
-              "            style: configuration.cutoutStyle",
-              "        )",
-              "        ",
-          ]) + "\n"
-          source = source[:size_start] + new_size + source[size_end:]
-
-          specs_start = source.index(specs_start_marker)
-          specs_end = source.index(specs_end_marker)
-          new_specs = "\n".join([
-              "            // Keep physical corner identity separate from the unflipped AppKit",
-              "            // drawing corner. CornerGeometry owns placement; ScreenCorner owns the",
-              "            // drawing-corner and gaming-hue mappings used by both creation and live updates.",
-              "            let cornerStates: [(corner: ScreenCorner, enabled: Bool)] = [",
-              "                (.topLeft, configuration.topLeftEnabled),",
-              "                (.topRight, configuration.topRightEnabled),",
-              "                (.bottomLeft, configuration.bottomLeftEnabled),",
-              "                (.bottomRight, configuration.bottomRightEnabled)",
-              "            ]",
-              "",
-              "            for state in cornerStates where state.enabled {",
-              "                let window = CornerOverlayWindow(",
-              "                    corner: CornerGeometry.windowOrigin(",
-              "                        in: frame,",
-              "                        corner: state.corner,",
-              "                        cornerSize: cornerSize",
-              "                    ),",
-              "                    size: cornerSize,",
-              "                    radius: CGFloat(configuration.radius),",
-              "                    color: configuration.color,",
-              "                    cutoutStyle: configuration.cutoutStyle,",
-              "                    cornerType: state.corner.drawingCorner",
-              "                )",
-              "                overlayWindows.append(window)",
-              "                if configuration.superGamingMode {",
-              "                    window.setGamingMode(",
-              "                        true,",
-              "                        speed: configuration.gamingSpeed,",
-              "                        baseHue: state.corner.gamingBaseHue",
-              "                    )",
-              "                }",
-              "            }",
-              "",
-          ]) + "\n"
-          source = source[:specs_start] + new_specs + source[specs_end:]
-
-          path.write_text(source)
-          PY
-
-      - name: Verify diff hygiene
+      - name: Build Rounder
         run: |
-          git diff --check
-          git diff -- Rounder/RounderApp.swift
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Debug \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
 
-      - name: Commit refactor
+      - name: Smoke test startup
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Rounder/RounderApp.swift
-          git commit -m "Use shared geometry for initial corner creation"
-          git push origin HEAD:corner-geometry-initialization-cleanup
+          set -euo pipefail
+          APP="build/Build/Products/Debug/Rounder.app"
+          LOG="$RUNNER_TEMP/rounder-smoke.log"
+
+          defaults write com.nisesimadao.Rounder hasLaunchedBefore -bool true
+          defaults write com.nisesimadao.Rounder isEnabled -bool false
+
+          "$APP/Contents/MacOS/Rounder" >"$LOG" 2>&1 &
+          PID=$!
+          sleep 5
+
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "Rounder exited during startup smoke test"
+            cat "$LOG"
+            exit 1
+          fi
+
+          kill "$PID" || true
+          wait "$PID" || true
+          cat "$LOG"
