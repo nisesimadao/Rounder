@@ -40,6 +40,20 @@ enum ScreenCorner: CaseIterable {
     }
 }
 
+extension CornerType {
+    /// Inverse of ScreenCorner.drawingCorner. This lets an existing
+    /// CornerOverlayWindow recover its physical screen anchor without changing
+    /// the initializer contract used by AppDelegate.
+    var screenCorner: ScreenCorner {
+        switch self {
+        case .bottomLeft: return .topLeft
+        case .bottomRight: return .topRight
+        case .topLeft: return .bottomLeft
+        case .topRight: return .bottomRight
+        }
+    }
+}
+
 enum CornerGeometry {
     /// Squircle uses a larger backing window so its diagonal depth visually
     /// matches the rounded style. This preserves the existing 1.8x rule.
@@ -74,6 +88,45 @@ enum CornerGeometry {
             return CGPoint(x: screenFrame.minX, y: screenFrame.minY)
         case .bottomRight:
             return CGPoint(x: screenFrame.maxX - cornerSize, y: screenFrame.minY)
+        }
+    }
+
+    /// Physical corner point represented by an existing corner-window frame.
+    /// Capturing this once lets live radius/style changes resize the same window
+    /// around a stable screen-edge anchor without consulting window.screen.
+    static func anchorPoint(
+        for windowFrame: NSRect,
+        corner: ScreenCorner
+    ) -> CGPoint {
+        switch corner {
+        case .topLeft:
+            return CGPoint(x: windowFrame.minX, y: windowFrame.maxY)
+        case .topRight:
+            return CGPoint(x: windowFrame.maxX, y: windowFrame.maxY)
+        case .bottomLeft:
+            return CGPoint(x: windowFrame.minX, y: windowFrame.minY)
+        case .bottomRight:
+            return CGPoint(x: windowFrame.maxX, y: windowFrame.minY)
+        }
+    }
+
+    /// Origin for a resized corner window around a previously captured physical
+    /// corner point. The formulas are the same as windowOrigin(in:corner:size:),
+    /// but no NSScreen lookup is required during a slider drag.
+    static func windowOrigin(
+        anchoredAt anchor: CGPoint,
+        corner: ScreenCorner,
+        cornerSize: CGFloat
+    ) -> CGPoint {
+        switch corner {
+        case .topLeft:
+            return CGPoint(x: anchor.x, y: anchor.y - cornerSize)
+        case .topRight:
+            return CGPoint(x: anchor.x - cornerSize, y: anchor.y - cornerSize)
+        case .bottomLeft:
+            return anchor
+        case .bottomRight:
+            return CGPoint(x: anchor.x - cornerSize, y: anchor.y)
         }
     }
 
