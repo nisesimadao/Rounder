@@ -193,6 +193,12 @@ class CornerOverlayView: NSView {
 
         setFrameSize(NSSize(width: contentSize, height: contentSize))
 
+        // Geometry should track the pointer immediately. Suppress only implicit
+        // Core Animation actions for frame/path mutations; the explicit rainbow
+        // fillColor animation already installed on gamingLayer remains intact.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+
         if let layer {
             layer.frame = bounds
         }
@@ -213,6 +219,7 @@ class CornerOverlayView: NSView {
             gamingLayer.contentsScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
         }
 
+        CATransaction.commit()
         needsDisplay = true
     }
 
