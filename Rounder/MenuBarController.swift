@@ -53,6 +53,16 @@ class MenuBarController: NSObject {
                     cutoutStyle: style
                 )
             },
+            onColorChanged: { [weak self] _ in
+                // Color is changed infrequently from three quick swatches. A
+                // rebuild keeps this path simple and preserves all existing
+                // gaming/non-gaming color semantics.
+                self?.appDelegate?.recreateOverlayWindows()
+            },
+            onOverlayStructureChanged: { [weak self] in
+                // Corner enablement and Gaming mode change which windows exist.
+                self?.appDelegate?.recreateOverlayWindows()
+            },
             onOpenSettings: { [weak self] in
                 self?.openSettingsFromPanel()
             },
