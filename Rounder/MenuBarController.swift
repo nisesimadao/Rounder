@@ -70,8 +70,38 @@ class MenuBarController: NSObject {
         let menu = NSMenu()
         menu.autoenablesItems = false
         menu.addItem(panelItem)
+
+        // Keep the classic menu's key equivalents without drawing duplicate
+        // Settings / Quit rows underneath the SwiftUI footer. AppKit explicitly
+        // supports key equivalents for hidden items when this flag is enabled.
+        menu.addItem(hiddenShortcutItem(
+            keyEquivalent: ",",
+            action: #selector(openSettingsShortcut)
+        ))
+        menu.addItem(hiddenShortcutItem(
+            keyEquivalent: "q",
+            action: #selector(quitShortcut)
+        ))
+
         statusItem.menu = menu
         self.menu = menu
+    }
+
+    private func hiddenShortcutItem(keyEquivalent: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: "", action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        item.keyEquivalentModifierMask = [.command]
+        item.isHidden = true
+        item.allowsKeyEquivalentWhenHidden = true
+        return item
+    }
+
+    @objc private func openSettingsShortcut() {
+        openSettingsFromPanel()
+    }
+
+    @objc private func quitShortcut() {
+        quitFromPanel()
     }
 
     /// A window cannot reliably become key while an NSMenu tracking session is
