@@ -45,11 +45,16 @@ struct CornerOverlayConstants {
 }
 
 class CornerOverlayWindow: NSWindow {
-    private let size: CGFloat
+    private var size: CGFloat
     private var radius: CGFloat
     private var color: NSColor
     private var cutoutStyle: CornerCutoutStyle
     private let cornerType: CornerType
+    /// 物理的な画面上の角。描画用 CornerType は上下が反転しているため別に保持する。
+    private let screenCorner: ScreenCorner
+    /// 初期生成時の物理的な角座標。ライブ更新時は window.screen を参照せず、
+    /// この点を固定したままウィンドウだけを伸縮する。
+    private let anchorPoint: CGPoint
 
     override var canBecomeKey: Bool {
         return false
@@ -60,16 +65,21 @@ class CornerOverlayWindow: NSWindow {
     }
 
     init(corner: CGPoint, size: CGFloat, radius: CGFloat, color: NSColor = .black, cutoutStyle: CornerCutoutStyle = .rounded, cornerType: CornerType) {
+        let initialFrame = NSRect(origin: corner, size: CGSize(width: size, height: size))
+        let screenCorner = cornerType.screenCorner
+
         self.size = size
         self.radius = radius
         self.color = color
         self.cutoutStyle = cutoutStyle
         self.cornerType = cornerType
+        self.screenCorner = screenCorner
+        self.anchorPoint = CornerGeometry.anchorPoint(for: initialFrame, corner: screenCorner)
 
         // ウィンドウは切り欠きコンテンツと同サイズ（描画はすべて境界内に収まるため余白は不要。
         // 余白があるとその分レイヤーバッキングと合成面積を無駄に消費する）
         super.init(
-            contentRect: NSRect(origin: corner, size: CGSize(width: size, height: size)),
+            contentRect: initialFrame,
             styleMask: .borderless,
             backing: .buffered,
             defer: false
@@ -97,6 +107,38 @@ class CornerOverlayWindow: NSWindow {
 
         // アプリが非アクティブ（常時）でも確実に前面へ出す
         orderFrontRegardless()
+    }
+
+    /// Radius / shape だけを変更するときの軽量更新。
+    /// NSWindow 自体は破棄せず、初期生成時の物理角を固定したまま frame と path を更新する。
+    func updateGeometry(radius: CGFloat, cutoutStyle: CornerCutoutStyle) {
+        let newSize = CornerGeometry.cornerSize(radius: radius, style: cutoutStyle)
+        guard radius != self.radius || cutoutStyle != self.cutoutStyle || newSize != size else {
+            return
+        }
+
+        self.radius = radius
+        self.cutoutStyle = cutoutStyle
+        self.size = newSize
+
+        let newOrigin = CornerGeometry.windowOrigin(
+            anchoredAt: anchorPoint,
+            corner: screenCorner,
+            cornerSize: newSize
+        )
+        let newFrame = NSRect(
+            origin: newOrigin,
+            size: NSSize(width: newSize, height: newSize)
+        )
+
+        // display:false にして、古いView状態で途中描画されるのを避ける。
+        // View側の状態更新後に needsDisplay で次の描画を要求する。
+        setFrame(newFrame, display: false)
+        (contentView as? CornerOverlayView)?.updateGeometry(
+            radius: radius,
+            cutoutStyle: cutoutStyle,
+            contentSize: newSize
+        )
     }
     
     func setGamingMode(_ enabled: Bool, speed: Double, baseHue: Double = 0) {
@@ -136,6 +178,42 @@ class CornerOverlayView: NSView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    /// 既存Viewのidentityを保ったままRadius / shapeだけを更新する。
+    /// Squircle cache はgeometry依存なので破棄し、Gaming中はCAShapeLayerのpathだけ差し替える。
+    func updateGeometry(radius: CGFloat, cutoutStyle: CornerCutoutStyle, contentSize: CGFloat) {
+        self.radius = radius
+        self.cutoutStyle = cutoutStyle
+        self.contentSize = contentSize
+
+        cachedSquirclePath = nil
+        cachedSquircleRadius = 0
+        cachedSquircleSize = 0
+
+        setFrameSize(NSSize(width: contentSize, height: contentSize))
+
+        if let layer {
+            layer.frame = bounds
+        }
+
+        if let gamingLayer {
+            let offset = CornerOverlayConstants.contentSizeOffset
+            let localBounds = bounds.isEmpty
+                ? NSRect(x: 0, y: 0, width: contentSize, height: contentSize)
+                : bounds
+
+            gamingLayer.frame = NSRect(
+                x: offset,
+                y: offset,
+                width: localBounds.width,
+                height: localBounds.height
+            )
+            gamingLayer.path = gamingFillPath(in: localBounds)
+            gamingLayer.contentsScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        }
+
+        needsDisplay = true
     }
 
     /// ゲーミング時、角丸の「見えている部分（切り欠き形状）」を虹色に光らせる。
