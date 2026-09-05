@@ -6,89 +6,109 @@
 //
 
 import Cocoa
+import SwiftUI
 
 // MARK: - Constants
 struct MenuBarControllerConstants {
     static let iconSize = NSSize(width: 16, height: 16)
 }
 
-class MenuBarController: NSObject, NSMenuDelegate {
+/// AppKit owns only the real status item / NSMenu tracking session.
+/// The panel contents remain SwiftUI so the controls can share @AppStorage with
+/// the existing Settings window without introducing a second settings model.
+class MenuBarController: NSObject {
     private var statusItem: NSStatusItem?
-    private var appDelegate: AppDelegate?
-    private var toggleItem: NSMenuItem?
+    private weak var appDelegate: AppDelegate?
+    private var menu: NSMenu?
 
     func setupMenuBar(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
 
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        // setupMenuBar is normally called once, but keeping it idempotent avoids
+        // duplicate status items if the launch flow is ever re-entered.
+        guard statusItem == nil else { return }
 
-        if let button = statusItem?.button {
+        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        self.statusItem = statusItem
+
+        if let button = statusItem.button {
             if let icon = NSImage(named: "StatusIcon") {
                 icon.size = MenuBarControllerConstants.iconSize
                 icon.isTemplate = true
                 button.image = icon
             }
             button.toolTip = String(localized: "rounder_tooltip")
+        }
 
-            let menu = NSMenu()
-            menu.delegate = self
+        let panelView = MenuBarPanelView(
+            onEnabledChanged: { [weak self] _ in
+                // Enable changes the existence of the overlay set, so this
+                // deliberately stays on the full rebuild path.
+                self?.appDelegate?.recreateOverlayWindows()
+            },
+            onGeometryChanged: { [weak self] radius, style in
+                // Radius / shape can update the existing windows in place.
+                self?.appDelegate?.updateCornerGeometry(
+                    radius: radius,
+                    cutoutStyle: style
+                )
+            },
+            onOpenSettings: { [weak self] in
+                self?.openSettingsFromPanel()
+            },
+            onQuit: { [weak self] in
+                self?.quitFromPanel()
+            }
+        )
 
-            // 角の表示/非表示をワンクリックで切り替えるトグル
-            let toggleItem = NSMenuItem(
-                title: String(localized: "enable_rounded_corners"),
-                action: #selector(toggleEnabled),
-                keyEquivalent: ""
-            )
-            toggleItem.target = self
-            menu.addItem(toggleItem)
-            self.toggleItem = toggleItem
+        let hostingView = MenuBarPanelHostingView(rootView: panelView)
+        hostingView.frame.size = hostingView.fittingSize
 
-            menu.addItem(NSMenuItem.separator())
+        let panelItem = NSMenuItem()
+        panelItem.view = hostingView
 
-            let settingsItem = NSMenuItem(
-                title: String(localized: "settings_menu"),
-                action: #selector(showSettings),
-                keyEquivalent: ","
-            )
-            settingsItem.target = self
-            menu.addItem(settingsItem)
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        menu.addItem(panelItem)
+        statusItem.menu = menu
+        self.menu = menu
+    }
 
-            menu.addItem(NSMenuItem.separator())
-
-            let quitItem = NSMenuItem(
-                title: String(localized: "quit_menu"),
-                action: #selector(quitApp),
-                keyEquivalent: "q"
-            )
-            quitItem.target = self
-            menu.addItem(quitItem)
-
-            statusItem?.menu = menu
+    /// A window cannot reliably become key while an NSMenu tracking session is
+    /// still active. Ask AppKit to end tracking, then open Settings on the next
+    /// main-loop turn rather than synchronously from the SwiftUI button action.
+    private func openSettingsFromPanel() {
+        menu?.cancelTracking()
+        DispatchQueue.main.async { [weak self] in
+            self?.appDelegate?.showSettings()
         }
     }
 
-    // MARK: - NSMenuDelegate
+    private func quitFromPanel() {
+        menu?.cancelTracking()
+        DispatchQueue.main.async {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+}
 
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        // メニューを開くたびに、現在の有効状態をチェックマークへ反映する
-        let isEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.isEnabled, defaultValue: true)
-        toggleItem?.state = isEnabled ? .on : .off
+/// NSMenuItem custom views are frame-based rather than constrained by an Auto
+/// Layout parent. Keep the AppKit frame synchronized with SwiftUI's ideal size.
+private final class MenuBarPanelHostingView: NSHostingView<MenuBarPanelView> {
+    required init(rootView: MenuBarPanelView) {
+        super.init(rootView: rootView)
     }
 
-    // MARK: - Actions
-
-    @objc private func toggleEnabled() {
-        let isEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.isEnabled, defaultValue: true)
-        UserDefaults.standard.set(!isEnabled, forKey: UserDefaultsKeys.isEnabled)
-        // 保存済み設定でその場で反映（再起動不要）
-        appDelegate?.recreateOverlayWindows()
+    @available(*, unavailable)
+    @objc dynamic required init?(coder: NSCoder) {
+        fatalError("MenuBarPanelHostingView does not support NSCoder")
     }
 
-    @objc private func showSettings() {
-        appDelegate?.showSettings()
-    }
-
-    @objc private func quitApp() {
-        NSApplication.shared.terminate(nil)
+    override func invalidateIntrinsicContentSize() {
+        super.invalidateIntrinsicContentSize()
+        let targetSize = fittingSize
+        if frame.size != targetSize {
+            setFrameSize(targetSize)
+        }
     }
 }
