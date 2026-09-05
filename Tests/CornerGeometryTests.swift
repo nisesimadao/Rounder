@@ -187,6 +187,34 @@ private func testShapeSwitchDoesNotMoveCorner() throws {
     }
 }
 
+private func testRoundedQuadrantNeverLeaksOutsidePreviewBounds() throws {
+    // Menu previews have padding around their sample bounds. The normal rounded
+    // drawing path is a full circle and intentionally extends outside its view,
+    // where NSView clipping hides it. A menu Canvas would expose those normally
+    // invisible quarters, so previews must use this bounded quadrant path.
+    let bounds = CGRect(x: 13, y: 9, width: 25, height: 25)
+    let epsilon: CGFloat = 0.0001
+
+    for cornerType in [CornerType.topLeft, .topRight, .bottomLeft, .bottomRight] {
+        for radius: CGFloat in [1, 12.5, 25] {
+            let path = CornerGeometry.roundedQuadrantPath(
+                in: bounds,
+                radius: radius,
+                cornerType: cornerType
+            )
+            let box = path.boundingBoxOfPath
+
+            try expect(
+                box.minX >= bounds.minX - epsilon &&
+                box.minY >= bounds.minY - epsilon &&
+                box.maxX <= bounds.maxX + epsilon &&
+                box.maxY <= bounds.maxY + epsilon,
+                "rounded quadrant leaked outside preview bounds corner=\(cornerType) radius=\(radius): \(box)"
+            )
+        }
+    }
+}
+
 @main
 struct CornerGeometryTestRunner {
     static func main() {
@@ -196,6 +224,7 @@ struct CornerGeometryTestRunner {
             ("screen origins preserve physical corners", testScreenOriginsStayOnPhysicalCorners),
             ("live resize preserves captured anchor", testLiveResizeKeepsCapturedAnchor),
             ("shape switching preserves physical corner", testShapeSwitchDoesNotMoveCorner),
+            ("rounded preview quadrant stays inside bounds", testRoundedQuadrantNeverLeaksOutsidePreviewBounds),
         ]
 
         var failed = false
