@@ -200,20 +200,7 @@ class CornerOverlayView: NSView {
 
     /// 角丸くり抜きの象限パイ版。円全体ではなく bounds 内の 1/4 象限のみを閉路にする。
     private func createRoundedQuadrantPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
-        let r = radius
-        let center: CGPoint
-        let startAngle: CGFloat
-        switch cornerType {
-        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY); startAngle = .pi
-        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY); startAngle = .pi * 1.5
-        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY); startAngle = .pi * 0.5
-        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY); startAngle = 0
-        }
-        let path = CGMutablePath()
-        path.move(to: center)
-        path.addArc(center: center, radius: r, startAngle: startAngle, endAngle: startAngle + .pi * 0.5, clockwise: false)
-        path.closeSubpath()
-        return path
+        CornerGeometry.roundedQuadrantPath(in: bounds, radius: radius, cornerType: cornerType)
     }
 
     /// baseHue（周回上の位置）から1周ぶん巡回する色。ふちのBloomと連続するようにする。
@@ -280,26 +267,7 @@ class CornerOverlayView: NSView {
             return cachedSquirclePath!
         }
 
-        let n = 4.0  // スーパー楕円の指数（大きいほど角ばる。4が古典的なSquircle）
-        let sx: CGFloat, sy: CGFloat  // 中心から画面の角へ向かう方向
-        let center: CGPoint
-        switch cornerType {
-        case .topLeft:     center = CGPoint(x: bounds.maxX, y: bounds.maxY); sx = -1; sy = -1
-        case .topRight:    center = CGPoint(x: bounds.minX, y: bounds.maxY); sx =  1; sy = -1
-        case .bottomLeft:  center = CGPoint(x: bounds.maxX, y: bounds.minY); sx = -1; sy =  1
-        case .bottomRight: center = CGPoint(x: bounds.minX, y: bounds.minY); sx =  1; sy =  1
-        }
-        let rx = bounds.width, ry = bounds.height
-        let path = CGMutablePath()
-        path.move(to: center)
-        let steps = 72
-        for i in 0...steps {
-            let theta = Double(i) / Double(steps) * .pi / 2.0
-            let x = Double(rx) * pow(cos(theta), 2.0 / n)
-            let y = Double(ry) * pow(sin(theta), 2.0 / n)
-            path.addLine(to: CGPoint(x: center.x + sx * CGFloat(x), y: center.y + sy * CGFloat(y)))
-        }
-        path.closeSubpath()
+        let path = CornerGeometry.squircleCutoutPath(in: bounds, cornerType: cornerType)
 
         // キャッシュを更新
         cachedSquirclePath = path
@@ -310,82 +278,11 @@ class CornerOverlayView: NSView {
     }
 
     private func createRoundedCutoutPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
-        let path = CGMutablePath()
-        let circleRadius = radius
-        
-        switch cornerType {
-        case .topLeft:
-            path.addEllipse(in: CGRect(
-                x: bounds.maxX - circleRadius,
-                y: bounds.maxY - circleRadius,
-                width: circleRadius * 2,
-                height: circleRadius * 2
-            ))
-        case .topRight:
-            path.addEllipse(in: CGRect(
-                x: bounds.minX - circleRadius,
-                y: bounds.maxY - circleRadius,
-                width: circleRadius * 2,
-                height: circleRadius * 2
-            ))
-        case .bottomLeft:
-            path.addEllipse(in: CGRect(
-                x: bounds.maxX - circleRadius,
-                y: bounds.minY - circleRadius,
-                width: circleRadius * 2,
-                height: circleRadius * 2
-            ))
-        case .bottomRight:
-            path.addEllipse(in: CGRect(
-                x: bounds.minX - circleRadius,
-                y: bounds.minY - circleRadius,
-                width: circleRadius * 2,
-                height: circleRadius * 2
-            ))
-        }
-        
-        return path
+        CornerGeometry.roundedCutoutPath(in: bounds, radius: radius, cornerType: cornerType)
     }
 
     private func createPolygonMaskPath(in bounds: NSRect, cornerType: CornerType) -> CGPath {
-        let path = CGMutablePath()
-        let inset = min(radius, min(bounds.width, bounds.height))
-        
-        guard inset > 0 else {
-            return path
-        }
-        
-        let points: [CGPoint]
-        switch cornerType {
-        case .topLeft:
-            points = [
-                CGPoint(x: bounds.minX, y: bounds.minY),
-                CGPoint(x: bounds.minX + inset, y: bounds.minY),
-                CGPoint(x: bounds.minX, y: bounds.minY + inset)
-            ]
-        case .topRight:
-            points = [
-                CGPoint(x: bounds.maxX, y: bounds.minY),
-                CGPoint(x: bounds.maxX - inset, y: bounds.minY),
-                CGPoint(x: bounds.maxX, y: bounds.minY + inset)
-            ]
-        case .bottomLeft:
-            points = [
-                CGPoint(x: bounds.minX, y: bounds.maxY),
-                CGPoint(x: bounds.minX + inset, y: bounds.maxY),
-                CGPoint(x: bounds.minX, y: bounds.maxY - inset)
-            ]
-        case .bottomRight:
-            points = [
-                CGPoint(x: bounds.maxX, y: bounds.maxY),
-                CGPoint(x: bounds.maxX - inset, y: bounds.maxY),
-                CGPoint(x: bounds.maxX, y: bounds.maxY - inset)
-            ]
-        }
-        
-        path.addLines(between: points)
-        path.closeSubpath()
-        return path
+        CornerGeometry.polygonMaskPath(in: bounds, radius: radius, cornerType: cornerType)
     }
     
 }
