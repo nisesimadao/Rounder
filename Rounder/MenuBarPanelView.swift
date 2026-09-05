@@ -136,7 +136,10 @@ struct MenuBarPanelView: View {
     }
 
     private func selectStyle(_ style: CornerCutoutStyle) {
-        guard style != cutoutStyle else { return }
+        // Compare the persisted raw value instead of the computed fallback.
+        // If preferences ever contain an unknown legacy/corrupt value, the UI
+        // still previews Rounded, but clicking Rounded must repair persistence.
+        guard cornerCutoutStyleRawValue != style.rawValue else { return }
         cornerCutoutStyleRawValue = style.rawValue
         onGeometryChanged(cornerRadius, style)
     }
