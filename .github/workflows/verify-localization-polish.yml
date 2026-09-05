@@ -1,4 +1,5 @@
 name: Verify localization polish
+# Trigger after the workflow exists on the branch.
 
 on:
   push:
