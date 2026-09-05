@@ -10,9 +10,14 @@ All notable changes to Rounder are tracked here.
 - Fixed the rounded preview so off-window circle geometry is correctly clipped in the menu panel.
 - Added lightweight in-place Radius / Shape updates so corner windows no longer need to be destroyed and recreated during slider/shape adjustments.
 - Added shared `CornerGeometry` / `ScreenCorner` logic for initial creation, live resizing, menu previews, corner orientation, and Gaming hue mapping.
+- Improved native menu-panel active-state handling so the radius slider and selected controls retain their accent appearance while the real menu is tracking.
+- Added a destructive red treatment for Quit and polished menu hover/selection states.
+- Removed the onboarding `TabView` chrome and switched onboarding steps directly with the existing Back / Next flow.
+- Polished English/Japanese menu and onboarding copy, corrected terminology, and added localized VoiceOver labels/values for quick colors, corners, and toggles.
 - Preserved Settings / Quit keyboard shortcuts and safe AppKit menu-tracking behavior.
 - Added standalone CornerGeometry regression tests covering 0/20/40 px radii, Squircle 1.8× sizing, negative display coordinates, stable corner anchors, shape switching, and bounded rounded previews.
-- Updated the release workflow to run CornerGeometry regression tests before packaging a release.
+- Added required English/Japanese localization coverage checks to the release pipeline.
+- Hardened release packaging with project-controlled build numbers, app version validation, ad-hoc signing, and ZIP integrity checks.
 
 ## v2.1.4
 
@@ -34,4 +39,3 @@ All notable changes to Rounder are tracked here.
 ## v2.1.1
 
 - Version maintenance release.
-
