@@ -2,9 +2,9 @@
 
 ## Why do I see a Gatekeeper warning?
 
-Rounder release builds are currently not signed with a paid Apple Developer ID. macOS may block the first launch.
+Rounder release builds are **ad-hoc signed, but not Developer ID signed or notarized**. Because macOS cannot establish the same trust chain as a notarized Developer ID app, Gatekeeper may block the first launch.
 
-Right-click `Rounder.app`, choose **Open**, then choose **Open** again. You can also remove quarantine manually:
+Right-click `Rounder.app`, choose **Open**, then choose **Open** again. If necessary, you can also remove the quarantine attribute manually:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/Rounder.app
