@@ -334,12 +334,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
         
-        // Squircle は円より角に沿って膨らむため、iOS 実機と同様に辺方向へ長く伸ばして描く。
-        // ウィンドウを radius の 1.8 倍にすると、対角の深さが角丸とほぼ揃う（0.405r ≒ 0.414r）。
-        let styleFactor: CGFloat = configuration.cutoutStyle == .squircle ? 1.8 : 1.0
-        // サイズは必ず整数に丸める。小数だと右・下の角ウィンドウの origin が小数座標になり、
-        // ピクセル格子に合わず合成時に最大1pxズレて画面の縁に隙間が見える（Squircle の 1.8 倍で顕在化）。
-        let cornerSize = (CGFloat(configuration.radius) * styleFactor).rounded() + RounderAppConstants.cornerSizePadding
+        // Initial creation and live Radius/Shape updates must use the exact same
+        // sizing rule (including Squircle's 1.8x backing window and pixel rounding).
+        let cornerSize = CornerGeometry.cornerSize(
+            radius: CGFloat(configuration.radius),
+            style: configuration.cutoutStyle
+        )
         
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
@@ -353,31 +353,36 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             
             let frame = screen.frame
 
-            // 各角の「物理的な位置」と、その角を描画するときに使う CornerType の対応表。
-            // CornerType は描画座標系（非フリップ）の都合で上下が反転している点に注意
-            // （物理的な左上 → .bottomLeft など）。以前は window.screen から角を推測していたが、
-            // マルチモニターで誤判定するため、生成時に確定した値を渡すようにした。
-            // baseHue は周回上の位置（時計回りに 左上=0, 右上=0.25, 右下=0.5, 左下=0.75）。
-            // これでふちの虹と角の色が連続してつながる。
-            let cornerSpecs: [(enabled: Bool, origin: CGPoint, type: CornerType, baseHue: Double)] = [
-                (configuration.topLeftEnabled,     CGPoint(x: frame.minX, y: frame.maxY - cornerSize),              .bottomLeft,  0.0),
-                (configuration.topRightEnabled,    CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize), .bottomRight, 0.25),
-                (configuration.bottomLeftEnabled,  CGPoint(x: frame.minX, y: frame.minY),                           .topLeft,     0.75),
-                (configuration.bottomRightEnabled, CGPoint(x: frame.maxX - cornerSize, y: frame.minY),              .topRight,    0.5)
+            // Keep physical corner identity separate from the unflipped AppKit
+            // drawing corner. CornerGeometry owns placement; ScreenCorner owns the
+            // drawing-corner and gaming-hue mappings used by both creation and live updates.
+            let cornerStates: [(corner: ScreenCorner, enabled: Bool)] = [
+                (.topLeft, configuration.topLeftEnabled),
+                (.topRight, configuration.topRightEnabled),
+                (.bottomLeft, configuration.bottomLeftEnabled),
+                (.bottomRight, configuration.bottomRightEnabled)
             ]
 
-            for spec in cornerSpecs where spec.enabled {
+            for state in cornerStates where state.enabled {
                 let window = CornerOverlayWindow(
-                    corner: spec.origin,
+                    corner: CornerGeometry.windowOrigin(
+                        in: frame,
+                        corner: state.corner,
+                        cornerSize: cornerSize
+                    ),
                     size: cornerSize,
                     radius: CGFloat(configuration.radius),
                     color: configuration.color,
                     cutoutStyle: configuration.cutoutStyle,
-                    cornerType: spec.type
+                    cornerType: state.corner.drawingCorner
                 )
                 overlayWindows.append(window)
                 if configuration.superGamingMode {
-                    window.setGamingMode(true, speed: configuration.gamingSpeed, baseHue: spec.baseHue)
+                    window.setGamingMode(
+                        true,
+                        speed: configuration.gamingSpeed,
+                        baseHue: state.corner.gamingBaseHue
+                    )
                 }
             }
 
