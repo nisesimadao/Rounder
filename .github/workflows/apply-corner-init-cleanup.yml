@@ -27,90 +27,67 @@ jobs:
           path = Path("Rounder/RounderApp.swift")
           source = path.read_text()
 
-          old_size = '''        // Squircle は円より角に沿って膨らむため、iOS 実機と同様に辺方向へ長く伸ばして描く。
-        // ウィンドウを radius の 1.8 倍にすると、対角の深さが角丸とほぼ揃う（0.405r ≒ 0.414r）。
-        let styleFactor: CGFloat = configuration.cutoutStyle == .squircle ? 1.8 : 1.0
-        // サイズは必ず整数に丸める。小数だと右・下の角ウィンドウの origin が小数座標になり、
-        // ピクセル格子に合わず合成時に最大1pxズレて画面の縁に隙間が見える（Squircle の 1.8 倍で顕在化）。
-        let cornerSize = (CGFloat(configuration.radius) * styleFactor).rounded() + RounderAppConstants.cornerSizePadding
-'''
-          new_size = '''        // Initial creation and live Radius/Shape updates must use the exact same
-        // sizing rule (including Squircle's 1.8x backing window and pixel rounding).
-        let cornerSize = CornerGeometry.cornerSize(
-            radius: CGFloat(configuration.radius),
-            style: configuration.cutoutStyle
-        )
-'''
+          size_start_marker = "        // Squircle は円より角に沿って膨らむため、iOS 実機と同様に辺方向へ長く伸ばして描く。"
+          size_end_marker = "        // 選択されたディスプレイのみにオーバーレイを作成"
+          specs_start_marker = "            // 各角の「物理的な位置」と、その角を描画するときに使う CornerType の対応表。"
+          specs_end_marker = "            // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）"
 
-          old_specs = '''            // 各角の「物理的な位置」と、その角を描画するときに使う CornerType の対応表。
-            // CornerType は描画座標系（非フリップ）の都合で上下が反転している点に注意
-            // （物理的な左上 → .bottomLeft など）。以前は window.screen から角を推測していたが、
-            // マルチモニターで誤判定するため、生成時に確定した値を渡すようにした。
-            // baseHue は周回上の位置（時計回りに 左上=0, 右上=0.25, 右下=0.5, 左下=0.75）。
-            // これでふちの虹と角の色が連続してつながる。
-            let cornerSpecs: [(enabled: Bool, origin: CGPoint, type: CornerType, baseHue: Double)] = [
-                (configuration.topLeftEnabled,     CGPoint(x: frame.minX, y: frame.maxY - cornerSize),              .bottomLeft,  0.0),
-                (configuration.topRightEnabled,    CGPoint(x: frame.maxX - cornerSize, y: frame.maxY - cornerSize), .bottomRight, 0.25),
-                (configuration.bottomLeftEnabled,  CGPoint(x: frame.minX, y: frame.minY),                           .topLeft,     0.75),
-                (configuration.bottomRightEnabled, CGPoint(x: frame.maxX - cornerSize, y: frame.minY),              .topRight,    0.5)
-            ]
+          for marker in [size_start_marker, size_end_marker, specs_start_marker, specs_end_marker]:
+              if source.count(marker) != 1:
+                  raise SystemExit(f"Expected marker once: {marker!r}; found {source.count(marker)}")
 
-            for spec in cornerSpecs where spec.enabled {
-                let window = CornerOverlayWindow(
-                    corner: spec.origin,
-                    size: cornerSize,
-                    radius: CGFloat(configuration.radius),
-                    color: configuration.color,
-                    cutoutStyle: configuration.cutoutStyle,
-                    cornerType: spec.type
-                )
-                overlayWindows.append(window)
-                if configuration.superGamingMode {
-                    window.setGamingMode(true, speed: configuration.gamingSpeed, baseHue: spec.baseHue)
-                }
-            }
-'''
-          new_specs = '''            // Keep physical corner identity separate from the unflipped AppKit
-            // drawing corner. CornerGeometry owns placement; ScreenCorner owns the
-            // drawing-corner and gaming-hue mappings used by both creation and live updates.
-            let cornerStates: [(corner: ScreenCorner, enabled: Bool)] = [
-                (.topLeft, configuration.topLeftEnabled),
-                (.topRight, configuration.topRightEnabled),
-                (.bottomLeft, configuration.bottomLeftEnabled),
-                (.bottomRight, configuration.bottomRightEnabled)
-            ]
+          size_start = source.index(size_start_marker)
+          size_end = source.index(size_end_marker)
+          new_size = "\n".join([
+              "        // Initial creation and live Radius/Shape updates must use the exact same",
+              "        // sizing rule (including Squircle's 1.8x backing window and pixel rounding).",
+              "        let cornerSize = CornerGeometry.cornerSize(",
+              "            radius: CGFloat(configuration.radius),",
+              "            style: configuration.cutoutStyle",
+              "        )",
+              "        ",
+          ]) + "\n"
+          source = source[:size_start] + new_size + source[size_end:]
 
-            for state in cornerStates where state.enabled {
-                let window = CornerOverlayWindow(
-                    corner: CornerGeometry.windowOrigin(
-                        in: frame,
-                        corner: state.corner,
-                        cornerSize: cornerSize
-                    ),
-                    size: cornerSize,
-                    radius: CGFloat(configuration.radius),
-                    color: configuration.color,
-                    cutoutStyle: configuration.cutoutStyle,
-                    cornerType: state.corner.drawingCorner
-                )
-                overlayWindows.append(window)
-                if configuration.superGamingMode {
-                    window.setGamingMode(
-                        true,
-                        speed: configuration.gamingSpeed,
-                        baseHue: state.corner.gamingBaseHue
-                    )
-                }
-            }
-'''
+          specs_start = source.index(specs_start_marker)
+          specs_end = source.index(specs_end_marker)
+          new_specs = "\n".join([
+              "            // Keep physical corner identity separate from the unflipped AppKit",
+              "            // drawing corner. CornerGeometry owns placement; ScreenCorner owns the",
+              "            // drawing-corner and gaming-hue mappings used by both creation and live updates.",
+              "            let cornerStates: [(corner: ScreenCorner, enabled: Bool)] = [",
+              "                (.topLeft, configuration.topLeftEnabled),",
+              "                (.topRight, configuration.topRightEnabled),",
+              "                (.bottomLeft, configuration.bottomLeftEnabled),",
+              "                (.bottomRight, configuration.bottomRightEnabled)",
+              "            ]",
+              "",
+              "            for state in cornerStates where state.enabled {",
+              "                let window = CornerOverlayWindow(",
+              "                    corner: CornerGeometry.windowOrigin(",
+              "                        in: frame,",
+              "                        corner: state.corner,",
+              "                        cornerSize: cornerSize",
+              "                    ),",
+              "                    size: cornerSize,",
+              "                    radius: CGFloat(configuration.radius),",
+              "                    color: configuration.color,",
+              "                    cutoutStyle: configuration.cutoutStyle,",
+              "                    cornerType: state.corner.drawingCorner",
+              "                )",
+              "                overlayWindows.append(window)",
+              "                if configuration.superGamingMode {",
+              "                    window.setGamingMode(",
+              "                        true,",
+              "                        speed: configuration.gamingSpeed,",
+              "                        baseHue: state.corner.gamingBaseHue",
+              "                    )",
+              "                }",
+              "            }",
+              "",
+          ]) + "\n"
+          source = source[:specs_start] + new_specs + source[specs_end:]
 
-          if source.count(old_size) != 1:
-              raise SystemExit(f"Expected size block once, found {source.count(old_size)}")
-          if source.count(old_specs) != 1:
-              raise SystemExit(f"Expected corner specs block once, found {source.count(old_specs)}")
-
-          source = source.replace(old_size, new_size)
-          source = source.replace(old_specs, new_specs)
           path.write_text(source)
           PY
 
@@ -126,5 +103,3 @@ jobs:
           git add Rounder/RounderApp.swift
           git commit -m "Use shared geometry for initial corner creation"
           git push origin HEAD:corner-geometry-initialization-cleanup
-
-# Triggered after the workflow exists on the branch.
