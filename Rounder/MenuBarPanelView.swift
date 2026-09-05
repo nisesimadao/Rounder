@@ -272,7 +272,11 @@ struct MenuBarPanelView: View {
 
             Spacer(minLength: 8)
 
-            PanelFooterButton(systemImage: "power", title: String(localized: "quit_menu")) {
+            PanelFooterButton(
+                systemImage: "power",
+                title: String(localized: "quit_menu"),
+                isDestructive: true
+            ) {
                 onQuit()
             }
         }
@@ -538,6 +542,7 @@ private struct CornerToggleButton: View {
 private struct PanelFooterButton: View {
     let systemImage: String
     let title: String
+    var isDestructive: Bool = false
     let action: () -> Void
 
     @State private var isHovered = false
@@ -546,11 +551,12 @@ private struct PanelFooterButton: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(.system(size: 11))
+                .foregroundStyle(isDestructive ? Color.red : Color.primary)
                 .padding(.horizontal, 8)
                 .frame(height: 24)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)
+                        .fill(isHovered ? (isDestructive ? Color.red.opacity(0.12) : Color.primary.opacity(0.08)) : Color.clear)
                 )
                 .contentShape(Rectangle())
         }
