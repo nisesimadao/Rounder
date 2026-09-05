@@ -1,0 +1,36 @@
+name: Verify Menu Panel Branch
+
+on:
+  push:
+    branches:
+      - menu-panel-geometry-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build Rounder
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Debug \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
