@@ -1,7 +1,7 @@
 name: Build & Release
 
-# バージョンタグ（例: v1.2.0）を push すると、ビルドして .zip を Releases に自動で並べる。
-# 手動実行（Run workflow）でもビルドの確認だけできる（その場合はリリースを作らずアーティファクトに保存）。
+# バージョンタグ（例: v1.2.0）を push すると、テスト→ビルド→Releases公開まで自動実行。
+# 手動実行（Run workflow）でも同じ検証とビルドを行い、その場合はReleaseを作らずartifactに保存する。
 on:
   push:
     tags:
@@ -22,6 +22,15 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
 
       - name: Resolve app version
         run: |
