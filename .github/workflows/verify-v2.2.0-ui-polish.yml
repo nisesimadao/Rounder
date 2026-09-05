@@ -1,0 +1,103 @@
+name: Verify v2.2.0 UI Polish
+
+on:
+  push:
+    branches:
+      - fix-v2.2.0-ui-polish
+    paths:
+      - .github/workflows/verify-v2.2.0-ui-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix-v2.2.0-ui-polish
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Bump build number
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path("Rounder.xcodeproj/project.pbxproj")
+          source = path.read_text()
+          old = "CURRENT_PROJECT_VERSION = 32;"
+          new = "CURRENT_PROJECT_VERSION = 33;"
+
+          if source.count(old) != 2:
+              raise SystemExit(f"Expected exactly 2 build-version entries, found {source.count(old)}")
+
+          source = source.replace(old, new)
+          path.write_text(source)
+          PY
+          git diff --check
+
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Validate version
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Rounder.app"
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
+          test "$VERSION" = "2.2.0"
+          test "$BUILD" = "33"
+          echo "Validated Rounder $VERSION ($BUILD)"
+
+      - name: Smoke test startup
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Rounder.app"
+          LOG="$RUNNER_TEMP/rounder-v2.2.0-ui-polish-smoke.log"
+          defaults write com.nisesimadao.Rounder hasLaunchedBefore -bool true
+          defaults write com.nisesimadao.Rounder isEnabled -bool false
+          "$APP/Contents/MacOS/Rounder" >"$LOG" 2>&1 &
+          PID=$!
+          sleep 5
+          if ! kill -0 "$PID" 2>/dev/null; then
+            cat "$LOG"
+            exit 1
+          fi
+          kill "$PID" || true
+          wait "$PID" || true
+
+      - name: Commit build number
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Rounder.xcodeproj/project.pbxproj
+          git commit -m "Bump build number to 33"
+          git push origin HEAD:fix-v2.2.0-ui-polish
