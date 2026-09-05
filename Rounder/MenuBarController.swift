@@ -141,8 +141,21 @@ class MenuBarController: NSObject {
 private struct MenuBarPanelRoot: View {
     let content: MenuBarPanelView
 
+    @ViewBuilder
     var body: some View {
-        content.tint(.accentColor)
+        if #available(macOS 15.0, *) {
+            content
+                .tint(.accentColor)
+                // A custom NSMenuItem view is hosted in an AppKit menu tracking
+                // window, which SwiftUI otherwise treats as inactive. Native
+                // switches/sliders then dim their accent to gray even though the
+                // menu is the active interaction surface.
+                .environment(\.appearsActive, true)
+        } else {
+            content
+                .tint(.accentColor)
+                .environment(\.controlActiveState, .key)
+        }
     }
 }
 
