@@ -2,7 +2,7 @@
 
 All notable changes to Rounder are tracked here.
 
-## v2.2.0
+## v2.3.0
 
 - Replaced the classic status-item menu with an interactive SwiftUI control panel hosted inside a real `NSMenu`.
 - Added live menu-bar controls for corner radius, Rounded / Squircle / Polygon shape, quick colors, individual corners, and Super Duper Gaming Mode.
