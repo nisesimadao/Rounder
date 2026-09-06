@@ -1,0 +1,151 @@
+name: Publish Rounder v2.3.0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/publish-v2.3.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: macos-15
+    env:
+      TARGET_COMMIT: 6c7f7830ab7b1e396e9a0d019b1fa353772f8534
+      RELEASE_TAG: v2.3.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release target
+        run: |
+          set -euo pipefail
+          PARENT="$(git rev-parse HEAD^)"
+          if [[ "$PARENT" != "$TARGET_COMMIT" ]]; then
+            echo "::error::Expected workflow commit to be directly after $TARGET_COMMIT, got parent $PARENT"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::error::$RELEASE_TAG already exists"
+            exit 1
+          fi
+          git checkout --detach "$TARGET_COMMIT"
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/CornerGeometryTests.swift \
+            Rounder/CornerGeometry.swift \
+            -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+
+      - name: Test localization coverage
+        run: |
+          set -euo pipefail
+          python3 -m json.tool Rounder/Localizable.xcstrings >/dev/null
+          python3 Tests/LocalizationTests.py
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Validate release app
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Rounder.app"
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
+          ARCHS=$(lipo -archs "$APP/Contents/MacOS/Rounder")
+          test "$VERSION" = "2.3.0"
+          test "$BUILD" = "36"
+          [[ "$ARCHS" == *"arm64"* ]]
+          [[ "$ARCHS" == *"x86_64"* ]]
+          echo "Validated Rounder $VERSION ($BUILD): $ARCHS"
+
+      - name: Smoke test startup
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Rounder.app"
+          LOG="$RUNNER_TEMP/rounder-230-release-smoke.log"
+          defaults write com.nisesimadao.Rounder hasLaunchedBefore -bool true
+          defaults write com.nisesimadao.Rounder isEnabled -bool false
+          "$APP/Contents/MacOS/Rounder" >"$LOG" 2>&1 &
+          PID=$!
+          sleep 5
+          if ! kill -0 "$PID" 2>/dev/null; then
+            cat "$LOG"
+            exit 1
+          fi
+          kill "$PID" || true
+          wait "$PID" || true
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Rounder.app"
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" Rounder.zip
+          unzip -t Rounder.zip
+          shasum -a 256 Rounder.zip
+
+      - name: Upload verified artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rounder-v2.3.0
+          path: Rounder.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2.3.0
+          target_commitish: 6c7f7830ab7b1e396e9a0d019b1fa353772f8534
+          name: Rounder v2.3.0
+          files: Rounder.zip
+          fail_on_unmatched_files: true
+          body: |
+            # Rounder v2.3.0
+
+            The menu bar is now Rounder's primary control surface.
+
+            ## Highlights
+            - New interactive menu-bar control panel inside a real macOS menu.
+            - Adjust corner radius live without recreating overlay windows.
+            - Switch between Rounded, Squircle, and Polygon shapes from the menu bar.
+            - Quick black / white / gray colors and full color-picker access.
+            - Toggle each corner independently.
+            - Toggle Super Duper Gaming Mode directly from the menu bar.
+            - Destructive red Quit action and polished native hover/selection states.
+            - Improved English and Japanese localization and VoiceOver labels.
+            - Cleaner onboarding without the unintended TabView chrome.
+            - Shared geometry logic and expanded regression/release QA.
+
+            ## Install
+            1. Download `Rounder.zip` and unzip it.
+            2. Move `Rounder.app` to `/Applications`.
+            3. If Gatekeeper blocks first launch, right-click the app and choose **Open**.
+
+            The release is ad-hoc signed, but is not Developer ID signed or notarized.
+
+            **Full Changelog**: https://github.com/nisesimadao/Rounder/compare/v2.1.4...v2.3.0
