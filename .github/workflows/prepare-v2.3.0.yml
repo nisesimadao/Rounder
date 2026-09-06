@@ -1,0 +1,143 @@
+name: Prepare Rounder v2.3.0
+
+on:
+  push:
+    branches:
+      - fix-v2.2.0-ui-polish
+    paths:
+      - .github/workflows/prepare-v2.3.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix-v2.2.0-ui-polish
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Prepare 2.3.0 metadata
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          project = Path('Rounder.xcodeproj/project.pbxproj')
+          text = project.read_text()
+          checks = [
+              ('MARKETING_VERSION = 2.2.0;', 'MARKETING_VERSION = 2.3.0;', 2),
+              ('CURRENT_PROJECT_VERSION = 35;', 'CURRENT_PROJECT_VERSION = 36;', 2),
+          ]
+          for old, new, expected in checks:
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'Expected {expected} occurrences of {old!r}, found {count}')
+              text = text.replace(old, new)
+          project.write_text(text)
+
+          readme_ja = Path('README_jp.md')
+          text = readme_ja.read_text()
+          old = '<img src="docs/menu-panel.webp" alt="Rounder メニューバー操作パネル" width="360" />'
+          new = '<img src="docs/menu-panel-ja.webp" alt="Rounder メニューバー操作パネル" width="360" />'
+          if text.count(old) != 1:
+              raise SystemExit('Expected exactly one Japanese menu screenshot reference')
+          readme_ja.write_text(text.replace(old, new))
+
+          changelog = Path('docs/CHANGELOG.md')
+          text = changelog.read_text()
+          if text.count('## v2.2.0') != 1:
+              raise SystemExit('Expected exactly one unreleased v2.2.0 changelog heading')
+          changelog.write_text(text.replace('## v2.2.0', '## v2.3.0', 1))
+          PY
+          git diff --check
+
+      - name: Test CornerGeometry
+        run: |
+          set -euo pipefail
+          xcrun swiftc Tests/CornerGeometryTests.swift Rounder/CornerGeometry.swift -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+
+      - name: Test localization coverage
+        run: |
+          set -euo pipefail
+          python3 -m json.tool Rounder/Localizable.xcstrings >/dev/null
+          python3 Tests/LocalizationTests.py
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Rounder.xcodeproj \
+            -scheme Rounder \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Validate app
+        run: |
+          set -euo pipefail
+          APP='build/Build/Products/Release/Rounder.app'
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")
+          ARCHS=$(lipo -archs "$APP/Contents/MacOS/Rounder")
+          test "$VERSION" = '2.3.0'
+          test "$BUILD" = '36'
+          [[ "$ARCHS" == *arm64* ]]
+          [[ "$ARCHS" == *x86_64* ]]
+          echo "Validated Rounder $VERSION ($BUILD): $ARCHS"
+
+      - name: Smoke test startup
+        run: |
+          set -euo pipefail
+          APP='build/Build/Products/Release/Rounder.app'
+          LOG="$RUNNER_TEMP/rounder-230-smoke.log"
+          defaults write com.nisesimadao.Rounder hasLaunchedBefore -bool true
+          defaults write com.nisesimadao.Rounder isEnabled -bool false
+          "$APP/Contents/MacOS/Rounder" >"$LOG" 2>&1 &
+          PID=$!
+          sleep 5
+          if ! kill -0 "$PID" 2>/dev/null; then
+            cat "$LOG"
+            exit 1
+          fi
+          kill "$PID" || true
+          wait "$PID" || true
+
+      - name: Package release candidate
+        run: |
+          set -euo pipefail
+          APP='build/Build/Products/Release/Rounder.app'
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" Rounder-v2.3.0-build36.zip
+          unzip -t Rounder-v2.3.0-build36.zip
+          shasum -a 256 Rounder-v2.3.0-build36.zip
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rounder-v2.3.0-build36
+          path: Rounder-v2.3.0-build36.zip
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Commit release metadata
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Rounder.xcodeproj/project.pbxproj README_jp.md docs/CHANGELOG.md
+          git commit -m 'Prepare Rounder v2.3.0'
+          git pull --rebase origin fix-v2.2.0-ui-polish
+          git push origin HEAD:fix-v2.2.0-ui-polish
