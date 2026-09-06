@@ -1,0 +1,23 @@
+name: Verify full localization coverage
+
+on:
+  push:
+    branches:
+      - fix-v2.2.0-ui-polish
+    paths:
+      - .github/workflows/verify-localization-all.yml
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix-v2.2.0-ui-polish
+
+      - name: Validate localization catalog
+        run: |
+          set -euo pipefail
+          python3 -m json.tool Rounder/Localizable.xcstrings >/dev/null
+          python3 Tests/LocalizationTests.py
