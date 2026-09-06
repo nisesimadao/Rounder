@@ -44,7 +44,11 @@ struct MenuBarPanelView: View {
         Color(cornerNSColor)
     }
 
-    private let quickColors: [NSColor] = [.black, .white, .systemGray]
+    private let quickColors: [(color: NSColor, label: LocalizedStringKey)] = [
+        (.black, "color_black"),
+        (.white, "color_white"),
+        (.systemGray, "color_gray")
+    ]
 
     private var enabledBinding: Binding<Bool> {
         Binding(
@@ -133,6 +137,7 @@ struct MenuBarPanelView: View {
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
+                .accessibilityLabel(Text("enable_rounded_corners"))
         }
     }
 
@@ -197,12 +202,13 @@ struct MenuBarPanelView: View {
             }
 
             HStack(spacing: 9) {
-                ForEach(Array(quickColors.enumerated()), id: \.offset) { _, color in
+                ForEach(Array(quickColors.enumerated()), id: \.offset) { _, swatch in
                     ColorSwatchButton(
-                        color: color,
-                        isSelected: colorsMatch(cornerNSColor, color)
+                        color: swatch.color,
+                        accessibilityLabel: swatch.label,
+                        isSelected: colorsMatch(cornerNSColor, swatch.color)
                     ) {
-                        selectColor(color)
+                        selectColor(swatch.color)
                     }
                 }
 
@@ -261,6 +267,7 @@ struct MenuBarPanelView: View {
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
+                .accessibilityLabel(Text("super_gaming_mode"))
         }
     }
 
@@ -451,6 +458,7 @@ private struct CornerShapePreview: View {
 
 private struct ColorSwatchButton: View {
     let color: NSColor
+    let accessibilityLabel: LocalizedStringKey
     let isSelected: Bool
     let action: () -> Void
 
@@ -474,6 +482,7 @@ private struct ColorSwatchButton: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        .accessibilityLabel(Text(accessibilityLabel))
         .animation(.snappy(duration: 0.16), value: isSelected)
         .animation(.easeOut(duration: 0.1), value: isHovered)
     }
@@ -533,7 +542,9 @@ private struct CornerToggleButton: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .accessibilityLabel(Text(accessibilityName))
-        .accessibilityValue(Text(isEnabled ? "On" : "Off"))
+        .accessibilityValue(
+            Text(LocalizedStringKey(isEnabled ? "state_on" : "state_off"))
+        )
         .animation(.snappy(duration: 0.18), value: isEnabled)
         .animation(.easeOut(duration: 0.1), value: isHovered)
     }

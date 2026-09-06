@@ -22,5 +22,4 @@ Include:
 
 Rounder does not request Accessibility, Screen Recording, Automation, Contacts, Location, Microphone, Camera, or network permissions. It draws local overlay windows and stores settings locally in `UserDefaults`.
 
-Release builds are currently unsigned with a paid Developer ID. macOS may show a Gatekeeper warning on first launch.
-
+Release builds are ad-hoc signed for packaging, but they are not Developer ID signed or notarized. macOS may therefore show a Gatekeeper warning on first launch.

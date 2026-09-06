@@ -86,40 +86,6 @@
         }
       }
     },
-    "accessibility_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to detect screen corners and display overlays"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画面の角を検出してオーバーレイを表示するために必要です"
-          }
-        }
-      }
-    },
-    "accessibility_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accessibility Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アクセシビリティ権限"
-          }
-        }
-      }
-    },
     "add_preset" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -137,23 +103,6 @@
         }
       }
     },
-    "allow_button" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "許可する"
-          }
-        }
-      }
-    },
     "app_description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -166,7 +115,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "macOSの画面コーナーを美しく角丸化"
+            "value" : "macOSの画面の角を美しく丸くします"
           }
         }
       }
@@ -183,7 +132,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Macの画面コーナーを美しい角丸に変換するユーティリティです。"
+            "value" : "Macの画面の角を美しく丸くするユーティリティです。"
           }
         }
       }
@@ -256,40 +205,6 @@
         }
       }
     },
-    "automation_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to monitor system events and handle screen changes"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システムイベントを監視して画面変更に対応するために必要です"
-          }
-        }
-      }
-    },
-    "automation_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automation Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動化権限"
-          }
-        }
-      }
-    },
     "back" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -313,13 +228,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "When checked, Rounder will start in the background and display an icon in the menu bar."
+            "value" : "When enabled, Rounder starts in the background and appears in the menu bar."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "チェックを入れると、Rounderがバックグラウンドで起動し、メニューバーにアイコンが表示されます。"
+            "value" : "有効にすると、Rounderがバックグラウンドで起動し、メニューバーに表示されます。"
           }
         }
       }
@@ -544,7 +459,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "切り欠き形状"
+            "value" : "角の形状"
           }
         }
       }
@@ -742,13 +657,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Customizable radius and color"
+            "value" : "Adjustable radius and color"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "カスタマイズ可能な半径と色"
+            "value" : "半径と色を自由に調整"
           }
         }
       }
@@ -1129,7 +1044,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ゲーム速さ"
+            "value" : "ゲーミング速度"
           }
         }
       }
@@ -1453,23 +1368,6 @@
         }
       }
     },
-    "open_system_preferences" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open System Preferences"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システム環境設定を開く"
-          }
-        }
-      }
-    },
     "overlay_description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1483,159 +1381,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "オーバーレイを表示して画面コーナーを角丸にします"
-          }
-        }
-      }
-    },
-    "pending" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pending"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要確認"
-          }
-        }
-      }
-    },
-    "permission_granted" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission is granted"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限が許可されています"
-          }
-        }
-      }
-    },
-    "permission_management" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission Management"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限管理"
-          }
-        }
-      }
-    },
-    "permission_not_granted" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission is not granted"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限が許可されていません"
-          }
-        }
-      }
-    },
-    "permission_regrant_instructions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "If there are permission issues, you can re-grant them through System Preferences."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限に問題がある場合、システム環境設定から再度許可することができます。"
-          }
-        }
-      }
-    },
-    "permission_request" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permission Request"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限の要求"
-          }
-        }
-      }
-    },
-    "permissions_required_message" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The following permissions are required for Rounder to function properly:"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rounderが正常に動作するために、以下の権限が必要です:"
-          }
-        }
-      }
-    },
-    "permissions_tab" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限"
-          }
-        }
-      }
-    },
-    "permissions_usage_only" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "These permissions are used only for Rounder's operation and not for any other purpose."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "これらの権限はRounderの動作にのみ使用され、他の目的では使用されません。"
           }
         }
       }
@@ -1899,6 +1644,41 @@
       "comment" : "A unit of measurement for pixel values.",
       "isCommentAutoGenerated" : true
     },
+    "color_black" : {
+    "extractionState" : "manual",
+    "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Black" } },
+      "ja" : { "stringUnit" : { "state" : "translated", "value" : "黒" } }
+    }
+  },
+  "color_gray" : {
+    "extractionState" : "manual",
+    "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Gray" } },
+      "ja" : { "stringUnit" : { "state" : "translated", "value" : "グレー" } }
+    }
+  },
+  "color_white" : {
+    "extractionState" : "manual",
+    "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "White" } },
+      "ja" : { "stringUnit" : { "state" : "translated", "value" : "白" } }
+    }
+  },
+  "state_off" : {
+    "extractionState" : "manual",
+    "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Off" } },
+      "ja" : { "stringUnit" : { "state" : "translated", "value" : "オフ" } }
+    }
+  },
+  "state_on" : {
+    "extractionState" : "manual",
+    "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "On" } },
+      "ja" : { "stringUnit" : { "state" : "translated", "value" : "オン" } }
+    }
+  },
     "quick_select" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1971,40 +1751,6 @@
         }
       }
     },
-    "required_permissions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "必要な権限"
-          }
-        }
-      }
-    },
-    "reset_permissions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Permissions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "権限の再設定"
-          }
-        }
-      }
-    },
     "restart_failed_message_with_error %1$@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2034,7 +1780,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "スクイークル"
+            "value" : "スクワークル"
           }
         }
       }
@@ -2113,13 +1859,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rounder - Screen corner rounding utility"
+            "value" : "Rounder – Screen corner utility"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rounder - 画面コーナー角丸化ツール"
+            "value" : "Rounder – 画面の角を丸くするユーティリティ"
           }
         }
       }
@@ -2151,47 +1897,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Screen Corner Rounding"
+            "value" : "Rounded Screen Corners"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画面コーナーの角丸化"
-          }
-        }
-      }
-    },
-    "screen_description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required to display overlays at screensaver level"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スクリーンセーバーレベルでオーバーレイを表示するために必要です"
-          }
-        }
-      }
-    },
-    "screen_permission" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screen Recording Permission"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "画面録画権限"
+            "value" : "画面の角を丸くする"
           }
         }
       }
@@ -2238,13 +1950,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "These settings can be changed at any time. Open the settings view from the Rounder icon in the menu bar."
+            "value" : "You can change these settings later from the Rounder icon in the menu bar."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "これらの設定は後からいつでも変更できます。メニューバーのRounderアイコンから設定画面を開いてください。"
+            "value" : "これらの設定は、あとからメニューバーのRounderアイコンで変更できます。"
           }
         }
       }
@@ -2255,13 +1967,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Settings..."
+            "value" : "Settings…"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "設定..."
+            "value" : "設定…"
           }
         }
       }
@@ -2357,7 +2069,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "SUPER DUPER GAMING TIME!"
+            "value" : "Super Duper Gaming Mode"
           }
         },
         "ja" : {

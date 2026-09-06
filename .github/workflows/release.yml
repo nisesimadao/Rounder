@@ -32,6 +32,11 @@ jobs:
             -o "$RUNNER_TEMP/corner-geometry-tests"
           "$RUNNER_TEMP/corner-geometry-tests"
 
+      - name: Test localization coverage
+        run: |
+          set -euo pipefail
+          python3 Tests/LocalizationTests.py
+
       - name: Resolve app version
         run: |
           set -euo pipefail
@@ -96,13 +101,15 @@ jobs:
 
       - name: Package
         run: |
+          set -euo pipefail
           APP="build/Build/Products/Release/Rounder.app"
           if [ ! -d "$APP" ]; then
             echo "::error::Rounder.app not found at $APP"; exit 1
           fi
-          # ad-hoc 署名しておくと Gatekeeper の扱いが少しマシになる（配布署名ではない）
-          codesign --force --deep --sign - "$APP" || true
+          # This is ad-hoc signing only; the public build is not Developer ID signed/notarized.
+          codesign --force --deep --sign - "$APP"
           ditto -c -k --sequesterRsrc --keepParent "$APP" Rounder.zip
+          unzip -t Rounder.zip
           echo "Packaged: $(du -h Rounder.zip | cut -f1)"
 
       - name: Upload build artifact
@@ -110,6 +117,7 @@ jobs:
         with:
           name: Rounder
           path: Rounder.zip
+          if-no-files-found: error
 
       - name: Publish Release
         if: startsWith(github.ref, 'refs/tags/')
