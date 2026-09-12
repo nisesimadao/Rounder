@@ -2,6 +2,12 @@
 
 All notable changes to Rounder are tracked here.
 
+## v2.3.1
+
+- Added a **Show menu bar icon** option in Settings so Rounder can keep running without a permanent status item.
+- Opening `Rounder.app` manually now opens Settings whether the menu-bar icon is visible or hidden, without changing the saved icon preference.
+- Launch at Login remains silent, including when the menu-bar icon is hidden.
+
 ## v2.3.0
 
 - Replaced the classic status-item menu with an interactive SwiftUI control panel hosted inside a real `NSMenu`.

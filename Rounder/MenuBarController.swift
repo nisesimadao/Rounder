@@ -20,12 +20,55 @@ class MenuBarController: NSObject {
     private var statusItem: NSStatusItem?
     private weak var appDelegate: AppDelegate?
     private var menu: NSMenu?
+    private var isObservingDefaults = false
+    private var handledHiddenLaunchRecovery = false
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
 
     func setupMenuBar(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
 
-        // setupMenuBar is normally called once, but keeping it idempotent avoids
-        // duplicate status items if the launch flow is ever re-entered.
+        if !isObservingDefaults {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(userDefaultsDidChange),
+                name: UserDefaults.didChangeNotification,
+                object: UserDefaults.standard
+            )
+            isObservingDefaults = true
+        }
+
+        applyMenuBarVisibility()
+
+        // If the app was explicitly opened while its status item is hidden,
+        // Settings is the recovery surface. A login-item launch stays silent.
+        if !handledHiddenLaunchRecovery,
+           !MenuBarVisibilityPreference.isVisible,
+           !MenuBarVisibilityPreference.wasLaunchedAsLoginItem {
+            handledHiddenLaunchRecovery = true
+            DispatchQueue.main.async { [weak self] in
+                self?.appDelegate?.showSettings()
+            }
+        }
+    }
+
+    @objc private func userDefaultsDidChange(_ notification: Notification) {
+        applyMenuBarVisibility()
+    }
+
+    private func applyMenuBarVisibility() {
+        if MenuBarVisibilityPreference.isVisible {
+            createMenuBarIfNeeded()
+        } else {
+            removeMenuBarIfNeeded()
+        }
+    }
+
+    private func createMenuBarIfNeeded() {
+        // setupMenuBar is normally called once, but keeping creation idempotent
+        // also lets the Settings toggle restore the status item immediately.
         guard statusItem == nil else { return }
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -97,6 +140,16 @@ class MenuBarController: NSObject {
 
         statusItem.menu = menu
         self.menu = menu
+    }
+
+    private func removeMenuBarIfNeeded() {
+        guard let statusItem else { return }
+
+        menu?.cancelTracking()
+        statusItem.menu = nil
+        NSStatusBar.system.removeStatusItem(statusItem)
+        self.statusItem = nil
+        menu = nil
     }
 
     private func hiddenShortcutItem(keyEquivalent: String, action: Selector) -> NSMenuItem {
