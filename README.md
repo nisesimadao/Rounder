@@ -6,7 +6,7 @@ A native macOS menu-bar utility that gives sharp display corners a cleaner, roun
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#requirements)
 
-Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It runs quietly in the menu bar and requires **no Accessibility, Screen Recording, Automation, or network permission**.
+Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It runs quietly in the background, usually from the menu bar, and requires **no Accessibility, Screen Recording, Automation, or network permission**.
 
 [日本語版 README](./README_jp.md)
 
@@ -30,7 +30,8 @@ Radius and shape changes update the existing overlay windows in place, so you ca
 - **Presets** for saving and applying favorite configurations
 - **Super Duper Gaming Mode** with animated rainbow glow, speed, intensity, and bloom controls
 - **Launch at Login** through `SMAppService`
-- **Menu-bar-first** — no Dock icon during normal use
+- **Optional menu-bar icon** — hide it after setup while Rounder keeps running
+- **Menu-bar-first** — no Dock icon during normal background use
 - **No invasive permissions** — local overlay windows and local `UserDefaults` only
 
 ## Download & install
@@ -67,7 +68,10 @@ The menu panel is for fast adjustments. The full Settings window provides:
 - preset management
 - Gaming Mode speed / intensity / bloom width
 - Launch at Login
+- menu-bar icon visibility
 - detailed corner configuration
+
+If the menu-bar icon is hidden, open `Rounder.app` again to show Settings. The icon stays hidden until you explicitly enable it again, and automatic login launches remain silent.
 
 <img src="Rounder/SCREENSHOT.png" alt="Rounder Settings window" />
 
@@ -127,4 +131,4 @@ Make sure Rounder is enabled and the target display is selected in Settings. On 
 Radius and shape should react immediately in the menu panel. For display-selection or other structural changes, toggle Rounder off/on or refresh the display list in Settings.
 
 **No menu-bar icon**  
-Make sure Rounder is running. It intentionally has no Dock icon during normal menu-bar use.
+If **Show menu bar icon** is disabled, this is expected. Open `Rounder.app` to access Settings and turn it back on. Otherwise, make sure Rounder is running.
