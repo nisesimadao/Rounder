@@ -6,8 +6,6 @@ on:
   push:
     tags:
       - "v*"
-    branches:
-      - "feature/hide-menu-bar-icon"
   workflow_dispatch:
 
 permissions:
