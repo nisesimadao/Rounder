@@ -1,18 +1,18 @@
 # <img src="Rounder/ICON.png" width="40" vertical-align="middle" /> Rounder
 
-A native macOS menu-bar utility that gives sharp display corners a cleaner, rounded look.
+A native macOS utility that gives sharp display corners a cleaner, rounded look.
 
 [![Latest release](https://img.shields.io/github/v/release/nisesimadao/Rounder?label=download)](https://github.com/nisesimadao/Rounder/releases/latest)
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#requirements)
 
-Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It runs quietly in the background, usually from the menu bar, and requires **no Accessibility, Screen Recording, Automation, or network permission**.
+Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It normally stays accessible from the menu bar, but you can hide the icon and keep Rounder running quietly in the background. It requires **no Accessibility, Screen Recording, Automation, or network permission**.
 
 [日本語版 README](./README_jp.md)
 
 ## Menu-bar controls
 
-Most everyday controls live directly in the menu-bar panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
+When the menu-bar icon is visible, most everyday controls live directly in the panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
 
 <img src="docs/menu-panel.webp" alt="Rounder menu-bar control panel" width="360" />
 
@@ -30,8 +30,8 @@ Radius and shape changes update the existing overlay windows in place, so you ca
 - **Presets** for saving and applying favorite configurations
 - **Super Duper Gaming Mode** with animated rainbow glow, speed, intensity, and bloom controls
 - **Launch at Login** through `SMAppService`
-- **Optional menu-bar icon** — hide it after setup while Rounder keeps running
-- **Menu-bar-first** — no Dock icon during normal background use
+- **Show or hide the menu-bar icon** — Rounder keeps running even while the icon is hidden
+- **No permanent Dock icon** — it only appears while onboarding or Settings is open
 - **No invasive permissions** — local overlay windows and local `UserDefaults` only
 
 ## Download & install
@@ -57,7 +57,7 @@ Rounder shows a short onboarding flow:
 
 **Welcome → basic radius/color setup → finish**
 
-Choose whether Rounder should launch at login, then click **Start Rounder**. After setup, it moves into the menu bar.
+Choose whether Rounder should launch at login, then click **Start Rounder**. It starts running in the background, and you can later choose whether the menu-bar icon should remain visible.
 
 ## Settings
 
@@ -130,5 +130,5 @@ Make sure Rounder is enabled and the target display is selected in Settings. On 
 **A change did not seem to apply**  
 Radius and shape should react immediately in the menu panel. For display-selection or other structural changes, toggle Rounder off/on or refresh the display list in Settings.
 
-**No menu-bar icon**  
-If **Show menu bar icon** is disabled, this is expected. Open `Rounder.app` to access Settings and turn it back on. Otherwise, make sure Rounder is running.
+**Want the menu-bar icon back?**  
+Open `Rounder.app` to show Settings, then enable **Show menu bar icon**. Rounder keeps running even while the icon is hidden.
