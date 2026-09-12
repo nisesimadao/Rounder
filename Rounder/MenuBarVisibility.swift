@@ -11,10 +11,9 @@ enum MenuBarVisibilityPreference {
         UserDefaults.standard.bool(forKey: key, defaultValue: true)
     }
 
-    /// SMAppService launches the main app with an Open Application Apple event
-    /// whose property data identifies it as a login-item launch. This lets
-    /// automatic login launches stay completely quiet while a normal Finder
-    /// launch can intentionally reveal Settings.
+    /// The Open Application Apple event identifies login-item launches through
+    /// keyAELaunchedAsLogInItem. Read this from applicationDidFinishLaunching,
+    /// while AppKit is handling the launch event.
     static var wasLaunchedAsLoginItem: Bool {
         guard let event = NSAppleEventManager.shared().currentAppleEvent else {
             return false
@@ -43,25 +42,6 @@ struct MenuBarVisibilityToggle: View {
 }
 
 extension AppDelegate {
-    /// Capture the launch source while the Open Application Apple event is still
-    /// available. A normal manual launch should open Settings regardless of the
-    /// menu-bar preference; login-item launches should remain silent.
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        let shouldOpenSettings = !MenuBarVisibilityPreference.wasLaunchedAsLoginItem
-
-        guard shouldOpenSettings else { return }
-
-        // Run after applicationDidFinishLaunching has created the overlays/menu
-        // and completed the first-launch decision. First launch keeps showing the
-        // onboarding window instead of stacking Settings on top of it.
-        DispatchQueue.main.async { [weak self] in
-            guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.hasLaunchedBefore) else {
-                return
-            }
-            self?.showSettings()
-        }
-    }
-
     /// Finder sends a reopen Apple event when an already-running app is opened
     /// again. Opening Rounder.app is always an explicit request for Settings,
     /// whether the menu-bar icon is currently visible or hidden.
