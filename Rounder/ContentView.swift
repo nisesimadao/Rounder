@@ -410,6 +410,8 @@ struct AdvancedSettingsView: View {
                 let applied = LoginItemManager.setEnabled(newValue)
                 if applied != newValue { launchAtLogin = applied }
             }
+        Divider()
+        MenuBarVisibilityToggle()
     }
 
     @ViewBuilder private var appearanceContent: some View {
