@@ -178,6 +178,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Read the Open Application Apple event at AppKit's did-finish-launching
+        // callback. Apple marks login-item launches with keyAELaunchedAsLogInItem.
+        let launchedAsLoginItem = MenuBarVisibilityPreference.wasLaunchedAsLoginItem
+
         // 多重起動を防止
         if preventMultipleInstances() {
             return
@@ -191,6 +195,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } else {
             createOverlayWindows()
             setupMenuBar()
+
+            // A manual cold launch is an explicit request to open Rounder, so
+            // show Settings regardless of menu-bar visibility. Login launches
+            // remain silent.
+            if !launchedAsLoginItem {
+                DispatchQueue.main.async { [weak self] in
+                    self?.showSettings()
+                }
+            }
         }
         
         ScreenMonitor.shared.startMonitoring(appDelegate: self)
