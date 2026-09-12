@@ -3,7 +3,9 @@
 import json
 from pathlib import Path
 
-CATALOG = Path(__file__).resolve().parents[1] / "Rounder" / "Localizable.xcstrings"
+ROOT = Path(__file__).resolve().parents[1]
+CATALOG = ROOT / "Rounder" / "Localizable.xcstrings"
+MENU_BAR_VISIBILITY_CATALOG = ROOT / "Rounder" / "MenuBarVisibility.xcstrings"
 LANGUAGES = ("en", "ja")
 
 # Product-critical strings that must never disappear even if Xcode's extraction
@@ -84,13 +86,23 @@ def main() -> None:
     for key in sorted(manual_keys - set(REQUIRED_KEYS)):
         validate_translation(key, strings[key], failures)
 
+    menu_bar_data = json.loads(MENU_BAR_VISIBILITY_CATALOG.read_text(encoding="utf-8"))
+    menu_bar_strings = menu_bar_data.get("strings", {})
+    menu_bar_key = "show_menu_bar_icon"
+    menu_bar_entry = menu_bar_strings.get(menu_bar_key)
+    if menu_bar_entry is None:
+        failures.append(f"missing key: {menu_bar_key}")
+    else:
+        validate_translation(menu_bar_key, menu_bar_entry, failures)
+
     if failures:
         raise SystemExit("Localization QA failed:\n- " + "\n- ".join(failures))
 
     print(
         "Localization QA passed: "
         f"{len(REQUIRED_KEYS)} critical keys + "
-        f"{len(manual_keys)} manually maintained keys across "
+        f"{len(manual_keys)} manually maintained Localizable keys + "
+        "1 menu-bar visibility key across "
         f"{len(LANGUAGES)} languages"
     )
 
