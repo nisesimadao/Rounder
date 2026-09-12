@@ -35,8 +35,8 @@ struct MenuBarVisibilityToggle: View {
         Toggle(isOn: $showMenuBarIcon) {
             Text(String(
                 localized: "show_menu_bar_icon",
-                table: "MenuBarVisibility",
-                defaultValue: "Show menu bar icon"
+                defaultValue: "Show menu bar icon",
+                table: "MenuBarVisibility"
             ))
         }
     }
