@@ -77,7 +77,7 @@ The menu panel is for fast adjustments. The full Settings window provides:
 
 If the menu-bar icon is hidden, open `Rounder.app` again to show Settings. The icon stays hidden until you explicitly enable it again, and automatic login launches remain silent.
 
-<img src="Rounder/SCREENSHOT.png" alt="Rounder Settings window" />
+<img src="docs/settings-window.webp" alt="Rounder Settings window" />
 
 ## Requirements
 
