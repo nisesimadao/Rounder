@@ -77,7 +77,7 @@ xattr -dr com.apple.quarantine /Applications/Rounder.app
 
 メニューバーアイコンを非表示にしている場合でも、`Rounder.app` をもう一度開けば設定画面を表示できます。設定画面を開いてもアイコンは自動で復帰せず、再表示したい場合だけ設定から明示的にオンにできます。ログイン時の自動起動では設定画面は表示されません。
 
-<img src="Rounder/SCREENSHOT.png" alt="Rounder 設定画面" />
+<img src="docs/settings-window.webp" alt="Rounder 設定画面" />
 
 ## システム要件
 
