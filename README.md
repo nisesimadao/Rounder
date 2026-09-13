@@ -32,7 +32,7 @@ Rounder is especially useful for external monitors and older Macs whose displays
 
 When the menu-bar icon is visible, most everyday controls live directly in the panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
 
-<img src="docs/menu-panel.webp" alt="Rounder menu-bar control panel" width="360" />
+<img src="docs/menu-panel.png" alt="Rounder menu-bar control panel" width="360" />
 
 Radius and shape changes update the existing overlay windows in place, so you can drag and compare shapes without repeatedly rebuilding the overlay.
 
@@ -77,7 +77,7 @@ The menu panel is for fast adjustments. The full Settings window provides:
 
 If the menu-bar icon is hidden, open `Rounder.app` again to show Settings. The icon stays hidden until you explicitly enable it again, and automatic login launches remain silent.
 
-<img src="docs/settings-window.webp" alt="Rounder Settings window" />
+<img src="Rounder/SCREENSHOT.png" alt="Rounder Settings window" />
 
 ## Requirements
 
