@@ -32,7 +32,7 @@ macOSの画面の角を、自然な角丸にするネイティブユーティリ
 
 メニューバーアイコンを表示しているときは、普段使う操作をほぼすべてパネルから行えます。Rounderのオン/オフ、角の半径、形状、クイック色、四隅の表示、すーぱーげーみんぐもーど、設定、終了までまとめています。
 
-<img src="docs/menu-panel-ja.webp" alt="Rounder メニューバー操作パネル" width="360" />
+<img src="docs/menu-panel-ja.png" alt="Rounder メニューバー操作パネル" width="360" />
 
 半径と形状は既存のオーバーレイウィンドウをその場で更新するため、スライダーを動かしたり形状を比較したりしても、毎回ウィンドウを作り直しません。
 
@@ -77,7 +77,7 @@ xattr -dr com.apple.quarantine /Applications/Rounder.app
 
 メニューバーアイコンを非表示にしている場合でも、`Rounder.app` をもう一度開けば設定画面を表示できます。設定画面を開いてもアイコンは自動で復帰せず、再表示したい場合だけ設定から明示的にオンにできます。ログイン時の自動起動では設定画面は表示されません。
 
-<img src="docs/settings-window.webp" alt="Rounder 設定画面" />
+<img src="Rounder/SCREENSHOT.png" alt="Rounder 設定画面" />
 
 ## システム要件
 
