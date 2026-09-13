@@ -67,7 +67,7 @@ Use this before sharing a new Rounder release publicly.
 - [ ] Capture one Gaming Mode clip if promoting the fun angle.
 - [ ] Follow `DEMO_ASSETS.md` and keep final assets small enough to load quickly on GitHub.
 - [ ] Update `Rounder/SCREENSHOT.png` only if the Settings UI changed materially.
-- [ ] Update `docs/menu-panel.webp` whenever the menu panel changed materially.
+- [ ] Update `docs/menu-panel.png` whenever the menu panel changed materially.
 
 ## Release Notes
 
