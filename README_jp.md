@@ -6,19 +6,13 @@ macOSの画面の角を、自然な角丸にするネイティブユーティリ
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#システム要件)
 
+<p align="center">
+  <img src="docs/assets/rounder-screenshot.png" alt="Rounderを有効にした画面の角" width="900" />
+</p>
+
 角が直線的な外部モニターや、Notch導入以前のMacで特に効果を発揮します。通常はメニューバーから操作でき、必要ならアイコンを隠したままバックグラウンドで動かせます。**アクセシビリティ・画面収録・自動化・ネットワーク権限は不要**です。
 
 [English README](./README.md)
-
-## メニューバーからすぐ調整
-
-メニューバーアイコンを表示しているときは、普段使う操作をほぼすべてパネルから行えます。Rounderのオン/オフ、角の半径、形状、クイック色、四隅の表示、すーぱーげーみんぐもーど、設定、終了までまとめています。
-
-<img src="docs/menu-panel-ja.webp" alt="Rounder メニューバー操作パネル" width="360" />
-
-半径と形状は既存のオーバーレイウィンドウをその場で更新するため、スライダーを動かしたり形状を比較したりしても、毎回ウィンドウを作り直しません。
-
-> Notch搭載Macの内蔵ディスプレイは物理的に角丸なので、Rounderの効果はほとんど見えません。外部ディスプレイや古いMacで最も分かりやすく使えます。
 
 ## 主な機能
 
@@ -33,6 +27,16 @@ macOSの画面の角を、自然な角丸にするネイティブユーティリ
 - **メニューバーアイコンを表示 / 非表示** — アイコンを隠してもRounderはバックグラウンドで動作を継続
 - **Dockに常駐しない** — Dockアイコンは初期設定や設定画面を開いている間だけ表示
 - **強い権限なし** — ローカルのオーバーレイと`UserDefaults`だけで動作
+
+## メニューバーからすぐ調整
+
+メニューバーアイコンを表示しているときは、普段使う操作をほぼすべてパネルから行えます。Rounderのオン/オフ、角の半径、形状、クイック色、四隅の表示、すーぱーげーみんぐもーど、設定、終了までまとめています。
+
+<img src="docs/menu-panel-ja.webp" alt="Rounder メニューバー操作パネル" width="360" />
+
+半径と形状は既存のオーバーレイウィンドウをその場で更新するため、スライダーを動かしたり形状を比較したりしても、毎回ウィンドウを作り直しません。
+
+> Notch搭載Macの内蔵ディスプレイは物理的に角丸なので、Rounderの効果はほとんど見えません。外部ディスプレイや古いMacで最も分かりやすく使えます。
 
 ## ダウンロードとインストール
 
