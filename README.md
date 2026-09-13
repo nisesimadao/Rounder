@@ -6,19 +6,13 @@ A native macOS utility that gives sharp display corners a cleaner, rounded look.
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#requirements)
 
+<p align="center">
+  <img src="docs/assets/rounder-screenshot.png" alt="A display corner with Rounder enabled" width="900" />
+</p>
+
 Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It normally stays accessible from the menu bar, but you can hide the icon and keep Rounder running quietly in the background. It requires **no Accessibility, Screen Recording, Automation, or network permission**.
 
 [日本語版 README](./README_jp.md)
-
-## Menu-bar controls
-
-When the menu-bar icon is visible, most everyday controls live directly in the panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
-
-<img src="docs/menu-panel.webp" alt="Rounder menu-bar control panel" width="360" />
-
-Radius and shape changes update the existing overlay windows in place, so you can drag and compare shapes without repeatedly rebuilding the overlay.
-
-> On notch-equipped Macs, the built-in display already has physically rounded corners. Rounder is most noticeable on external displays and older Macs.
 
 ## Highlights
 
@@ -33,6 +27,16 @@ Radius and shape changes update the existing overlay windows in place, so you ca
 - **Show or hide the menu-bar icon** — Rounder keeps running even while the icon is hidden
 - **No permanent Dock icon** — it only appears while onboarding or Settings is open
 - **No invasive permissions** — local overlay windows and local `UserDefaults` only
+
+## Menu-bar controls
+
+When the menu-bar icon is visible, most everyday controls live directly in the panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
+
+<img src="docs/menu-panel.webp" alt="Rounder menu-bar control panel" width="360" />
+
+Radius and shape changes update the existing overlay windows in place, so you can drag and compare shapes without repeatedly rebuilding the overlay.
+
+> On notch-equipped Macs, the built-in display already has physically rounded corners. Rounder is most noticeable on external displays and older Macs.
 
 ## Download & install
 
