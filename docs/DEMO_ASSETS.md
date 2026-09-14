@@ -5,7 +5,7 @@ Use this when preparing screenshots, GIFs, or short videos for the README, GitHu
 ## Assets To Prepare
 
 - `docs/menu-panel.png`: final menu-panel screenshot showing the current UI.
-- `Rounder/SCREENSHOT.png`: clean full Settings-window screenshot.
+- `docs/settings-window.png`: clean full Settings-window screenshot.
 - `docs/assets/rounder-social-preview.png`: 1280 × 640 GitHub/social preview image.
 - Before/after image: external monitor with sharp corners, then with Rounder enabled.
 - 5–8 second live-menu clip: open the menu, drag Radius, switch Rounded / Squircle / Polygon, and keep the panel open while the corners update.
