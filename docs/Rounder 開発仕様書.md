@@ -1,75 +1,78 @@
-# **Rounder: macOS 画面コーナー丸角化ツール 仕様書**
+# Rounder：macOS 画面コーナー丸角化ツール仕様書
 
-## **1\. コアコンセプト**
+## 1. コアコンセプト
 
-Notch導入以前のMacBookや外部モニターの直線的な角を、ソフトウェア制御のオーバーレイによってモダンな丸角（Rounded Corners）に見せる。
+Notch 導入以前の MacBook や外部モニターの直線的な角を、ソフトウェア制御のオーバーレイによって丸く見せます。
 
-## **2\. ウィンドウ設計 (Window Architecture)**
+## 2. ウィンドウ設計
 
-macOSのシステムUIを上書きするための特殊なウィンドウ設定。
+macOS のシステム UI より前面に角用のオーバーレイを表示するため、通常のアプリウィンドウとは異なる設定を使用します。
 
-### **ウィンドウレベル (Window Level)**
+### ウィンドウレベル
 
-* **設定値**: NSWindow.Level.screenSaver (または statusBar \+ 1\)  
-* **理由**: NSWindow.Level.mainMenu (メニューバー) より高いレベルに設定する必要がある。screenSaver レベルを使用することで、メニューバー、コントロールセンター、通知センターのすべてを覆うことが可能。
+- **設定値**：`NSWindow.Level.screenSaver`、または必要に応じて `statusBar + 1`。
+- **理由**：メニューバーより前面に表示し、コントロールセンターや通知センターを含む画面端まで角の描画を維持するためです。
 
-### **ウィンドウ属性 (Window Styles)**
+### ウィンドウ属性
 
-* **Style Mask**: .borderless  
-* **背景**: NSColor.clear  
-* **不透明度**: isOpaque \= false  
-* **影の無効化**: hasShadow \= false (角に余計な影が出ないようにする)
+- **Style Mask**：`.borderless`
+- **背景**：`NSColor.clear`
+- **不透明度**：`isOpaque = false`
+- **影**：`hasShadow = false`
+  角の周囲に不要な影を出さないためです。
 
-### **インタラクション設定 (Event Handling)**
+### インタラクション設定
 
-* **マウスイベントの透過**: ignoresMouseEvents \= true  
-  * これを設定しないと、画面の角にあるメニュー（Appleメニュー等）やボタンがクリック不能になる。  
-* **スペース跨ぎ**: .canJoinAllSpaces  
-  * 仮想デスクトップを切り替えても角が常に表示されるようにする。  
-* **フルスクリーン対応**: .fullScreenAuxiliary  
-  * 動画視聴やゲームなどのフルスクリーンモード時にもオーバーレイを維持する。
+- **マウスイベントの透過**：`ignoresMouseEvents = true`
+  これを設定しない場合、画面角付近の Apple メニューなどを操作できなくなります。
+- **Space をまたいだ表示**：`.canJoinAllSpaces`
+  仮想デスクトップを切り替えても角を表示し続けます。
+- **フルスクリーン対応**：`.fullScreenAuxiliary`
+  動画やゲームなどのフルスクリーン表示でもオーバーレイを維持します。
 
-## **3\. 描画エンジンの仕様 (Graphics & Rendering)**
+## 3. 描画エンジン
 
-### **描画方式の選択**
+### 描画方式
 
-1. **四隅分割方式（推奨）**: 四隅に小さな ![][image1] のウィンドウを4つ配置する。  
-   * **メリット**: メモリ消費が極めて少なく、画面中央の描画更新に影響を与えない。  
-2. **フルスクリーン・単一ウィンドウ方式**: 画面全体を1枚の透明な布のように覆う。  
-   * **メリット**: 実装が単純。
+1. **四隅分割方式（推奨）**
+   四隅に小さなウィンドウを一つずつ配置します。
+   画面全体を覆わないため、必要な描画領域を小さく保てます。
+2. **フルスクリーン単一ウィンドウ方式**
+   画面全体を一枚の透明なウィンドウで覆います。
+   実装は単純ですが、不要な領域までウィンドウが広がります。
 
-### **シェイプの作成 (Drawing Logic)**
+### シェイプの作成
 
-* **Core Graphics (Quartz 2D)** を使用。  
-* **アルゴリズム**:  
-  1. 四角形を描画。  
-  2. そこから appendBezierPathWithArc 等を用いて円弧をくり抜く（サブトラクション）。  
-  3. 塗りつぶし色は NSColor.black またはユーザー指定色。  
-* **アンチエイリアス**: context.shouldAntialias \= true を設定し、ジャギー（階段状のガタつき）を完全に排除する。
+- **描画 API**：Core Graphics（Quartz 2D）。
+- **基本処理**：
+  1. コーナーを覆う矩形を作成します。
+  2. `appendBezierPathWithArc` などを使い、表示したい丸角部分を切り抜きます。
+  3. `NSColor.black` またはユーザー指定色で残った領域を塗りつぶします。
+- **アンチエイリアス**：`context.shouldAntialias = true` を設定します。
 
-## **4\. 機能要件 (Feature Requirements)**
+## 4. 機能要件
 
-### **ユーザーカスタマイズ**
+### ユーザーカスタマイズ
 
-* **Radius (半径) スライダー**: 0px 〜 40px 程度まで調整可能にする。  
-* **カラー選択**: 黒以外のベゼル（シルバーや白）に対応するため、色の変更を許可。  
-* **特定ディスプレイの無効化**: マルチディスプレイ環境で、すでに角が丸い本体（Notch付き）には適用しない設定。
+- **Radius スライダー**：0〜40 px 程度の範囲で角半径を変更できます。
+- **カラー選択**：黒以外のベゼルに合わせられるよう、任意色を指定できます。
+- **対象ディスプレイの選択**：マルチディスプレイ環境で、Rounder を適用しない画面を選択できます。
 
-### **システム連携**
+### システム連携
 
-* **画面解像度変更の監視**: NSApplication.didChangeScreenParametersNotification を受信し、リサイズやディスプレイ接続時にウィンドウ位置を自動再計算。  
-* **メニューバー表示状態の監視**: メニューバーの「自動的に隠す」設定がオンの場合でも、描画が崩れないように座標を NSScreen.frame (絶対座標) ベースで計算する。
+- **画面構成変更の監視**：`NSApplication.didChangeScreenParametersNotification` を受け取り、解像度変更やディスプレイ接続時にウィンドウ位置を再計算します。
+- **メニューバーの表示状態への対応**：メニューバーの自動非表示が有効でも位置がずれないよう、`NSScreen.frame` の絶対座標を基準にします。
 
-## **5\. 技術スタック案**
+## 5. 技術スタック
 
-* **Language**: Swift 5.10+  
-* **Framework**: AppKit (NSWindow, NSScreen) & SwiftUI (設定画面用)  
-* **Persistence**: UserDefaults (設定の保存)
+- **Language**：Swift 5.10+
+- **Framework**：AppKit（`NSWindow`, `NSScreen`）と SwiftUI（設定画面）
+- **Persistence**：`UserDefaults`
 
-## **6\. 実装上の注意点 (Pitfalls)**
+## 6. 実装上の注意点
 
-* **パフォーマンス**: draw(\_:) メソッドを頻繁に呼び出すとCPUを消費するため、CALayer にパスをキャッシュする手法を推奨。  
-* **メニューバーとの隙間**: Retinaディスプレイでは1pxの隙間が目立つ場合があるため、描画座標を整数 (Int) ではなく浮動小数点 (CGFloat) で精密に制御し、わずかに（0.5px程度）外側へオーバーラップさせる調整が必要。  
-* **事実確認**: コーディングには最適・最新・安定の情報が必須です。定期的に調べながら実装を続けましょう。
-
-[image1]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAAYCAYAAACiNE5vAAACaElEQVR4Xu2XO0hcQRSGd6OJlaBpEsnuzl1YuMlWgUVMYRA0IFkI9haJYJPKRqs0ISCYKhDRwt4UJoWFNraC5UKKkMIUIZDCIhHNQ0Qx+p/rmWT27NwnYRGZDw478//nzD1z784+cjmHw+G4pHQopfYRp0Z8I8PzvNsY/zY9aNu6EPOvom7837LtAdfcQRwbPRwitthbROwZHsWOXOCAjCaR0UVSJ3AjnsKblno7QQ/3uMd56RFR/ZP5PsyMKoR+LLV2gx5WqT/cgB7p1Wq1q9x/8C5oAcY7Tugz9VKp9BjaH9vGoS0UCoXrUg8DjQ1ITULHS2pxxDyYZ+RhHyPSC4AxRwnFYvG+qSs+M7xwp/A+mvMEdNJNlKImrPk4eOMnUidUxBEOgDlJCbjjE4b2xvf9brwuk1cul33D+6DHaahWq9dsjdi0JKDuDtXiwW0gHmFcRzw04jRybWx4iJNmtYZxg70X7NVpjgv0Yryg89IiNx/ZWAzo7S33NoOYNmIGfT4nDzmbsu4vOKu3OGmF5hh/0R60J+RhoSn2jrSXFb15Ckzz0k+KsUYLis83Ylh6TXBSAxu9iXipdWx4kDxorzF+gNcxsy4jV6KaTgqvEXa+fyVanxf5IRfCvI+9NellJNg0j+kHVHxzFvAA7nJfr6RHsBe/tk6kpxrm4QPuhvRSkrc0k2nzqFmnOs/y/V2pVLq4Z/v3twknWs8ve5+lnpaIDZrvgkRwT9Ya3Iwl8uiTXnotcGKv1ImwC6QBzYxKTZDH74h+KUrU+f8H+n/xHbGrzs/yJ/boOP5knXzK+x/H0+FwOBwXljMlhOby4b9XnQAAAABJRU5ErkJggg==>
+- **パフォーマンス**：`draw(_:)` を必要以上に呼び出さないようにします。
+  形状が変わらない場合は、`CALayer` などへ描画結果を保持する方法を検討します。
+- **画面端の隙間**：Retina ディスプレイでは 1 px 程度の隙間も目立ちます。
+  座標は整数へ丸めず `CGFloat` で扱い、必要に応じて 0.5 px 程度外側へ重ねます。
+- **API の確認**：macOS や Swift の更新で挙動が変わる可能性があるため、実装時点の Apple ドキュメントと実機挙動を確認します。
