@@ -61,15 +61,18 @@ enum CornerGeometry {
         style == .squircle ? 1.8 : 1.0
     }
 
-    /// Backing-window size for one corner. Integer rounding is deliberate: the
-    /// current implementation avoids fractional right/bottom origins because
-    /// they can reveal a one-pixel seam at the display edge.
+    /// Backing-window size for one corner. Nonzero sizes must be integral
+    /// points: a fractional 0.01pt pad gets rounded differently by AppKit
+    /// when an existing NSWindow is resized, shifting its screen-edge anchor
+    /// by a pixel during live menu-bar adjustments. Keep a tiny nonzero frame
+    /// only for radius zero so an invisible overlay still has a valid size.
     static func cornerSize(
         radius: CGFloat,
         style: CornerCutoutStyle,
         padding: CGFloat = RounderAppConstants.cornerSizePadding
     ) -> CGFloat {
-        (radius * styleFactor(for: style)).rounded() + padding
+        let roundedSize = (radius * styleFactor(for: style)).rounded()
+        return roundedSize == 0 ? padding : roundedSize
     }
 
     /// Origin for a corner window while keeping the selected physical screen

@@ -117,7 +117,7 @@ class MenuBarController: NSObject {
         let hostingView = MenuBarPanelHostingView(
             rootView: MenuBarPanelRoot(content: panelView)
         )
-        hostingView.frame.size = hostingView.fittingSize
+        hostingView.lockMenuSize()
 
         let panelItem = NSMenuItem()
         panelItem.view = hostingView
@@ -212,9 +212,14 @@ private struct MenuBarPanelRoot: View {
     }
 }
 
-/// NSMenuItem custom views are frame-based rather than constrained by an Auto
-/// Layout parent. Keep the AppKit frame synchronized with SwiftUI's ideal size.
+/// NSMenuItem custom views are frame-based. Unlike a regular SwiftUI window,
+/// a menu tracks the hosting view's *current* frame. Its fittingSize may be
+/// temporarily inflated when AppKit relayouts a menu after display sleep/wake.
+/// This panel has no expanding/collapsing sections, so measure once at startup
+/// and keep its geometry stable while @AppStorage updates its contents.
 private final class MenuBarPanelHostingView: NSHostingView<MenuBarPanelRoot> {
+    private var lockedMenuSize: NSSize?
+
     required init(rootView: MenuBarPanelRoot) {
         super.init(rootView: rootView)
     }
@@ -224,11 +229,28 @@ private final class MenuBarPanelHostingView: NSHostingView<MenuBarPanelRoot> {
         fatalError("MenuBarPanelHostingView does not support NSCoder")
     }
 
-    override func invalidateIntrinsicContentSize() {
+    func lockMenuSize() {
+        layoutSubtreeIfNeeded()
+        let measuredHeight = fittingSize.height
+        guard measuredHeight.isFinite, measuredHeight > 0 else { return }
+
+        // The SwiftUI content itself has a fixed width of 300pt. Whole-point
+        // dimensions also avoid an unnecessary fractional menu tracking rect.
+        let size = NSSize(width: 300, height: ceil(measuredHeight))
+        lockedMenuSize = size
+        setFrameSize(size)
         super.invalidateIntrinsicContentSize()
-        let targetSize = fittingSize
-        if frame.size != targetSize {
-            setFrameSize(targetSize)
-        }
+    }
+
+    override var intrinsicContentSize: NSSize {
+        lockedMenuSize ?? super.intrinsicContentSize
+    }
+
+    override func invalidateIntrinsicContentSize() {
+        // Color, radius, and selection animations may invalidate SwiftUI's
+        // ideal size. Never turn those transient measurements into empty rows
+        // in the AppKit menu (especially on its first open after waking).
+        guard lockedMenuSize == nil else { return }
+        super.invalidateIntrinsicContentSize()
     }
 }
