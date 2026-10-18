@@ -1,0 +1,30 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    paths:
+      - "Rounder/**"
+      - "Tests/**"
+      - "Rounder.xcodeproj/**"
+      - ".github/workflows/pr-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test corner placement
+        run: |
+          set -euo pipefail
+          xcrun swiftc Tests/CornerGeometryTests.swift Rounder/CornerGeometry.swift -o "$RUNNER_TEMP/corner-geometry-tests"
+          "$RUNNER_TEMP/corner-geometry-tests"
+      - name: Test localization
+        run: python3 Tests/LocalizationTests.py
+      - name: Compile Rounder
+        run: |
+          set -o pipefail
+          xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Debug -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build

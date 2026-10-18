@@ -81,12 +81,12 @@ private func testStyleFactorsAndCornerSizes() throws {
         (0, .rounded, 0.01),
         (0, .squircle, 0.01),
         (0, .polygon, 0.01),
-        (20, .rounded, 20.01),
-        (20, .squircle, 36.01),
-        (20, .polygon, 20.01),
-        (40, .rounded, 40.01),
-        (40, .squircle, 72.01),
-        (40, .polygon, 40.01),
+        (20, .rounded, 20),
+        (20, .squircle, 36),
+        (20, .polygon, 20),
+        (40, .rounded, 40),
+        (40, .squircle, 72),
+        (40, .polygon, 40),
     ]
 
     for (radius, style, expected) in cases {
@@ -96,6 +96,18 @@ private func testStyleFactorsAndCornerSizes() throws {
             expected,
             "cornerSize radius=\(radius) style=\(style.rawValue)"
         )
+    }
+
+    // Live NSWindow resize must never introduce subpixel window dimensions
+    // for visible corners, across the full range of slider values and styles.
+    for radius in 1...40 {
+        for style in CornerCutoutStyle.allCases {
+            let size = CornerGeometry.cornerSize(radius: CGFloat(radius), style: style)
+            try expect(
+                size == size.rounded(),
+                "Fractional window size \(size) at radius=\(radius), style=\(style.rawValue)"
+            )
+        }
     }
 }
 
