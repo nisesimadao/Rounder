@@ -20,6 +20,8 @@ Rounder is especially useful for external monitors and older Macs whose displays
 - **0–40 px radius** with live menu-bar adjustment
 - **Any corner color** plus black / white / gray quick swatches
 - **Per-corner control** for all four corners
+- **Exclude the menu bar** by placing the top corners below it
+- **Screen and virtual-desktop attachment** with independently selectable overlays
 - **Multi-display selection** for choosing which screens Rounder affects
 - **Presets** for saving and applying favorite configurations
 - **Super Duper Gaming Mode** with animated rainbow glow, speed, intensity, and bloom controls
@@ -79,6 +81,10 @@ If the menu-bar icon is hidden, open `Rounder.app` again to show Settings. The i
 
 <img src="docs/settings-window.png" alt="Rounder Settings window" />
 
+Screen and virtual-desktop attachment can be enabled together in **Displays**. Turning both off hides the overlays. **Exclude menu bar** is in **Corners**, below the four corner switches.
+
+<img src="docs/settings-displays.png" alt="Screen and virtual-desktop attachment settings" />
+
 ## Requirements
 
 - macOS 14.6 or later
@@ -95,7 +101,7 @@ See [Privacy](./docs/PRIVACY.md) and [Security](./docs/SECURITY.md).
 - SwiftUI + AppKit
 - borderless `NSWindow` overlays at `.screenSaver` level
 - Core Graphics / Core Animation corner rendering
-- a real `NSMenu` hosts the interactive SwiftUI menu panel, preserving normal macOS menu tracking behavior
+- a nonactivating `NSPanel` hosts the SwiftUI menu controls; the status icon stays highlighted while the panel is open, and clicking it again closes the panel
 - `CornerGeometry` / `ScreenCorner` are the shared source of truth for initial placement, live resizing, menu previews, orientation, and Gaming hue mapping
 - radius and shape use in-place geometry updates; structural changes still use the full overlay rebuild path
 

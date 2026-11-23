@@ -55,6 +55,21 @@ extension CornerType {
 }
 
 enum CornerGeometry {
+    /// Only the top inset belongs to the menu bar. Height differences also
+    /// include a bottom Dock; visibleFrame's horizontal insets include side Docks.
+    static func overlayFrame(
+        screenFrame: NSRect,
+        visibleFrame: NSRect,
+        excludeMenuBar: Bool
+    ) -> NSRect {
+        guard excludeMenuBar else { return screenFrame }
+        let topInset = min(max(screenFrame.maxY - visibleFrame.maxY, 0), screenFrame.height)
+        return NSRect(
+            x: screenFrame.minX, y: screenFrame.minY,
+            width: screenFrame.width, height: screenFrame.height - topInset
+        )
+    }
+
     /// Squircle uses a larger backing window so its diagonal depth visually
     /// matches the rounded style. This preserves the existing 1.8x rule.
     static func styleFactor(for style: CornerCutoutStyle) -> CGFloat {

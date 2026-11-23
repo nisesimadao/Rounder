@@ -227,10 +227,44 @@ private func testRoundedQuadrantNeverLeaksOutsidePreviewBounds() throws {
     }
 }
 
+private func testMenuBarExclusion() throws {
+    // Include a secondary display with a negative origin.
+    for screen in [NSRect(x: 0, y: 0, width: 1440, height: 900),
+                   NSRect(x: -1920, y: -300, width: 1920, height: 1080)] {
+        for topInset: CGFloat in [0, 24, 38] {
+            for dockInset: CGFloat in [0, 70] {
+                let visible = NSRect(x: screen.minX + dockInset,
+                                     y: screen.minY + dockInset,
+                                     width: screen.width - dockInset,
+                                     height: screen.height - topInset - dockInset)
+                let frame = CornerGeometry.overlayFrame(
+                    screenFrame: screen, visibleFrame: visible, excludeMenuBar: true
+                )
+                try expectNear(frame.maxY, screen.maxY - topInset, "menu bar top edge")
+                try expectNear(frame.minY, screen.minY, "bottom Dock must not move bottom corners")
+                try expectNear(frame.minX, screen.minX, "side Dock must not move left corners")
+                try expectNear(frame.maxX, screen.maxX, "right edge")
+                try expect(CornerGeometry.overlayFrame(
+                    screenFrame: screen, visibleFrame: visible, excludeMenuBar: false
+                ) == screen, "disabled setting must preserve the full screen")
+                for corner in ScreenCorner.allCases {
+                    let origin = CornerGeometry.windowOrigin(in: frame, corner: corner, cornerSize: 20)
+                    let anchor = CornerGeometry.anchorPoint(
+                        for: NSRect(origin: origin, size: NSSize(width: 20, height: 20)), corner: corner
+                    )
+                    try expectPointNear(anchor, physicalCornerPoint(in: frame, corner: corner),
+                                        "corner placement below menu bar")
+                }
+            }
+        }
+    }
+}
+
 @main
 struct CornerGeometryTestRunner {
     static func main() {
         let tests: [(String, () throws -> Void)] = [
+            ("menu bar exclusion ignores Dock and supports multiple displays", testMenuBarExclusion),
             ("style factors and 0/20/40 sizes", testStyleFactorsAndCornerSizes),
             ("drawing-corner round trip", testDrawingCornerRoundTrip),
             ("screen origins preserve physical corners", testScreenOriginsStayOnPhysicalCorners),

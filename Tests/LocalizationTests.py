@@ -33,6 +33,13 @@ REQUIRED_KEYS = (
     "color_gray",
     "state_on",
     "state_off",
+    "exclude_menu_bar",
+    "exclude_menu_bar_description",
+    "pin_to_screen",
+    "pin_to_desktop",
+    "overlay_attachment",
+    "overlay_attachment_description",
+    "target_displays",
     # Onboarding
     "welcome_to_rounder",
     "app_description",

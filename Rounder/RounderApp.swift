@@ -39,6 +39,9 @@ struct UserDefaultsKeys {
     static let topRightEnabled = "topRightEnabled"
     static let bottomLeftEnabled = "bottomLeftEnabled"
     static let bottomRightEnabled = "bottomRightEnabled"
+    static let pinToScreen = "pinToScreen"
+    static let pinToDesktop = "pinToDesktop"
+    static let excludeMenuBar = "excludeMenuBar"
     static let selectedDisplayIDs = "selectedDisplayIDs"
 }
 
@@ -56,6 +59,9 @@ struct OverlayConfiguration {
     var bottomLeftEnabled: Bool
     var bottomRightEnabled: Bool
     var selectedDisplayIDs: [CGDirectDisplayID]
+    var pinToScreen: Bool = true
+    var pinToDesktop: Bool = false
+    var excludeMenuBar: Bool = false
 
     static func current() -> OverlayConfiguration {
         let defaults = UserDefaults.standard
@@ -76,7 +82,10 @@ struct OverlayConfiguration {
             topRightEnabled: defaults.bool(forKey: UserDefaultsKeys.topRightEnabled, defaultValue: true),
             bottomLeftEnabled: defaults.bool(forKey: UserDefaultsKeys.bottomLeftEnabled, defaultValue: true),
             bottomRightEnabled: defaults.bool(forKey: UserDefaultsKeys.bottomRightEnabled, defaultValue: true),
-            selectedDisplayIDs: selectedDisplayIDs
+            selectedDisplayIDs: selectedDisplayIDs,
+            pinToScreen: defaults.bool(forKey: UserDefaultsKeys.pinToScreen, defaultValue: true),
+            pinToDesktop: defaults.bool(forKey: UserDefaultsKeys.pinToDesktop),
+            excludeMenuBar: defaults.bool(forKey: UserDefaultsKeys.excludeMenuBar)
         )
     }
 
@@ -148,6 +157,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     var overlayWindows: [CornerOverlayWindow] = []
+    var overlayScreenFrames: [CGDirectDisplayID: NSRect] = [:]
+    var overlayExcludesMenuBar = false
     /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
     var glowWindows: [GamingGlowWindow] = []
     private var overlayGeneration = 0
@@ -227,14 +238,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 実際に画面へ載っていないウィンドウだけを再アタッチする。
         spaceReassertWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            self?.reattachDetachedOverlays()
+            guard let self else { return }
+            self.refreshOverlayScreenGeometry()
+            self.reattachDetachedOverlays()
         }
         spaceReassertWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: work)
     }
 
-    /// 現在の Space に表示されていないオーバーレイを orderOut→orderFrontRegardless で再アタッチする。
-    /// （orderFrontRegardless の再実行だけでは復帰しない：一度 orderOut して入れ直す必要がある）
+    /// Repair missing desktop overlays without detaching screen-pinned windows.
     private func reattachDetachedOverlays() {
         let windows: [NSWindow] = overlayWindows + glowWindows
         guard !windows.isEmpty else { return }
@@ -243,13 +255,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let onscreenIDs = Set(info.compactMap { $0[kCGWindowNumber as String] as? Int })
 
         for window in windows where !onscreenIDs.contains(window.windowNumber) {
-            window.orderOut(nil)
+            // Screen-pinned windows already belong to the persistent overlay
+            // Space. Never detach them or move them between Spaces on a switch.
+            if !window.collectionBehavior.contains(.stationary) {
+                window.orderOut(nil)
+            }
             window.orderFrontRegardless()
         }
-
-        // Space 構成が変わっている可能性がある（フルスクリーン Space の新規作成など）ため、
-        // すべての Space への登録を取り直す。遷移アニメーション中も両側に切り欠きが描画される。
-        OverlaySpace.pin(windows)
     }
     
     private func isFirstLaunch() -> Bool {
@@ -340,6 +352,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         closeOverlayWindows()
+        overlayScreenFrames = Dictionary(uniqueKeysWithValues: NSScreen.screens.compactMap { screen in
+            screen.displayID.map { ($0, screen.frame) }
+        })
+        overlayExcludesMenuBar = configuration.excludeMenuBar
 
         guard configuration.isEnabled else { return }
 
@@ -364,7 +380,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 continue
             }
             
-            let frame = screen.frame
+            let frame = CornerGeometry.overlayFrame(
+                screenFrame: screen.frame,
+                visibleFrame: screen.visibleFrame,
+                excludeMenuBar: configuration.excludeMenuBar
+            )
 
             // Keep physical corner identity separate from the unflipped AppKit
             // drawing corner. CornerGeometry owns placement; ScreenCorner owns the
@@ -376,40 +396,59 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 (.bottomRight, configuration.bottomRightEnabled)
             ]
 
-            for state in cornerStates where state.enabled {
-                let window = CornerOverlayWindow(
-                    corner: CornerGeometry.windowOrigin(
-                        in: frame,
-                        corner: state.corner,
-                        cornerSize: cornerSize
-                    ),
-                    size: cornerSize,
-                    radius: CGFloat(configuration.radius),
-                    color: configuration.color,
-                    cutoutStyle: configuration.cutoutStyle,
-                    cornerType: state.corner.drawingCorner
-                )
-                overlayWindows.append(window)
-                if configuration.superGamingMode {
-                    window.setGamingMode(
-                        true,
-                        speed: configuration.gamingSpeed,
-                        baseHue: state.corner.gamingBaseHue
+            let attachmentModes = [(stationary: true, enabled: configuration.pinToScreen),
+                                   (stationary: false, enabled: configuration.pinToDesktop)]
+            for mode in attachmentModes where mode.enabled {
+                // Desktop-attached overlays travel with app content, so keep
+                // them above regular windows but below the Dock and menu bar.
+                let overlayLevel: NSWindow.Level = mode.stationary
+                    ? .screenSaver
+                    : NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) - 1)
+                for state in cornerStates where state.enabled {
+                    let window = CornerOverlayWindow(
+                        corner: CornerGeometry.windowOrigin(
+                            in: frame,
+                            corner: state.corner,
+                            cornerSize: cornerSize
+                        ),
+                        size: cornerSize,
+                        radius: CGFloat(configuration.radius),
+                        color: configuration.color,
+                        cutoutStyle: configuration.cutoutStyle,
+                        cornerType: state.corner.drawingCorner
                     )
+                    window.overlayDisplayID = displayID
+                    window.level = overlayLevel
+                    window.collectionBehavior = mode.stationary
+                        ? [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+                        : [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+                    overlayWindows.append(window)
+                    if configuration.superGamingMode {
+                        window.setGamingMode(
+                            true,
+                            speed: configuration.gamingSpeed,
+                            baseHue: state.corner.gamingBaseHue
+                        )
+                    }
                 }
-            }
 
-            // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）
-            if configuration.superGamingMode {
-                for edge in ScreenEdge.allCases {
-                    let glow = GamingGlowWindow(
-                        screenFrame: frame,
-                        edge: edge,
-                        speed: configuration.gamingSpeed,
-                        glowIntensity: configuration.glowIntensity,
-                        bloomWidth: configuration.bloomWidth
-                    )
-                    glowWindows.append(glow)
+                // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）
+                if configuration.superGamingMode {
+                    for edge in ScreenEdge.allCases {
+                        let glow = GamingGlowWindow(
+                            screenFrame: frame,
+                            edge: edge,
+                            speed: configuration.gamingSpeed,
+                            glowIntensity: configuration.glowIntensity,
+                            bloomWidth: configuration.bloomWidth
+                        )
+                        glow.overlayDisplayID = displayID
+                        glow.level = overlayLevel
+                        glow.collectionBehavior = mode.stationary
+                            ? [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+                            : [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+                        glowWindows.append(glow)
+                    }
                 }
             }
         }
@@ -427,7 +466,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 window.orderFrontRegardless()
             }
             // すべての Space に登録し、Space 遷移アニメーション中も両側に描画されるようにする
-            OverlaySpace.pin(windows)
+            OverlaySpace.pin(windows.filter { $0.collectionBehavior.contains(.stationary) })
         }
     }
 

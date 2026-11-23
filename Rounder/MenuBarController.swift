@@ -1,88 +1,92 @@
-//
-//  MenuBarController.swift
-//  Rounder
-//
-//  Created by Nisesimadao on 2026/04/25.
-//
-
 import Cocoa
 import SwiftUI
 
-// MARK: - Constants
 struct MenuBarControllerConstants {
     static let iconSize = NSSize(width: 16, height: 16)
 }
 
-/// AppKit owns only the real status item / NSMenu tracking session.
-/// The panel contents remain SwiftUI so the controls can share @AppStorage with
-/// the existing Settings window without introducing a second settings model.
+/// The status button owns the open/closed state; the nonactivating panel can
+/// become key without activating Rounder or starting an NSMenu tracking loop.
 class MenuBarController: NSObject {
     private var statusItem: NSStatusItem?
     private weak var appDelegate: AppDelegate?
-    private var menu: NSMenu?
+    private var panel: MenuBarPanel?
+    private var eventMonitors: [Any] = []
     private var isObservingDefaults = false
     private var handledHiddenLaunchRecovery = false
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        eventMonitors.forEach(NSEvent.removeMonitor)
     }
 
     func setupMenuBar(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
-
         if !isObservingDefaults {
             NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(userDefaultsDidChange),
-                name: UserDefaults.didChangeNotification,
-                object: UserDefaults.standard
+                self, selector: #selector(userDefaultsDidChange),
+                name: UserDefaults.didChangeNotification, object: UserDefaults.standard
             )
             isObservingDefaults = true
         }
-
         applyMenuBarVisibility()
-
-        // If the app was explicitly opened while its status item is hidden,
-        // Settings is the recovery surface. A login-item launch stays silent.
         if !handledHiddenLaunchRecovery,
            !MenuBarVisibilityPreference.isVisible,
            !MenuBarVisibilityPreference.wasLaunchedAsLoginItem {
             handledHiddenLaunchRecovery = true
-            DispatchQueue.main.async { [weak self] in
-                self?.appDelegate?.showSettings()
-            }
+            DispatchQueue.main.async { [weak self] in self?.appDelegate?.showSettings() }
         }
     }
 
     @objc private func userDefaultsDidChange(_ notification: Notification) {
-        applyMenuBarVisibility()
+        // Defaults notifications may arrive from a background thread or from a
+        // SwiftUI binding setter. Defer AppKit work to the next main-loop turn.
+        DispatchQueue.main.async { [weak self] in self?.applyMenuBarVisibility() }
     }
 
     private func applyMenuBarVisibility() {
         if MenuBarVisibilityPreference.isVisible {
             createMenuBarIfNeeded()
-        } else {
-            removeMenuBarIfNeeded()
+        } else if let statusItem {
+            closePanel()
+            NSStatusBar.system.removeStatusItem(statusItem)
+            self.statusItem = nil
         }
     }
 
     private func createMenuBarIfNeeded() {
-        // setupMenuBar is normally called once, but keeping creation idempotent
-        // also lets the Settings toggle restore the status item immediately.
         guard statusItem == nil else { return }
-
-        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        self.statusItem = statusItem
-
-        if let button = statusItem.button {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = item
+        if let button = item.button {
             if let icon = NSImage(named: "StatusIcon") {
                 icon.size = MenuBarControllerConstants.iconSize
                 icon.isTemplate = true
                 button.image = icon
             }
+            // Keep the selected background after the mouse-up action returns.
+            (button.cell as? NSButtonCell)?.showsStateBy = [.changeBackgroundCellMask]
             button.toolTip = String(localized: "rounder_tooltip")
+            button.target = self
+            button.action = #selector(togglePanel)
+            button.sendAction(on: .leftMouseUp)
         }
+    }
 
+    @objc private func togglePanel() {
+        if panel?.isVisible == true {
+            closePanel()
+        } else {
+            // A system-hidden panel is not an open menu. Clear stale state so
+            // the next click opens immediately instead of merely resetting it.
+            closePanel()
+            showPanel()
+        }
+    }
+
+    private func showPanel() {
+        guard NSApp.modalWindow == nil, let button = statusItem?.button,
+              let statusWindow = button.window else { return }
         let panelView = MenuBarPanelView(
             onEnabledChanged: { [weak self] _ in
                 // Enable changes the existence of the overlay set, so this
@@ -114,143 +118,121 @@ class MenuBarController: NSObject {
             }
         )
 
-        let hostingView = MenuBarPanelHostingView(
-            rootView: MenuBarPanelRoot(content: panelView)
+        let hosting = NSHostingView(rootView: MenuBarPanelRoot(content: panelView))
+        hosting.layoutSubtreeIfNeeded()
+        let buttonRect = statusWindow.convertToScreen(button.convert(button.bounds, to: nil))
+        let screen = statusWindow.screen ?? NSScreen.main
+        guard let visibleFrame = screen?.visibleFrame else { return }
+        let measured = hosting.fittingSize.height
+        let height = min(measured.isFinite && measured > 0 ? ceil(measured) : 480,
+                         visibleFrame.height)
+        let size = NSSize(width: 300, height: height)
+        let origin = NSPoint(
+            x: min(max(buttonRect.midX - size.width / 2, visibleFrame.minX),
+                   visibleFrame.maxX - size.width),
+            y: max(visibleFrame.minY, buttonRect.minY - size.height)
         )
-        hostingView.lockMenuSize()
-
-        let panelItem = NSMenuItem()
-        panelItem.view = hostingView
-
-        let menu = NSMenu()
-        menu.autoenablesItems = false
-        menu.addItem(panelItem)
-
-        // Keep the classic menu's key equivalents without drawing duplicate
-        // Settings / Quit rows underneath the SwiftUI footer. AppKit explicitly
-        // supports key equivalents for hidden items when this flag is enabled.
-        menu.addItem(hiddenShortcutItem(
-            keyEquivalent: ",",
-            action: #selector(openSettingsShortcut)
-        ))
-        menu.addItem(hiddenShortcutItem(
-            keyEquivalent: "q",
-            action: #selector(quitShortcut)
-        ))
-
-        statusItem.menu = menu
-        self.menu = menu
-    }
-
-    private func removeMenuBarIfNeeded() {
-        guard let statusItem else { return }
-
-        menu?.cancelTracking()
-        statusItem.menu = nil
-        NSStatusBar.system.removeStatusItem(statusItem)
-        self.statusItem = nil
-        menu = nil
-    }
-
-    private func hiddenShortcutItem(keyEquivalent: String, action: Selector) -> NSMenuItem {
-        let item = NSMenuItem(title: "", action: action, keyEquivalent: keyEquivalent)
-        item.target = self
-        item.keyEquivalentModifierMask = [.command]
-        item.isHidden = true
-        item.allowsKeyEquivalentWhenHidden = true
-        return item
-    }
-
-    @objc private func openSettingsShortcut() {
-        openSettingsFromPanel()
-    }
-
-    @objc private func quitShortcut() {
-        quitFromPanel()
-    }
-
-    /// A window cannot reliably become key while an NSMenu tracking session is
-    /// still active. Ask AppKit to end tracking, then open Settings on the next
-    /// main-loop turn rather than synchronously from the SwiftUI button action.
-    private func openSettingsFromPanel() {
-        menu?.cancelTracking()
-        DispatchQueue.main.async { [weak self] in
-            self?.appDelegate?.showSettings()
+        let panel = MenuBarPanel(
+            contentRect: NSRect(origin: origin, size: size),
+            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+            backing: .buffered, defer: false
+        )
+        panel.isReleasedWhenClosed = false
+        panel.isFloatingPanel = true
+        panel.hidesOnDeactivate = false
+        panel.level = .popUpMenu
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        hosting.setFrameSize(size)
+        panel.contentView = hosting
+        self.panel = panel
+        panel.orderFrontRegardless()
+        panel.makeKey()
+        // A custom panel does not track the status button automatically.
+        button.state = .on
+        button.highlight(true)
+        // The status button's mouse-up tracking clears its pressed highlight
+        // after invoking our action. Reapply it once tracking has finished.
+        DispatchQueue.main.async { [weak self, weak panel] in
+            guard let self, let panel, self.panel === panel else { return }
+            self.statusItem?.button?.highlight(true)
         }
+        installEventMonitors(for: panel)
+    }
+
+    private func closePanel() {
+        let closingPanel = panel
+        panel = nil
+        eventMonitors.forEach(NSEvent.removeMonitor)
+        eventMonitors.removeAll()
+        statusItem?.button?.state = .off
+        statusItem?.button?.highlight(false)
+        closingPanel?.orderOut(nil)
+        closingPanel?.close()
+    }
+
+    // Nonactivating panels can lose key status while the status button finishes
+    // tracking its click. This is not a dismissal; outside-click monitoring,
+    // Escape and the status button are the authoritative close paths.
+    private func installEventMonitors(for panel: NSPanel) {
+        let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self, weak panel] _ in
+            guard let self, let panel else { return }
+            let location = NSEvent.mouseLocation
+            if panel.frame.contains(location) { return }
+            if let button = self.statusItem?.button, let window = button.window,
+               window.convertToScreen(button.convert(button.bounds, to: nil)).contains(location) {
+                return
+            }
+            DispatchQueue.main.async { [weak self, weak panel] in
+                guard let self, let panel, self.panel === panel else { return }
+                self.closePanel()
+            }
+        }) { eventMonitors.append(monitor) }
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: [clicks, .keyDown], handler: { [weak self, weak panel] event in
+            guard let self, let panel, self.panel === panel else { return event }
+            if event.type == .keyDown {
+                if event.keyCode == 53 {
+                    self.closePanel()
+                    return nil
+                }
+                if event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command {
+                    if event.charactersIgnoringModifiers == "," {
+                        self.openSettingsFromPanel()
+                        return nil
+                    }
+                    if event.charactersIgnoringModifiers == "q" {
+                        self.quitFromPanel()
+                        return nil
+                    }
+                }
+                return event
+            }
+            // Leave the status button click to togglePanel; closing here would
+            // immediately reopen the panel on the corresponding mouse-up.
+            if event.window === self.statusItem?.button?.window { return event }
+            var window = event.window
+            while let current = window {
+                if current === panel { return event }
+                window = current.parent
+            }
+            DispatchQueue.main.async { [weak self, weak panel] in
+                guard let self, let panel, self.panel === panel else { return }
+                self.closePanel()
+            }
+            return event
+        }) { eventMonitors.append(monitor) }
+    }
+
+    private func openSettingsFromPanel() {
+        closePanel()
+        DispatchQueue.main.async { [weak self] in self?.appDelegate?.showSettings() }
     }
 
     private func quitFromPanel() {
-        menu?.cancelTracking()
-        DispatchQueue.main.async {
-            NSApplication.shared.terminate(nil)
-        }
-    }
-}
-
-/// Keep the root type concrete while applying one panel-wide accent tint. The
-/// previous generic NSHostingView subclass triggered a Swift 6.2.4 Release
-/// optimizer crash in EarlyPerfInliner; this wrapper preserves the exact same UI
-/// without making the AppKit hosting subclass generic.
-private struct MenuBarPanelRoot: View {
-    let content: MenuBarPanelView
-
-    @ViewBuilder
-    var body: some View {
-        if #available(macOS 15.0, *) {
-            content
-                .tint(.accentColor)
-                // A custom NSMenuItem view is hosted in an AppKit menu tracking
-                // window, which SwiftUI otherwise treats as inactive. Native
-                // switches/sliders then dim their accent to gray even though the
-                // menu is the active interaction surface.
-                .environment(\.appearsActive, true)
-        } else {
-            content
-                .tint(.accentColor)
-                .environment(\.controlActiveState, .key)
-        }
-    }
-}
-
-/// NSMenuItem custom views are frame-based. Unlike a regular SwiftUI window,
-/// a menu tracks the hosting view's *current* frame. Its fittingSize may be
-/// temporarily inflated when AppKit relayouts a menu after display sleep/wake.
-/// This panel has no expanding/collapsing sections, so measure once at startup
-/// and keep its geometry stable while @AppStorage updates its contents.
-private final class MenuBarPanelHostingView: NSHostingView<MenuBarPanelRoot> {
-    private var lockedMenuSize: NSSize?
-
-    required init(rootView: MenuBarPanelRoot) {
-        super.init(rootView: rootView)
-    }
-
-    @available(*, unavailable)
-    @objc dynamic required init?(coder: NSCoder) {
-        fatalError("MenuBarPanelHostingView does not support NSCoder")
-    }
-
-    func lockMenuSize() {
-        layoutSubtreeIfNeeded()
-        let measuredHeight = fittingSize.height
-        guard measuredHeight.isFinite, measuredHeight > 0 else { return }
-
-        // The SwiftUI content itself has a fixed width of 300pt. Whole-point
-        // dimensions also avoid an unnecessary fractional menu tracking rect.
-        let size = NSSize(width: 300, height: ceil(measuredHeight))
-        lockedMenuSize = size
-        setFrameSize(size)
-        super.invalidateIntrinsicContentSize()
-    }
-
-    override var intrinsicContentSize: NSSize {
-        lockedMenuSize ?? super.intrinsicContentSize
-    }
-
-    override func invalidateIntrinsicContentSize() {
-        // Color, radius, and selection animations may invalidate SwiftUI's
-        // ideal size. Never turn those transient measurements into empty rows
-        // in the AppKit menu (especially on its first open after waking).
-        guard lockedMenuSize == nil else { return }
-        super.invalidateIntrinsicContentSize()
+        closePanel()
+        DispatchQueue.main.async { NSApplication.shared.terminate(nil) }
     }
 }

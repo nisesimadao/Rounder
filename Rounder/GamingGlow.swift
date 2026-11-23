@@ -90,11 +90,23 @@ enum GamingGlowClock {
 
 /// 画面の1辺ぶんのゲーミング発光バンドウィンドウ（1スクリーンにつき4枚）。
 final class GamingGlowWindow: NSWindow {
+    var overlayDisplayID: CGDirectDisplayID?
+    private let edge: ScreenEdge
+    private let reach: CGFloat
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
+    /// Overlay placement is already computed from the physical display bounds.
+    /// AppKit otherwise moves windows below the menu bar at levels below Dock,
+    /// adding a second top inset even when menu-bar exclusion is disabled.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
+    }
+
     init(screenFrame: NSRect, edge: ScreenEdge, speed: Double, glowIntensity: Double, bloomWidth: Double) {
         let reach = GamingGlowClock.reach(bloomWidth: bloomWidth)
+        self.edge = edge
+        self.reach = reach
         let bandFrame: NSRect
         switch edge {
         case .top:    bandFrame = NSRect(x: screenFrame.minX, y: screenFrame.maxY - reach, width: screenFrame.width, height: reach)
@@ -113,6 +125,20 @@ final class GamingGlowWindow: NSWindow {
         contentView = GamingGlowEdgeView(size: bandFrame.size, edge: edge, speed: speed, glowIntensity: glowIntensity)
         // アプリが非アクティブ（常時）でも確実に前面へ出す
         orderFrontRegardless()
+    }
+
+    func updatePlacement(in screenFrame: NSRect) {
+        let newFrame: NSRect
+        switch edge {
+        case .top: newFrame = NSRect(x: screenFrame.minX, y: screenFrame.maxY - reach, width: screenFrame.width, height: reach)
+        case .bottom: newFrame = NSRect(x: screenFrame.minX, y: screenFrame.minY, width: screenFrame.width, height: reach)
+        case .left: newFrame = NSRect(x: screenFrame.minX, y: screenFrame.minY, width: reach, height: screenFrame.height)
+        case .right: newFrame = NSRect(x: screenFrame.maxX - reach, y: screenFrame.minY, width: reach, height: screenFrame.height)
+        }
+        guard newFrame != frame else { return }
+        setFrame(newFrame, display: false)
+        contentView?.setFrameSize(newFrame.size)
+        contentView?.needsLayout = true
     }
 
     func prepareForClose() {
@@ -148,6 +174,15 @@ final class GamingGlowEdgeView: NSView {
         case .bottom: return (CGPoint(x: 1, y: 0.5), CGPoint(x: 0, y: 0.5), CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), 0.5)   // 右→左
         case .left:   return (CGPoint(x: 0.5, y: 0), CGPoint(x: 0.5, y: 1), CGPoint(x: 0, y: 0.5), CGPoint(x: 1, y: 0.5), 0.75)  // 下→上
         }
+    }
+
+    override func layout() {
+        super.layout()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        hueLayer?.frame = bounds
+        hueLayer?.mask?.frame = bounds
+        CATransaction.commit()
     }
 
     private func setupLayer(size: CGSize) {

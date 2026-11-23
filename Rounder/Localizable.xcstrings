@@ -1,6 +1,125 @@
 {
   "sourceLanguage" : "ja",
   "strings" : {
+    "overlay_attachment_description" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen overlays stay at the screen edges during Space transitions. Desktop overlays move with each Space. Enable both to combine them; disable both to hide overlays."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面に固定すると、デスクトップの切り替え中も画面端に角丸が残ります。仮想デスクトップに固定すると、角丸がデスクトップと一緒に移動します。両方オンで併用でき、両方オフで非表示になります。"
+          }
+        }
+      }
+    },
+    "exclude_menu_bar_description" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Place the top corners below the menu bar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上側の角丸をメニューバーの下に配置します。"
+          }
+        }
+      }
+    },
+    "target_displays" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target displays"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示するディスプレイ"
+          }
+        }
+      }
+    },
+    "overlay_attachment" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay attachment"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角丸の固定方法"
+          }
+        }
+      }
+    },
+    "pin_to_desktop" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin to virtual desktops"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仮想デスクトップに固定"
+          }
+        }
+      }
+    },
+    "pin_to_screen" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin to screen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面に固定"
+          }
+        }
+      }
+    },
+    "exclude_menu_bar" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exclude menu bar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メニューバーを除外"
+          }
+        }
+      }
+    },
     "" : {
 
     },

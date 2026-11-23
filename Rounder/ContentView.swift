@@ -148,6 +148,12 @@ struct AdvancedSettingsView: View {
     @State private var tempRadius: Double = RounderAppConstants.defaultCornerRadius
     @State private var tempColor: Color = .black
     @State private var tempEnabled: Bool = true
+    @AppStorage(UserDefaultsKeys.excludeMenuBar) private var savedExcludeMenuBar = false
+    @State private var tempExcludeMenuBar = false
+    @AppStorage(UserDefaultsKeys.pinToScreen) private var savedPinToScreen = true
+    @AppStorage(UserDefaultsKeys.pinToDesktop) private var savedPinToDesktop = false
+    @State private var tempPinToScreen = true
+    @State private var tempPinToDesktop = false
     @State private var tempTopLeftEnabled: Bool = true
     @State private var tempTopRightEnabled: Bool = true
     @State private var tempBottomLeftEnabled: Bool = true
@@ -474,9 +480,27 @@ struct AdvancedSettingsView: View {
                 Toggle("bottom_right_corner", isOn: $tempBottomRightEnabled)
             }
         }
+        Divider()
+        Toggle("exclude_menu_bar", isOn: $tempExcludeMenuBar)
+            .onChange(of: tempExcludeMenuBar) { markAsChanged() }
+        Text("exclude_menu_bar_description")
+            .font(.callout)
+            .foregroundStyle(.secondary)
     }
 
     @ViewBuilder private var displaysContent: some View {
+        Text("overlay_attachment")
+            .font(.headline)
+        Toggle("pin_to_screen", isOn: $tempPinToScreen)
+            .onChange(of: tempPinToScreen) { markAsChanged() }
+        Toggle("pin_to_desktop", isOn: $tempPinToDesktop)
+            .onChange(of: tempPinToDesktop) { markAsChanged() }
+        Text("overlay_attachment_description")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        Divider()
+        Text("target_displays")
+            .font(.headline)
         HStack {
             Text("select_monitors_description").font(.caption).foregroundStyle(.secondary)
             Spacer()
@@ -643,7 +667,7 @@ struct AdvancedSettingsView: View {
         // モニター選択の変更をチェック（保存値の読み出しは savedSelectedDisplays() に一本化）
         let displaySelectionChanged = savedSelectedDisplays() != selectedDisplays
 
-        hasUnsavedChanges = radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
+        hasUnsavedChanges = tempPinToScreen != savedPinToScreen || tempPinToDesktop != savedPinToDesktop || tempExcludeMenuBar != savedExcludeMenuBar || radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
 
         // ウィンドウタイトルを更新
         AppDelegate.shared?.updateSettingsWindowTitle(hasUnsavedChanges: hasUnsavedChanges)
@@ -664,6 +688,9 @@ struct AdvancedSettingsView: View {
         savedGlowIntensity = glowIntensity
         savedBloomWidth = bloomWidth
         savedCornerCutoutStyleRawValue = tempCornerCutoutStyle.rawValue
+        savedPinToScreen = tempPinToScreen
+        savedPinToDesktop = tempPinToDesktop
+        savedExcludeMenuBar = tempExcludeMenuBar
         savedTopLeftEnabled = tempTopLeftEnabled
         savedTopRightEnabled = tempTopRightEnabled
         savedBottomLeftEnabled = tempBottomLeftEnabled
@@ -689,6 +716,9 @@ struct AdvancedSettingsView: View {
         tempRadius = cornerRadius
         tempColor = selectedColor
         tempEnabled = isEnabled
+        tempPinToScreen = savedPinToScreen
+        tempPinToDesktop = savedPinToDesktop
+        tempExcludeMenuBar = savedExcludeMenuBar
         tempTopLeftEnabled = savedTopLeftEnabled
         tempTopRightEnabled = savedTopRightEnabled
         tempBottomLeftEnabled = savedBottomLeftEnabled
@@ -735,7 +765,10 @@ struct AdvancedSettingsView: View {
             topRightEnabled: tempTopRightEnabled,
             bottomLeftEnabled: tempBottomLeftEnabled,
             bottomRightEnabled: tempBottomRightEnabled,
-            selectedDisplayIDs: Array(selectedDisplays)
+            selectedDisplayIDs: Array(selectedDisplays),
+            pinToScreen: tempPinToScreen,
+            pinToDesktop: tempPinToDesktop,
+            excludeMenuBar: tempExcludeMenuBar
         )
     }
     

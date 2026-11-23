@@ -2,7 +2,7 @@
 //  MenuBarPanelView.swift
 //  Rounder
 //
-//  Compact SwiftUI controls hosted inside the real NSMenu owned by
+//  Compact SwiftUI controls hosted inside the nonactivating panel owned by
 //  MenuBarController. UserDefaults remain the durable source of truth; the
 //  callbacks only perform runtime side effects for direct panel interactions.
 //

@@ -58,10 +58,10 @@ class ScreenMonitor: NSObject {
         guard let appDelegate = appDelegate else { return }
         pendingScreenChangeWorkItem?.cancel()
         
-        // マルチモニター対応：スクリーン構成が変わったらオーバーレイだけを再作成する
+        // Rebuild only for actual display changes; visibleFrame changes update in place.
         let workItem = DispatchWorkItem { [weak self, weak appDelegate] in
             guard let self, self.isMonitoring else { return }
-            appDelegate?.recreateOverlayWindows()
+            appDelegate?.refreshOverlayScreenGeometry()
         }
         pendingScreenChangeWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + ScreenMonitorConstants.screenChangeDelay, execute: workItem)

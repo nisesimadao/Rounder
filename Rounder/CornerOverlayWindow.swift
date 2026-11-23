@@ -54,7 +54,8 @@ class CornerOverlayWindow: NSWindow {
     private let screenCorner: ScreenCorner
     /// 初期生成時の物理的な角座標。ライブ更新時は window.screen を参照せず、
     /// この点を固定したままウィンドウだけを伸縮する。
-    private let anchorPoint: CGPoint
+    private var anchorPoint: CGPoint
+    var overlayDisplayID: CGDirectDisplayID?
 
     override var canBecomeKey: Bool {
         return false
@@ -62,6 +63,13 @@ class CornerOverlayWindow: NSWindow {
 
     override var canBecomeMain: Bool {
         return false
+    }
+
+    /// Overlay placement is already computed from the physical display bounds.
+    /// AppKit otherwise moves windows below the menu bar at levels below Dock,
+    /// adding a second top inset even when menu-bar exclusion is disabled.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
     }
 
     init(corner: CGPoint, size: CGFloat, radius: CGFloat, color: NSColor = .black, cutoutStyle: CornerCutoutStyle = .rounded, cornerType: CornerType) {
@@ -107,6 +115,14 @@ class CornerOverlayWindow: NSWindow {
 
         // アプリが非アクティブ（常時）でも確実に前面へ出す
         orderFrontRegardless()
+    }
+
+    func updatePlacement(in screenFrame: NSRect) {
+        let origin = CornerGeometry.windowOrigin(in: screenFrame, corner: screenCorner, cornerSize: size)
+        let newFrame = NSRect(origin: origin, size: frame.size)
+        guard newFrame != frame else { return }
+        anchorPoint = CornerGeometry.anchorPoint(for: newFrame, corner: screenCorner)
+        setFrame(newFrame, display: false)
     }
 
     /// Radius / shape だけを変更するときの軽量更新。
