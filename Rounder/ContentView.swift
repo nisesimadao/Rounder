@@ -213,78 +213,7 @@ struct AdvancedSettingsView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Divider()
-            detailColumn
-        }
-        .background(
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-                .ignoresSafeArea()
-        )
-        .frame(
-            minWidth: RounderAppConstants.settingsMinWindowSize.width,
-            idealWidth: RounderAppConstants.settingsWindowSize.width,
-            minHeight: RounderAppConstants.settingsMinWindowSize.height,
-            idealHeight: RounderAppConstants.settingsWindowSize.height
-        )
-        .onAppear {
-            loadSavedColor()
-            resetToSavedValues()
-            loadDisplaySettings()
-        }
-        .onChange(of: cornerRadius) { _, newValue in
-            selectedColor = loadColorFromData(cornerColorData)
-            tempRadius = newValue
-            markAsChanged()
-        }
-        .onChange(of: cornerColorData) { _, newData in
-            selectedColor = loadColorFromData(newData)
-            tempColor = selectedColor
-            markAsChanged()
-        }
-        .onChange(of: savedCornerCutoutStyleRawValue) { _, newValue in
-            tempCornerCutoutStyle = CornerCutoutStyle(rawValue: newValue) ?? .rounded
-            markAsChanged()
-        }
-        .onChange(of: isEnabled) { _, newValue in
-            tempEnabled = newValue
-            markAsChanged()
-        }
-        // プリセット適用など、設定ウィンドウの外から保存値が変わったときにも
-        // 各タブの一時状態を追従させる（ウィンドウは使い回されるため onAppear は再実行されない）。
-        .onChange(of: savedPinToScreen) { _, value in
-            tempPinToScreen = value
-            markAsChanged()
-        }
-        .onChange(of: savedPinToDesktop) { _, value in
-            tempPinToDesktop = value
-            markAsChanged()
-        }
-        .onChange(of: savedExcludeMenuBar) { _, value in
-            tempExcludeMenuBar = value
-            markAsChanged()
-        }
-        .onChange(of: savedBlackMenuBar) { _, value in
-            tempBlackMenuBar = value
-            markAsChanged()
-        }
-        .onChange(of: savedTopLeftEnabled) { _, newValue in
-            tempTopLeftEnabled = newValue
-            markAsChanged()
-        }
-        .onChange(of: savedTopRightEnabled) { _, newValue in
-            tempTopRightEnabled = newValue
-            markAsChanged()
-        }
-        .onChange(of: savedBottomLeftEnabled) { _, newValue in
-            tempBottomLeftEnabled = newValue
-            markAsChanged()
-        }
-        .onChange(of: savedBottomRightEnabled) { _, newValue in
-            tempBottomRightEnabled = newValue
-            markAsChanged()
-        }
+        cornerSynchronizedLayout
         .onChange(of: savedSuperGamingMode) { _, newValue in
             superGamingMode = newValue
             markAsChanged()
@@ -306,6 +235,94 @@ struct AdvancedSettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             launchAtLogin = LoginItemManager.isEnabled
+        }
+    }
+
+    // Keep modifier groups small enough for older release-toolchain type checking.
+    private var settingsLayout: some View {
+        HStack(spacing: 0) {
+            sidebar
+            Divider()
+            detailColumn
+        }
+        .background(
+            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+                .ignoresSafeArea()
+        )
+        .frame(
+            minWidth: RounderAppConstants.settingsMinWindowSize.width,
+            idealWidth: RounderAppConstants.settingsWindowSize.width,
+            minHeight: RounderAppConstants.settingsMinWindowSize.height,
+            idealHeight: RounderAppConstants.settingsWindowSize.height
+        )
+        .onAppear {
+            loadSavedColor()
+            resetToSavedValues()
+            loadDisplaySettings()
+        }
+    }
+
+    private var appearanceSynchronizedLayout: some View {
+        settingsLayout
+        .onChange(of: cornerRadius) { _, newValue in
+            selectedColor = loadColorFromData(cornerColorData)
+            tempRadius = newValue
+            markAsChanged()
+        }
+        .onChange(of: cornerColorData) { _, newData in
+            selectedColor = loadColorFromData(newData)
+            tempColor = selectedColor
+            markAsChanged()
+        }
+        .onChange(of: savedCornerCutoutStyleRawValue) { _, newValue in
+            tempCornerCutoutStyle = CornerCutoutStyle(rawValue: newValue) ?? .rounded
+            markAsChanged()
+        }
+        .onChange(of: isEnabled) { _, newValue in
+            tempEnabled = newValue
+            markAsChanged()
+        }
+    }
+
+    private var attachmentSynchronizedLayout: some View {
+        appearanceSynchronizedLayout
+        // プリセット適用など、設定ウィンドウの外から保存値が変わったときにも
+        // 各タブの一時状態を追従させる（ウィンドウは使い回されるため onAppear は再実行されない）。
+        .onChange(of: savedPinToScreen) { _, value in
+            tempPinToScreen = value
+            markAsChanged()
+        }
+        .onChange(of: savedPinToDesktop) { _, value in
+            tempPinToDesktop = value
+            markAsChanged()
+        }
+        .onChange(of: savedExcludeMenuBar) { _, value in
+            tempExcludeMenuBar = value
+            markAsChanged()
+        }
+        .onChange(of: savedBlackMenuBar) { _, value in
+            tempBlackMenuBar = value
+            markAsChanged()
+        }
+    }
+
+    private var cornerSynchronizedLayout: some View {
+        attachmentSynchronizedLayout
+        .onChange(of: savedTopLeftEnabled) { _, newValue in
+            tempTopLeftEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedTopRightEnabled) { _, newValue in
+            tempTopRightEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedBottomLeftEnabled) { _, newValue in
+            tempBottomLeftEnabled = newValue
+            markAsChanged()
+        }
+        .onChange(of: savedBottomRightEnabled) { _, newValue in
+            tempBottomRightEnabled = newValue
+            markAsChanged()
         }
     }
 
