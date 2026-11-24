@@ -24,6 +24,10 @@ Apply **Notched MacBook** in Settings → Presets, or enable **Exclude menu bar*
 
 macOS chooses the menu text color from the wallpaper. If labels are hard to read against black, use a dark wallpaper or turn off the black background. Rounder does not change the system text color.
 
+## Can the menu bar use Gaming Mode?
+
+In the current source build, the menu bar strip shares the top corners' colors and the edge glow's speed and timing. There is no separate menu bar color control. Turning Gaming Mode off restores the black strip.
+
 ## What happens in fullscreen and Mission Control?
 
 With Exclude menu bar enabled, screen-fixed top corners move to the screen edge in a fullscreen Space and return below the menu bar in a normal Space. Mission Control hides the black strip and top corners with the same fade. Lower corners remain visible. The animations respect Reduce Motion.

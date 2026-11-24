@@ -7,8 +7,14 @@
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#システム要件)
 
 <p align="center">
-  <img src="docs/assets/rounder-screenshot.png" alt="Rounder を有効にした画面の角" width="900" />
+  <img src="docs/assets/rounder-menu-bar-black.png" alt="黒いメニューバーとアプリ領域の角丸を有効にした Rounder の設定画面" width="900" />
 </p>
+
+<details>
+  <summary>メニューバー背景をオフにした状態と比較</summary>
+  <p>こちらは背景の黒塗りをオフにした状態です。角丸は有効のままです。</p>
+  <img src="docs/assets/rounder-menu-bar-system.png" alt="同じ設定画面でメニューバー背景の黒塗りをオフにした状態" width="900" />
+</details>
 
 Rounder は、外部モニターや古い MacBook の直線的な画面の角を丸く見せます。ノッチ搭載 MacBook では、メニューバーの背景を黒くしてノッチを目立たなくし、その下にあるアプリ領域の上端を角丸にできます。
 
@@ -64,13 +70,17 @@ Rounder は、外部モニターや古い MacBook の直線的な画面の角を
 
 <img src="docs/menu-panel-ja.png" alt="Rounder メニューバー操作パネル" width="360" />
 
+開発版では、メニューバーの帯も上の角丸・発光と同じ色と速度で変化します。帯専用の速度や色の設定はありません。
+
+<p align="center">
+  <img src="docs/assets/rounder-gaming-menu-bar.png" alt="メニューバー除外とすーぱーげーみんぐもーどを併用した状態。虹色の発光とメニューバーの帯が同期しています" width="900" />
+</p>
+
 半径と形状は既存の切り欠きウィンドウをその場で更新します。アイコンの再クリック、パネル外のクリック、Esc キーでパネルを閉じられます。
 
 ## 設定
 
 設定画面では、フルカラーピッカー、対象ディスプレイ、プリセット、メニューバー設定、固定方法、発光の速度・強度・Bloom 幅を変更できます。変更後は「適用」を押してください。
-
-<img src="docs/settings-window-ja.png" alt="Rounder 設定画面" />
 
 固定方法は「ディスプレイ」に、メニューバーの除外と背景の黒塗りは「角の表示」の四隅のスイッチの下にあります。
 

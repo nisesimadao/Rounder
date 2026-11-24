@@ -25,6 +25,10 @@ extension AppDelegate {
             RounderAppConstants.cornerRadiusMax
         )
 
+        let cornerSize = CornerGeometry.cornerSize(radius: CGFloat(clampedRadius), style: cutoutStyle)
+        for window in menuBarBackgroundWindows { window.updateCornerSize(cornerSize) }
+        for window in glowWindows { window.updateCornerSize(cornerSize) }
+
         for window in overlayWindows {
             window.updateGeometry(
                 radius: CGFloat(clampedRadius),

@@ -25,7 +25,23 @@ final class MenuBarBackgroundWindow: NSWindow {
         // top corners together. Transient would hide the strip ahead of corners.
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
         level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue - 1)
+        contentView = MenuBarBackgroundView(frame: .zero)
         updatePlacement(on: screen, isFullScreen: isFullScreen)
+    }
+
+    func setGamingMode(_ enabled: Bool, speed: Double, cornerSize: CGFloat) {
+        collectionBehavior = enabled
+            ? [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+            : [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
+        (contentView as? MenuBarBackgroundView)?.setGamingMode(enabled, speed: speed, cornerSize: cornerSize)
+    }
+
+    func updateCornerSize(_ cornerSize: CGFloat) {
+        (contentView as? MenuBarBackgroundView)?.updateCornerSize(cornerSize)
+    }
+
+    func prepareForClose() {
+        setGamingMode(false, speed: 1, cornerSize: 0)
     }
 
     func updatePlacement(on screen: NSScreen, isFullScreen: Bool = false) {

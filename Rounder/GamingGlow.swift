@@ -51,6 +51,29 @@ enum OverlaySpace {
     /// 一度だけ作るオーバーレイ専用 Space の ID（0 = 未作成/失敗）
     private static var spaceID: UInt64 = 0
 
+    /// Move an overlay back to the active ordinary Space without replacing it.
+    /// The same WindowServer operation removes its previous overlay-Space membership.
+    @discardableResult
+    static func attachToCurrentDesktop(_ windows: [NSWindow], displayID: CGDirectDisplayID) -> Bool {
+        typealias CopySpaces = @convention(c) (Int32) -> Unmanaged<CFArray>?
+        guard let functions,
+              let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY),
+              let symbol = dlsym(handle, "SLSCopyManagedDisplaySpaces"),
+              let displays = unsafeBitCast(symbol, to: CopySpaces.self)(functions.main())?.takeRetainedValue() as? [[String: Any]],
+              let uuid = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue() else { return false }
+        let identifier = CFUUIDCreateString(nil, uuid) as String
+        let isPrimary = CGMainDisplayID() == displayID
+        guard let display = displays.first(where: {
+            let name = $0["Display Identifier"] as? String
+            return name == identifier || (isPrimary && name == "Main")
+        }), let current = display["Current Space"] as? [String: Any],
+            let target = current["ManagedSpaceID"] as? NSNumber else { return false }
+        let ids = windows.filter { $0.windowNumber > 0 }.map { NSNumber(value: $0.windowNumber) }
+        guard !ids.isEmpty else { return true }
+        functions.addWindows(functions.main(), target.uint64Value, ids as CFArray, 0x7)
+        return true
+    }
+
     /// 窓をオーバーレイ専用 Space へ移す。窓を作り直すたびに呼び直すこと。
     static func pin(_ windows: [NSWindow]) {
         guard let functions else { return }
@@ -82,6 +105,65 @@ enum GamingGlowClock {
         NSColor(hue: hue(at: index), saturation: 1.0, brightness: 1.0, alpha: 1.0)
     }
 
+    private static var gradientFrameCache: [Double: [[CGColor]]] = [:]
+
+    static func rainbowColor(baseHue: Double, phase: Double) -> CGColor {
+        let hue = (baseHue + phase).truncatingRemainder(dividingBy: 1.0)
+        return NSColor(hue: hue, saturation: 1, brightness: 1, alpha: 1).cgColor
+    }
+
+    static func cornerColors(baseHue: Double) -> [CGColor] {
+        (0...steps).map { rainbowColor(baseHue: baseHue, phase: Double($0) / Double(steps)) }
+    }
+
+    static func gradientColors(baseHue: Double, phase: Double) -> [CGColor] {
+        (0...6).map { rainbowColor(baseHue: baseHue + Double($0) / 6 * 0.25, phase: phase) }
+    }
+
+    /// Keep white menu text at a contrast ratio of at least 4.5:1.
+    /// Scale linear RGB together so bright yellow/green retain their hue.
+    static func menuBarColor(_ color: CGColor) -> CGColor {
+        guard let rgb = NSColor(cgColor: color)?.usingColorSpace(.sRGB) else { return color }
+        func linear(_ value: CGFloat) -> CGFloat {
+            value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        func encoded(_ value: CGFloat) -> CGFloat {
+            value <= 0.0031308 ? value * 12.92 : 1.055 * pow(value, 1 / 2.4) - 0.055
+        }
+        let red = linear(rgb.redComponent), green = linear(rgb.greenComponent), blue = linear(rgb.blueComponent)
+        let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+        guard luminance > 0.18 else { return color }
+        let scale = 0.18 / luminance
+        return NSColor(srgbRed: encoded(red * scale), green: encoded(green * scale),
+                       blue: encoded(blue * scale), alpha: rgb.alphaComponent).cgColor
+    }
+
+    /// Constant-color ends meet the solid corner masks without a visible seam.
+    static func topGradientLocations(width: CGFloat, cornerSize: CGFloat) -> [NSNumber] {
+        let inset = width > 0 ? min(max(cornerSize / width, 0), 0.49) : 0
+        return (0...6).map { NSNumber(value: Double(inset) + Double($0) / 6 * Double(1 - 2 * inset)) }
+    }
+
+    static func addRainbowAnimation(to layer: CAGradientLayer, baseHue: Double, speed: Double, menuBar: Bool = false) {
+        let frames: [[CGColor]]
+        if let cached = gradientFrameCache[baseHue] {
+            frames = cached
+        } else {
+            frames = (0...steps).map { gradientColors(baseHue: baseHue, phase: Double($0) / Double(steps)) }
+            gradientFrameCache[baseHue] = frames
+        }
+        let displayFrames = menuBar ? frames.map { $0.map(menuBarColor) } : frames
+        layer.colors = displayFrames.first
+        let animation = CAKeyframeAnimation(keyPath: "colors")
+        animation.values = displayFrames
+        animation.duration = CornerOverlayConstants.baseColorAnimationDuration / max(0.1, speed)
+        animation.repeatCount = .infinity
+        animation.calculationMode = .linear
+        animation.isRemovedOnCompletion = false
+        animation.beginTime = layer.convertTime(anchor, from: nil)
+        layer.add(animation, forKey: "rainbow")
+    }
+
     /// ふちから内側へ届く光の幅。プロファイル基準（24px）× 広さ設定。
     static func reach(bloomWidth: Double) -> CGFloat {
         max(5, 24 * CGFloat(bloomWidth))
@@ -105,7 +187,7 @@ final class GamingGlowWindow: NSWindow {
         frameRect
     }
 
-    init(screenFrame: NSRect, edge: ScreenEdge, speed: Double, glowIntensity: Double, bloomWidth: Double) {
+    init(screenFrame: NSRect, edge: ScreenEdge, speed: Double, glowIntensity: Double, bloomWidth: Double, cornerSize: CGFloat = 0) {
         let reach = GamingGlowClock.reach(bloomWidth: bloomWidth)
         self.edge = edge
         self.reach = reach
@@ -124,7 +206,7 @@ final class GamingGlowWindow: NSWindow {
         ignoresMouseEvents = true
         isReleasedWhenClosed = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        contentView = GamingGlowEdgeView(size: bandFrame.size, edge: edge, speed: speed, glowIntensity: glowIntensity)
+        contentView = GamingGlowEdgeView(size: bandFrame.size, edge: edge, speed: speed, glowIntensity: glowIntensity, cornerSize: cornerSize)
         // アプリが非アクティブ（常時）でも確実に前面へ出す
         orderFrontRegardless()
     }
@@ -153,6 +235,10 @@ final class GamingGlowWindow: NSWindow {
         contentView?.needsLayout = true
     }
 
+    func updateCornerSize(_ cornerSize: CGFloat) {
+        (contentView as? GamingGlowEdgeView)?.updateCornerSize(cornerSize)
+    }
+
     func prepareForClose() {
         (contentView as? GamingGlowEdgeView)?.stop()
     }
@@ -163,12 +249,14 @@ final class GamingGlowEdgeView: NSView {
     private let edge: ScreenEdge
     private let speed: Double
     private let glowIntensity: Double
+    private var cornerSize: CGFloat
     private var hueLayer: CAGradientLayer?
 
-    init(size: CGSize, edge: ScreenEdge, speed: Double, glowIntensity: Double) {
+    init(size: CGSize, edge: ScreenEdge, speed: Double, glowIntensity: Double, cornerSize: CGFloat = 0) {
         self.edge = edge
         self.speed = max(0.1, speed)
         self.glowIntensity = glowIntensity
+        self.cornerSize = cornerSize
         super.init(frame: CGRect(origin: .zero, size: size))
         wantsLayer = true
         setupLayer(size: size)
@@ -194,12 +282,14 @@ final class GamingGlowEdgeView: NSView {
         CATransaction.setDisableActions(true)
         hueLayer?.frame = bounds
         hueLayer?.mask?.frame = bounds
+        if edge == .top {
+            hueLayer?.locations = GamingGlowClock.topGradientLocations(width: bounds.width, cornerSize: cornerSize)
+        }
         CATransaction.commit()
     }
 
     private func setupLayer(size: CGSize) {
         let spec = self.spec
-        let duration = CornerOverlayConstants.baseColorAnimationDuration / speed
 
         // 画面の縁からの距離（reach=24px基準）と不透明度のプロファイル。
         // 一番はじ(≤1px)は必ず不透明、そこから 2px=50%,3px=30%,4px=25%… と急激に減衰。
@@ -216,7 +306,9 @@ final class GamingGlowEdgeView: NSView {
         hueLayer.type = .axial
         hueLayer.startPoint = spec.hueStart
         hueLayer.endPoint = spec.hueEnd
-        hueLayer.colors = hueColors(base: spec.base, t: 0)
+        if edge == .top {
+            hueLayer.locations = GamingGlowClock.topGradientLocations(width: size.width, cornerSize: cornerSize)
+        }
 
         // 内側フェード（Bloomの形と濃さ）を alpha マスクで与える（急減衰プロファイル）。
         let mask = CAGradientLayer()
@@ -234,44 +326,13 @@ final class GamingGlowEdgeView: NSView {
         layer?.addSublayer(hueLayer)
         self.hueLayer = hueLayer
 
-        let anim = CAKeyframeAnimation(keyPath: "colors")
-        anim.values = (0...GamingGlowClock.steps).map { cachedHueColors(base: spec.base, t: Double($0) / Double(GamingGlowClock.steps)) }
-        anim.duration = duration
-        anim.repeatCount = .infinity
-        anim.calculationMode = .linear
-        anim.isRemovedOnCompletion = false
-        // 全辺・全角を共有時刻から begin して色を完全同期
-        anim.beginTime = hueLayer.convertTime(GamingGlowClock.anchor, from: nil)
-        hueLayer.add(anim, forKey: "rainbow")
+        GamingGlowClock.addRainbowAnimation(to: hueLayer, baseHue: spec.base, speed: speed)
     }
 
-    /// 1つの辺に沿った hue 配列（周回上の base から 0.25周ぶん）。t で全体を回転させる。
-    private func hueColors(base: Double, t: Double) -> [CGColor] {
-        let stops = 6
-        return (0...stops).map { s in
-            let hue = (base + t + Double(s) / Double(stops) * 0.25).truncatingRemainder(dividingBy: 1.0)
-            return NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
-        }
-    }
-
-    /// 色配列のキャッシュ（baseとtに対して事前計算）
-    private static var colorCache: [String: [CGColor]] = [:]
-    private static let cacheQueue = DispatchQueue(label: "com.rounder.colorcache")
-
-    private func cachedHueColors(base: Double, t: Double) -> [CGColor] {
-        let cacheKey = String(format: "%.2f_%.2f", base, t)
-        return Self.cacheQueue.sync {
-            if let cached = Self.colorCache[cacheKey] {
-                return cached
-            }
-            let colors = hueColors(base: base, t: t)
-            Self.colorCache[cacheKey] = colors
-            // キャッシュサイズを制限（最新100個のみ）
-            if Self.colorCache.count > 100 {
-                Self.colorCache.removeValue(forKey: Self.colorCache.keys.first!)
-            }
-            return colors
-        }
+    func updateCornerSize(_ cornerSize: CGFloat) {
+        self.cornerSize = cornerSize
+        needsLayout = true
+        layoutSubtreeIfNeeded()
     }
 
     func stop() {

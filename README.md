@@ -7,8 +7,14 @@ Round display corners and blend a MacBook notch into a black menu bar.
 [![macOS](https://img.shields.io/badge/macOS-14.6%2B-blue)](#requirements)
 
 <p align="center">
-  <img src="docs/assets/rounder-screenshot.png" alt="A display corner with Rounder enabled" width="900" />
+  <img src="docs/assets/rounder-menu-bar-black.png" alt="Rounder Settings with a black menu bar and rounded application area" width="900" />
 </p>
+
+<details>
+  <summary>Compare with the system menu bar background</summary>
+  <p>The black background is off in this screenshot. Corner overlays are still enabled.</p>
+  <img src="docs/assets/rounder-menu-bar-system.png" alt="The same Rounder settings with the system menu bar background" width="900" />
+</details>
 
 Rounder adds rounded corners to external monitors and older MacBook displays. On a MacBook with a notch, it can paint the menu bar black so the notch blends into its background, then round the top corners of the application area below it.
 
@@ -64,13 +70,17 @@ The menu panel contains enable/disable, radius, shape, quick colors, individual 
 
 <img src="docs/menu-panel.png" alt="Rounder menu-bar control panel" width="360" />
 
+In the current source build, Gaming Mode also colors the menu bar strip in sync with the top corners and edge glow. It uses the same speed control.
+
+<p align="center">
+  <img src="docs/assets/rounder-gaming-menu-bar.png" alt="Rounder Gaming Mode with menu-bar exclusion: rainbow edge glow and a matching menu bar strip" width="900" />
+</p>
+
 Radius and shape changes update the existing corner windows. Clicking the status icon again closes the panel; clicking outside it or pressing Escape also closes it.
 
 ## Settings
 
 Settings includes the full color picker, display selection, presets, menu-bar options, attachment modes, and Gaming Mode speed, intensity, and bloom width. Click **Apply** to save changes.
-
-<img src="docs/settings-window.png" alt="Rounder Settings window" />
 
 The attachment switches are in **Displays**. Menu-bar exclusion and the black background switch are in **Corners**, below the four corner switches.
 

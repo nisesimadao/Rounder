@@ -162,6 +162,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var overlayScreenFrames: [CGDirectDisplayID: NSRect] = [:]
     var overlayExcludesMenuBar = false
+    var gamingOverlayActive = false
+    var temporaryScreenAttachments: [Int: (behavior: NSWindow.CollectionBehavior, level: NSWindow.Level)] = [:]
     var menuBarBackgroundWindows: [MenuBarBackgroundWindow] = []
     /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
     var glowWindows: [GamingGlowWindow] = []
@@ -337,6 +339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         // 追加のクリーンアップ処理
         overlayWindows.removeAll()
+        temporaryScreenAttachments.removeAll()
         settingsWindow = nil
     }
     
@@ -376,6 +379,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             style: configuration.cutoutStyle
         )
         
+        gamingOverlayActive = configuration.superGamingMode
         let fullScreenDisplays = DisplaySpaceState.fullScreenDisplayIDs()
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
@@ -388,7 +392,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             
             if configuration.blackMenuBar {
-                menuBarBackgroundWindows.append(MenuBarBackgroundWindow(screen: screen, displayID: displayID, isFullScreen: fullScreenDisplays.contains(displayID)))
+                let background = MenuBarBackgroundWindow(screen: screen, displayID: displayID,
+                                                         isFullScreen: fullScreenDisplays.contains(displayID))
+                background.setGamingMode(configuration.superGamingMode, speed: configuration.gamingSpeed,
+                                         cornerSize: cornerSize)
+                menuBarBackgroundWindows.append(background)
             }
 
             let frame = CornerGeometry.overlayFrame(
@@ -444,25 +452,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 }
 
                 // ゲーミングモードでは、四隅に加えて画面のふち全体をGPU合成で発光させる（1スクリーン1枚）
-                if configuration.superGamingMode {
+                if configuration.superGamingMode && mode.stationary == attachmentModes.first(where: { $0.enabled })?.stationary {
                     for edge in ScreenEdge.allCases {
                         let glow = GamingGlowWindow(
                             screenFrame: frame,
                             edge: edge,
                             speed: configuration.gamingSpeed,
                             glowIntensity: configuration.glowIntensity,
-                            bloomWidth: configuration.bloomWidth
+                            bloomWidth: configuration.bloomWidth,
+                            cornerSize: cornerSize
                         )
                         glow.overlayDisplayID = displayID
-                        glow.level = overlayLevel
-                        glow.collectionBehavior = mode.stationary
-                            ? [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-                            : [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+                        glow.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) - 1)
+                        glow.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
                         glowWindows.append(glow)
                     }
                 }
             }
         }
+
+        refreshOverlayScreenGeometry()
 
         if (configuration.excludeMenuBar && !overlayWindows.isEmpty) || !menuBarBackgroundWindows.isEmpty {
             missionControlMonitor.start { [weak self] displays in
@@ -510,8 +519,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.close()
         }
         overlayWindows.removeAll()
+        temporaryScreenAttachments.removeAll()
 
         for window in menuBarBackgroundWindows {
+            window.prepareForClose()
             window.orderOut(nil)
             window.close()
         }

@@ -325,10 +325,7 @@ class CornerOverlayView: NSView {
 
     /// baseHue（周回上の位置）から1周ぶん巡回する色。ふちのBloomと連続するようにする。
     private func rainbowCGColors(baseHue: Double) -> [CGColor] {
-        (0...GamingGlowClock.steps).map { i in
-            let hue = (baseHue + Double(i) / Double(GamingGlowClock.steps)).truncatingRemainder(dividingBy: 1.0)
-            return NSColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 1.0).cgColor
-        }
+        GamingGlowClock.cornerColors(baseHue: baseHue)
     }
 
     override func draw(_ dirtyRect: NSRect) {

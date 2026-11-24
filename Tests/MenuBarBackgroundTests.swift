@@ -2,11 +2,10 @@ import AppKit
 
 // Run in a logged-in macOS UI session:
 // xcrun swiftc Tests/MenuBarBackgroundTests.swift Rounder/MenuBarBackgroundWindow.swift \
-//   Rounder/CornerGeometry.swift -o /tmp/rounder-menu-background-tests
+//   Rounder/MenuBarBackgroundView.swift Rounder/CornerGeometry.swift \
+//   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift -o /tmp/rounder-menu-background-tests
 // /tmp/rounder-menu-background-tests
 
-enum CornerType { case topLeft, topRight, bottomLeft, bottomRight }
-enum CornerCutoutStyle { case rounded, squircle, polygon }
 enum RounderAppConstants { static let cornerSizePadding: CGFloat = 0.01 }
 
 @main
