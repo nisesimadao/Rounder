@@ -26,6 +26,10 @@ struct EditPresetTabView: View {
     @State private var tempSuperGamingMode: Bool
     @State private var tempGamingSpeed: Double
     @State private var tempGlowIntensity: Double
+    @State private var tempPinToScreen: Bool
+    @State private var tempPinToDesktop: Bool
+    @State private var tempExcludeMenuBar: Bool
+    @State private var tempBlackMenuBar: Bool
     @State private var tempBloomWidth: Double
     @State private var hasUnsavedChanges: Bool = false
     
@@ -52,6 +56,10 @@ struct EditPresetTabView: View {
         self._tempGamingSpeed = State(initialValue: initialPreset.gamingSpeed)
         self._tempGlowIntensity = State(initialValue: initialPreset.glowIntensity)
         self._tempBloomWidth = State(initialValue: initialPreset.bloomWidth)
+        self._tempPinToScreen = State(initialValue: initialPreset.pinToScreen)
+        self._tempPinToDesktop = State(initialValue: initialPreset.pinToDesktop)
+        self._tempExcludeMenuBar = State(initialValue: initialPreset.excludeMenuBar)
+        self._tempBlackMenuBar = State(initialValue: initialPreset.blackMenuBar)
     }
     
     var body: some View {
@@ -138,6 +146,21 @@ struct EditPresetTabView: View {
                         }
                     }
                     
+                    VStack(alignment: .leading, spacing: 12) {
+                        Toggle("exclude_menu_bar", isOn: $tempExcludeMenuBar)
+                            .onChange(of: tempExcludeMenuBar) { markAsChanged() }
+                        Toggle("black_menu_bar", isOn: $tempBlackMenuBar)
+                            .onChange(of: tempBlackMenuBar) { markAsChanged() }
+                        Text("black_menu_bar_description")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Text("overlay_attachment").font(.headline)
+                        Toggle("pin_to_screen", isOn: $tempPinToScreen)
+                            .onChange(of: tempPinToScreen) { markAsChanged() }
+                        Toggle("pin_to_desktop", isOn: $tempPinToDesktop)
+                            .onChange(of: tempPinToDesktop) { markAsChanged() }
+                    }
+
                     // 角の半径
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -274,6 +297,10 @@ struct EditPresetTabView: View {
         updatedPreset = updatedPreset.withGamingMode(tempSuperGamingMode, speed: tempGamingSpeed)
         updatedPreset = updatedPreset.withGlowSettings(intensity: tempGlowIntensity, bloomWidth: tempBloomWidth)
 
+        updatedPreset.pinToScreen = tempPinToScreen
+        updatedPreset.pinToDesktop = tempPinToDesktop
+        updatedPreset.excludeMenuBar = tempExcludeMenuBar
+        updatedPreset.blackMenuBar = tempBlackMenuBar
         onSave(updatedPreset)
         dismiss()
     }

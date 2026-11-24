@@ -1,6 +1,6 @@
 # <img src="Rounder/ICON.png" width="40" vertical-align="middle" /> Rounder
 
-A native macOS utility that gives sharp display corners a cleaner, rounded look.
+Round display corners and blend a MacBook notch into a black menu bar.
 
 [![Latest release](https://img.shields.io/github/v/release/nisesimadao/Rounder?label=download)](https://github.com/nisesimadao/Rounder/releases/latest)
 [![Build & Release](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml/badge.svg)](https://github.com/nisesimadao/Rounder/actions/workflows/release.yml)
@@ -10,135 +10,121 @@ A native macOS utility that gives sharp display corners a cleaner, rounded look.
   <img src="docs/assets/rounder-screenshot.png" alt="A display corner with Rounder enabled" width="900" />
 </p>
 
-Rounder is especially useful for external monitors and older Macs whose displays still have sharp rectangular corners. It normally stays accessible from the menu bar, but you can hide the icon and keep Rounder running quietly in the background. It requires **no Accessibility, Screen Recording, Automation, or network permission**.
+Rounder adds rounded corners to external monitors and older MacBook displays. On a MacBook with a notch, it can paint the menu bar black so the notch blends into its background, then round the top corners of the application area below it.
+
+It runs in the menu bar, supports multiple displays, and needs no Accessibility, Screen Recording, or Automation permission. You can hide its menu-bar icon and open `Rounder.app` to return to Settings.
 
 [日本語版 README](./README_jp.md)
 
-## Highlights
+## Features
 
-- **Three corner shapes** — Rounded, Squircle, and Polygon
-- **0–40 px radius** with live menu-bar adjustment
-- **Any corner color** plus black / white / gray quick swatches
-- **Per-corner control** for all four corners
-- **Exclude the menu bar** by placing the top corners below it
-- **Screen and virtual-desktop attachment** with independently selectable overlays
-- **Multi-display selection** for choosing which screens Rounder affects
-- **Presets** for saving and applying favorite configurations
-- **Super Duper Gaming Mode** with animated rainbow glow, speed, intensity, and bloom controls
-- **Launch at Login** through `SMAppService`
-- **Show or hide the menu-bar icon** — Rounder keeps running even while the icon is hidden
-- **No permanent Dock icon** — it only appears while onboarding or Settings is open
-- **No invasive permissions** — local overlay windows and local `UserDefaults` only
+- Rounded, Squircle, and Polygon corner shapes
+- Corner radius from 0 to 40 px, with live menu-panel adjustment
+- Any corner color, plus black, white, and gray quick swatches
+- Independent switches for all four corners
+- A black menu bar background for selected displays
+- Top corners below the menu bar with **Exclude menu bar**
+- Screen-fixed and virtual-desktop-attached overlays, usable together
+- Presets that save appearance, attachment, and menu-bar settings
+- Animated rainbow edges with Super Duper Gaming Mode
+- Launch at Login and optional menu-bar icon visibility
+
+## On a MacBook with a notch
+
+In **Settings → Presets**, apply **Notched MacBook**. This uses black corners, places the top corners below the menu bar, and paints the menu bar background black. The physical notch blends into that black strip.
+
+You can also set this up manually:
+
+1. In **Corners**, enable **Exclude menu bar** and **Black menu bar background**.
+2. In **Appearance**, set the corner color to black.
+3. In **Displays**, select the built-in display and the attachment modes you want.
+4. Click **Apply**.
+
+macOS chooses the menu text color from the wallpaper. A black background can make dark text hard to read, so use a dark wallpaper if that happens. Rounder changes the background, not the system text color.
+
+Black menu bar support and the three presets below are new in **2.4.0**.
+
+## Built-in presets
+
+| Preset | Fixed to screen | Attached to virtual desktops | Exclude menu bar | Black menu bar |
+| --- | --- | --- | --- | --- |
+| Default | On | Off | Off | Off |
+| Virtual Desktops | Off | On | Off | Off |
+| Notched MacBook | On | On | On | On |
+
+All three start with black, rounded corners at a 20 px radius. You can edit them or save your own settings as another preset. Upgrading keeps user-created presets.
+
+Screen-fixed corners stay at the physical screen edges during Space transitions. Desktop-attached corners move with each desktop. Enabling both combines them; turning both off hides the corner overlays.
+
+With **Exclude menu bar** enabled, screen-fixed top corners move to the physical top edge in a fullscreen Space and return below the menu bar in a normal Space. In Mission Control, the black strip and top corners fade out together and return when you leave. Lower corners remain visible. These animations respect the macOS Reduce Motion setting.
 
 ## Menu-bar controls
 
-When the menu-bar icon is visible, most everyday controls live directly in the panel: enable/disable, radius, corner shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
+The menu panel contains enable/disable, radius, shape, quick colors, individual corners, Gaming Mode, Settings, and Quit.
 
 <img src="docs/menu-panel.png" alt="Rounder menu-bar control panel" width="360" />
 
-Radius and shape changes update the existing overlay windows in place, so you can drag and compare shapes without repeatedly rebuilding the overlay.
+Radius and shape changes update the existing corner windows. Clicking the status icon again closes the panel; clicking outside it or pressing Escape also closes it.
 
-> On notch-equipped Macs, the built-in display already has physically rounded corners. Rounder is most noticeable on external displays and older Macs.
+## Settings
 
-## Download & install
+Settings includes the full color picker, display selection, presets, menu-bar options, attachment modes, and Gaming Mode speed, intensity, and bloom width. Click **Apply** to save changes.
+
+<img src="docs/settings-window.png" alt="Rounder Settings window" />
+
+The attachment switches are in **Displays**. Menu-bar exclusion and the black background switch are in **Corners**, below the four corner switches.
+
+<img src="docs/settings-displays.png" alt="Screen and virtual-desktop attachment settings" />
+
+If you hide the menu-bar icon, open `Rounder.app` again to show Settings. This does not turn the icon back on. Login launches remain silent.
+
+## Download and install
 
 Download `Rounder.zip` from [Releases](https://github.com/nisesimadao/Rounder/releases/latest), unzip it, and move `Rounder.app` to `/Applications`.
 
-Release builds are **ad-hoc signed, but not Developer ID signed or notarized**. Because of that, macOS Gatekeeper may block the first launch. If it does:
+Release builds are ad-hoc signed. They are not Developer ID signed or notarized, so macOS may block the first launch. Right-click `Rounder.app`, choose **Open**, then choose **Open** again in the confirmation dialog.
 
-1. Right-click `Rounder.app` and choose **Open**.
-2. Choose **Open** again in the confirmation dialog.
-
-If necessary, you can also remove the quarantine attribute manually:
+If necessary, remove the quarantine attribute manually:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/Rounder.app
 ```
 
-See the [FAQ](./docs/FAQ.md) for more details.
-
-## First launch
-
-Rounder shows a short onboarding flow:
-
-**Welcome → basic radius/color setup → finish**
-
-Choose whether Rounder should launch at login, then click **Start Rounder**. It starts running in the background, and you can later choose whether the menu-bar icon should remain visible.
-
-## Settings
-
-The menu panel is for fast adjustments. The full Settings window provides:
-
-- full color picker
-- display selection
-- preset management
-- Gaming Mode speed / intensity / bloom width
-- Launch at Login
-- menu-bar icon visibility
-- detailed corner configuration
-
-If the menu-bar icon is hidden, open `Rounder.app` again to show Settings. The icon stays hidden until you explicitly enable it again, and automatic login launches remain silent.
-
-<img src="docs/settings-window.png" alt="Rounder Settings window" />
-
-Screen and virtual-desktop attachment can be enabled together in **Displays**. Turning both off hides the overlays. **Exclude menu bar** is in **Corners**, below the four corner switches.
-
-<img src="docs/settings-displays.png" alt="Screen and virtual-desktop attachment settings" />
+First launch walks through radius, color, and login settings. Click **Start Rounder** to run it in the background. The Dock icon appears while onboarding or Settings is open.
 
 ## Requirements
 
 - macOS 14.6 or later
 - Apple Silicon or Intel Mac
 
-## Privacy & permissions
+## Privacy and permissions
 
-Rounder does not request Accessibility, Screen Recording, Automation, Contacts, Location, Microphone, Camera, or network permissions. Settings stay on your Mac in `UserDefaults`.
+Rounder does not collect telemetry or analytics. It stores settings locally in macOS `UserDefaults` and needs no network access for its core functions.
+
+It draws click-through overlay windows and reads local display, Space, and window metadata. It does not capture screen images or request Accessibility, Screen Recording, or Automation permission.
 
 See [Privacy](./docs/PRIVACY.md) and [Security](./docs/SECURITY.md).
 
-## Technical notes
-
-- SwiftUI + AppKit
-- borderless `NSWindow` overlays at `.screenSaver` level
-- Core Graphics / Core Animation corner rendering
-- a nonactivating `NSPanel` hosts the SwiftUI menu controls; the status icon stays highlighted while the panel is open, and clicking it again closes the panel
-- `CornerGeometry` / `ScreenCorner` are the shared source of truth for initial placement, live resizing, menu previews, orientation, and Gaming hue mapping
-- radius and shape use in-place geometry updates; structural changes still use the full overlay rebuild path
-
 ## Build from source
 
-```bash
-open Rounder.xcodeproj
-```
-
-Or from the command line:
+Open `Rounder.xcodeproj` in Xcode, or build from the command line:
 
 ```bash
 xcodebuild -project Rounder.xcodeproj -scheme Rounder -configuration Release build
 ```
 
-## Releases / CI
+The app uses SwiftUI, AppKit, Core Graphics, and Core Animation. Some Space behavior uses optional private macOS APIs and may vary between macOS versions.
 
-Pushing a `vX.Y.Z` tag runs the release workflow, which checks corner-geometry regressions and required English/Japanese localizations before building and packaging `Rounder.zip`.
-
-## Project docs
-
-- [Changelog](./docs/CHANGELOG.md)
-- [FAQ](./docs/FAQ.md)
-- [Privacy](./docs/PRIVACY.md)
-- [Security](./docs/SECURITY.md)
-- [Contributing](./docs/CONTRIBUTING.md)
-- [Demo asset checklist](./docs/DEMO_ASSETS.md)
-- [Launch checklist](./docs/LAUNCH_CHECKLIST.md)
-- [License](./LICENSE)
+Pushing a `vX.Y.Z` tag runs the tests and release build, then publishes `Rounder.zip`.
 
 ## Troubleshooting
 
-**Rounded corners are not visible**  
-Make sure Rounder is enabled and the target display is selected in Settings. On notch-equipped Macs, try an external display because the built-in panel is already physically rounded.
+**Corners are not visible.** Enable Rounder, select the target display, and enable at least one attachment mode in Displays. On a notched MacBook, try the Notched MacBook preset to see the effect below the menu bar.
 
-**A change did not seem to apply**  
-Radius and shape should react immediately in the menu panel. For display-selection or other structural changes, toggle Rounder off/on or refresh the display list in Settings.
+**Menu labels are hard to read.** Use a dark wallpaper or turn off Black menu bar background. macOS controls the label color.
 
-**Want the menu-bar icon back?**  
-Open `Rounder.app` to show Settings, then enable **Show menu bar icon**. Rounder keeps running even while the icon is hidden.
+**A setting did not take effect.** Click Apply in Settings. Radius and shape changes in the menu panel apply immediately.
+
+**The menu-bar icon is hidden.** Open `Rounder.app`, then turn on Show menu bar icon in General.
+
+[FAQ](./docs/FAQ.md) · [Release notes](https://github.com/nisesimadao/Rounder/releases) · [License](./LICENSE)

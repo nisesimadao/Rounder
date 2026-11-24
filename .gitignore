@@ -8,3 +8,6 @@ showhn.md
 hn_success_guide.md
 Rounder/rounderapp_old.swift
 /UPGRADE_GUIDE.md
+
+# Local development documents, excluded from published repository
+/.local-docs/

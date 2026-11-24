@@ -16,7 +16,21 @@ No. Rounder draws borderless overlay windows and does not need Accessibility, Sc
 
 ## Why do I not see rounded corners on my MacBook display?
 
-On Macs with a notch, the built-in display already has physical rounded corners. Rounder is most useful on external monitors and older MacBook displays with sharp corners.
+A notched MacBook already has rounded physical screen corners. In 2.4.0, apply the **Notched MacBook** preset to paint the menu bar black, blend the notch into that background, and round the application area below it. External monitors and older MacBooks can use the **Default** preset for their screen edges.
+
+## How do I make the menu bar black?
+
+Apply **Notched MacBook** in Settings → Presets, or enable **Exclude menu bar** and **Black menu bar background** in Corners, select black as the corner color in Appearance, and click Apply. The black background applies to the displays selected in Displays.
+
+macOS chooses the menu text color from the wallpaper. If labels are hard to read against black, use a dark wallpaper or turn off the black background. Rounder does not change the system text color.
+
+## What happens in fullscreen and Mission Control?
+
+With Exclude menu bar enabled, screen-fixed top corners move to the screen edge in a fullscreen Space and return below the menu bar in a normal Space. Mission Control hides the black strip and top corners with the same fade. Lower corners remain visible. The animations respect Reduce Motion.
+
+## Do presets include the menu-bar and attachment settings?
+
+Yes. In 2.4.0, presets save screen attachment, virtual-desktop attachment, menu-bar exclusion, and the black background along with the corner appearance. The initial presets are Default, Virtual Desktops, and Notched MacBook. Older preset files still load, and upgrading keeps user-created presets.
 
 ## Does Rounder send any data?
 

@@ -32,6 +32,19 @@ jobs:
             -o "$RUNNER_TEMP/corner-geometry-tests"
           "$RUNNER_TEMP/corner-geometry-tests"
 
+      - name: Test presets
+        run: |
+          set -euo pipefail
+          xcrun swiftc \
+            Tests/PresetManagerTests.swift \
+            Rounder/PresetManager.swift \
+            Rounder/BuiltInPresets.swift \
+            Rounder/CornerGeometry.swift \
+            Rounder/CornerOverlayWindow.swift \
+            Rounder/GamingGlow.swift \
+            -o "$RUNNER_TEMP/preset-manager-tests"
+          "$RUNNER_TEMP/preset-manager-tests"
+
       - name: Test localization coverage
         run: |
           set -euo pipefail

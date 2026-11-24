@@ -36,6 +36,10 @@ struct CornerPreset: Codable, Identifiable {
     var glowIntensity: Double
     var bloomWidth: Double
     var cornerCutoutStyle: CornerCutoutStyle
+    var pinToScreen: Bool
+    var pinToDesktop: Bool
+    var excludeMenuBar: Bool
+    var blackMenuBar: Bool
     
     init(name: String,
          topLeftEnabled: Bool = true,
@@ -48,8 +52,13 @@ struct CornerPreset: Codable, Identifiable {
          gamingSpeed: Double = PresetManagerConstants.defaultGamingSpeed,
          glowIntensity: Double = PresetManagerConstants.defaultGlowIntensity,
          bloomWidth: Double = PresetManagerConstants.defaultBloomWidth,
-         cornerCutoutStyle: CornerCutoutStyle = PresetManagerConstants.defaultCornerCutoutStyle) {
-        self.id = UUID()
+         cornerCutoutStyle: CornerCutoutStyle = PresetManagerConstants.defaultCornerCutoutStyle,
+         pinToScreen: Bool = true,
+         pinToDesktop: Bool = false,
+         excludeMenuBar: Bool = false,
+         blackMenuBar: Bool = false,
+         id: UUID = UUID()) {
+        self.id = id
         self.name = name
         self.topLeftEnabled = topLeftEnabled
         self.topRightEnabled = topRightEnabled
@@ -69,6 +78,10 @@ struct CornerPreset: Codable, Identifiable {
         self.glowIntensity = glowIntensity
         self.bloomWidth = bloomWidth
         self.cornerCutoutStyle = cornerCutoutStyle
+        self.pinToScreen = pinToScreen
+        self.pinToDesktop = pinToDesktop
+        self.excludeMenuBar = excludeMenuBar
+        self.blackMenuBar = blackMenuBar
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -85,6 +98,7 @@ struct CornerPreset: Codable, Identifiable {
         case glowIntensity
         case bloomWidth
         case cornerCutoutStyle
+        case pinToScreen, pinToDesktop, excludeMenuBar, blackMenuBar
     }
 
     init(from decoder: Decoder) throws {
@@ -103,6 +117,10 @@ struct CornerPreset: Codable, Identifiable {
         glowIntensity = try container.decode(Double.self, forKey: .glowIntensity)
         bloomWidth = try container.decodeIfPresent(Double.self, forKey: .bloomWidth) ?? PresetManagerConstants.defaultBloomWidth
         cornerCutoutStyle = try container.decodeIfPresent(CornerCutoutStyle.self, forKey: .cornerCutoutStyle) ?? .rounded
+        pinToScreen = try container.decodeIfPresent(Bool.self, forKey: .pinToScreen) ?? true
+        pinToDesktop = try container.decodeIfPresent(Bool.self, forKey: .pinToDesktop) ?? false
+        excludeMenuBar = try container.decodeIfPresent(Bool.self, forKey: .excludeMenuBar) ?? false
+        blackMenuBar = try container.decodeIfPresent(Bool.self, forKey: .blackMenuBar) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -120,6 +138,10 @@ struct CornerPreset: Codable, Identifiable {
         try container.encode(glowIntensity, forKey: .glowIntensity)
         try container.encode(bloomWidth, forKey: .bloomWidth)
         try container.encode(cornerCutoutStyle, forKey: .cornerCutoutStyle)
+        try container.encode(pinToScreen, forKey: .pinToScreen)
+        try container.encode(pinToDesktop, forKey: .pinToDesktop)
+        try container.encode(excludeMenuBar, forKey: .excludeMenuBar)
+        try container.encode(blackMenuBar, forKey: .blackMenuBar)
     }
     
     // 色をNSColorとして取得
@@ -141,32 +163,29 @@ class PresetManager: ObservableObject {
     @Published var presets: [CornerPreset] = []
     
     private let presetsKey = PresetManagerConstants.presetsKey
-    
-    init() {
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         loadPresets()
-        createDefaultPresetsIfNeeded()
+        installBuiltInPresetsIfNeeded()
     }
-    
-    // デフォルトプリセットの作成
-    private func createDefaultPresetsIfNeeded() {
-        if presets.isEmpty {
-            let defaultPresets = [
-                CornerPreset(name: String(localized: "preset_all_corners"), topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: true, bottomRightEnabled: true),
-                CornerPreset(name: String(localized: "preset_top_only"), topLeftEnabled: true, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: false),
-                CornerPreset(name: String(localized: "preset_bottom_only"), topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: true),
-                CornerPreset(name: String(localized: "preset_left_only"), topLeftEnabled: true, topRightEnabled: false, bottomLeftEnabled: true, bottomRightEnabled: false),
-                CornerPreset(name: String(localized: "preset_right_only"), topLeftEnabled: false, topRightEnabled: true, bottomLeftEnabled: false, bottomRightEnabled: true),
-                CornerPreset(name: String(localized: "preset_none"), topLeftEnabled: false, topRightEnabled: false, bottomLeftEnabled: false, bottomRightEnabled: false)
-            ]
-            
-            presets.append(contentsOf: defaultPresets)
-            savePresets()
-        }
+
+    private func installBuiltInPresetsIfNeeded() {
+        let versionKey = "builtInPresetsVersion"
+        guard defaults.integer(forKey: versionKey) < 1 else { return }
+        let legacyIDs = BuiltInPresets.unchangedLegacyIDs(in: presets)
+        presets.removeAll { legacyIDs.contains($0.id) }
+        let builtIns = BuiltInPresets.makePresets()
+        let existingIDs = Set(presets.map(\.id))
+        presets.insert(contentsOf: builtIns.filter { !existingIDs.contains($0.id) }, at: 0)
+        savePresets()
+        defaults.set(1, forKey: versionKey)
     }
-    
+
     // プリセットの読み込み
     func loadPresets() {
-        if let data = UserDefaults.standard.data(forKey: presetsKey),
+        if let data = defaults.data(forKey: presetsKey),
            let decodedPresets = try? JSONDecoder().decode([CornerPreset].self, from: data) {
             presets = decodedPresets
         }
@@ -175,7 +194,7 @@ class PresetManager: ObservableObject {
     // プリセットの保存
     func savePresets() {
         if let encodedData = try? JSONEncoder().encode(presets) {
-            UserDefaults.standard.set(encodedData, forKey: presetsKey)
+            defaults.set(encodedData, forKey: presetsKey)
         }
     }
     
@@ -201,17 +220,21 @@ class PresetManager: ObservableObject {
     
     // プリセットの適用
     func applyPreset(_ preset: CornerPreset) {
-        UserDefaults.standard.set(preset.topLeftEnabled, forKey: UserDefaultsKeys.topLeftEnabled)
-        UserDefaults.standard.set(preset.topRightEnabled, forKey: UserDefaultsKeys.topRightEnabled)
-        UserDefaults.standard.set(preset.bottomLeftEnabled, forKey: UserDefaultsKeys.bottomLeftEnabled)
-        UserDefaults.standard.set(preset.bottomRightEnabled, forKey: UserDefaultsKeys.bottomRightEnabled)
-        UserDefaults.standard.set(preset.cornerRadius, forKey: UserDefaultsKeys.cornerRadius)
-        UserDefaults.standard.set(preset.cornerColor, forKey: UserDefaultsKeys.cornerColor)
-        UserDefaults.standard.set(preset.superGamingMode, forKey: UserDefaultsKeys.superGamingMode)
-        UserDefaults.standard.set(preset.gamingSpeed, forKey: UserDefaultsKeys.gamingSpeed)
-        UserDefaults.standard.set(preset.glowIntensity, forKey: UserDefaultsKeys.glowIntensity)
-        UserDefaults.standard.set(preset.bloomWidth, forKey: UserDefaultsKeys.bloomWidth)
-        UserDefaults.standard.set(preset.cornerCutoutStyle.rawValue, forKey: UserDefaultsKeys.cornerCutoutStyle)
+        defaults.set(preset.topLeftEnabled, forKey: UserDefaultsKeys.topLeftEnabled)
+        defaults.set(preset.topRightEnabled, forKey: UserDefaultsKeys.topRightEnabled)
+        defaults.set(preset.bottomLeftEnabled, forKey: UserDefaultsKeys.bottomLeftEnabled)
+        defaults.set(preset.bottomRightEnabled, forKey: UserDefaultsKeys.bottomRightEnabled)
+        defaults.set(preset.cornerRadius, forKey: UserDefaultsKeys.cornerRadius)
+        defaults.set(preset.cornerColor, forKey: UserDefaultsKeys.cornerColor)
+        defaults.set(preset.superGamingMode, forKey: UserDefaultsKeys.superGamingMode)
+        defaults.set(preset.gamingSpeed, forKey: UserDefaultsKeys.gamingSpeed)
+        defaults.set(preset.glowIntensity, forKey: UserDefaultsKeys.glowIntensity)
+        defaults.set(preset.bloomWidth, forKey: UserDefaultsKeys.bloomWidth)
+        defaults.set(preset.cornerCutoutStyle.rawValue, forKey: UserDefaultsKeys.cornerCutoutStyle)
+        defaults.set(preset.pinToScreen, forKey: UserDefaultsKeys.pinToScreen)
+        defaults.set(preset.pinToDesktop, forKey: UserDefaultsKeys.pinToDesktop)
+        defaults.set(preset.excludeMenuBar, forKey: UserDefaultsKeys.excludeMenuBar)
+        defaults.set(preset.blackMenuBar, forKey: UserDefaultsKeys.blackMenuBar)
         
         // AppDelegateに通知して設定を反映
         AppDelegate.shared?.recreateOverlayWindows()
@@ -219,18 +242,18 @@ class PresetManager: ObservableObject {
     
     // 現在の設定からプリセットを作成
     func createPresetFromCurrentSettings(name: String) -> CornerPreset {
-        let topLeftEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.topLeftEnabled, defaultValue: true)
-        let topRightEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.topRightEnabled, defaultValue: true)
-        let bottomLeftEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.bottomLeftEnabled, defaultValue: true)
-        let bottomRightEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.bottomRightEnabled, defaultValue: true)
-        let cornerRadius = UserDefaults.standard.object(forKey: UserDefaultsKeys.cornerRadius) as? Double ?? RounderAppConstants.defaultCornerRadius
-        let cornerColorData = UserDefaults.standard.data(forKey: UserDefaultsKeys.cornerColor) ?? Data()
-        let superGamingMode = UserDefaults.standard.bool(forKey: UserDefaultsKeys.superGamingMode)
-        let gamingSpeed = UserDefaults.standard.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed
-        let glowIntensity = UserDefaults.standard.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity
-        let bloomWidth = UserDefaults.standard.object(forKey: UserDefaultsKeys.bloomWidth) as? Double ?? PresetManagerConstants.defaultBloomWidth
+        let topLeftEnabled = defaults.bool(forKey: UserDefaultsKeys.topLeftEnabled, defaultValue: true)
+        let topRightEnabled = defaults.bool(forKey: UserDefaultsKeys.topRightEnabled, defaultValue: true)
+        let bottomLeftEnabled = defaults.bool(forKey: UserDefaultsKeys.bottomLeftEnabled, defaultValue: true)
+        let bottomRightEnabled = defaults.bool(forKey: UserDefaultsKeys.bottomRightEnabled, defaultValue: true)
+        let cornerRadius = defaults.object(forKey: UserDefaultsKeys.cornerRadius) as? Double ?? RounderAppConstants.defaultCornerRadius
+        let cornerColorData = defaults.data(forKey: UserDefaultsKeys.cornerColor) ?? Data()
+        let superGamingMode = defaults.bool(forKey: UserDefaultsKeys.superGamingMode)
+        let gamingSpeed = defaults.object(forKey: UserDefaultsKeys.gamingSpeed) as? Double ?? PresetManagerConstants.defaultGamingSpeed
+        let glowIntensity = defaults.object(forKey: UserDefaultsKeys.glowIntensity) as? Double ?? PresetManagerConstants.defaultGlowIntensity
+        let bloomWidth = defaults.object(forKey: UserDefaultsKeys.bloomWidth) as? Double ?? PresetManagerConstants.defaultBloomWidth
         let cornerCutoutStyle = CornerCutoutStyle(
-            rawValue: UserDefaults.standard.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
+            rawValue: defaults.string(forKey: UserDefaultsKeys.cornerCutoutStyle) ?? ""
         ) ?? .rounded
         
         let preset = CornerPreset(
@@ -245,7 +268,11 @@ class PresetManager: ObservableObject {
             gamingSpeed: gamingSpeed,
             glowIntensity: glowIntensity,
             bloomWidth: bloomWidth,
-            cornerCutoutStyle: cornerCutoutStyle
+            cornerCutoutStyle: cornerCutoutStyle,
+            pinToScreen: defaults.bool(forKey: UserDefaultsKeys.pinToScreen, defaultValue: true),
+            pinToDesktop: defaults.bool(forKey: UserDefaultsKeys.pinToDesktop),
+            excludeMenuBar: defaults.bool(forKey: UserDefaultsKeys.excludeMenuBar),
+            blackMenuBar: defaults.bool(forKey: UserDefaultsKeys.blackMenuBar)
         )
         
         return preset

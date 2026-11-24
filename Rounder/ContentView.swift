@@ -253,6 +253,22 @@ struct AdvancedSettingsView: View {
         }
         // プリセット適用など、設定ウィンドウの外から保存値が変わったときにも
         // 各タブの一時状態を追従させる（ウィンドウは使い回されるため onAppear は再実行されない）。
+        .onChange(of: savedPinToScreen) { _, value in
+            tempPinToScreen = value
+            markAsChanged()
+        }
+        .onChange(of: savedPinToDesktop) { _, value in
+            tempPinToDesktop = value
+            markAsChanged()
+        }
+        .onChange(of: savedExcludeMenuBar) { _, value in
+            tempExcludeMenuBar = value
+            markAsChanged()
+        }
+        .onChange(of: savedBlackMenuBar) { _, value in
+            tempBlackMenuBar = value
+            markAsChanged()
+        }
         .onChange(of: savedTopLeftEnabled) { _, newValue in
             tempTopLeftEnabled = newValue
             markAsChanged()
