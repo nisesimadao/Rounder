@@ -41,6 +41,7 @@ struct UserDefaultsKeys {
     static let bottomRightEnabled = "bottomRightEnabled"
     static let pinToScreen = "pinToScreen"
     static let pinToDesktop = "pinToDesktop"
+    static let blackMenuBar = "blackMenuBar"
     static let excludeMenuBar = "excludeMenuBar"
     static let selectedDisplayIDs = "selectedDisplayIDs"
 }
@@ -62,6 +63,7 @@ struct OverlayConfiguration {
     var pinToScreen: Bool = true
     var pinToDesktop: Bool = false
     var excludeMenuBar: Bool = false
+    var blackMenuBar: Bool = false
 
     static func current() -> OverlayConfiguration {
         let defaults = UserDefaults.standard
@@ -85,7 +87,8 @@ struct OverlayConfiguration {
             selectedDisplayIDs: selectedDisplayIDs,
             pinToScreen: defaults.bool(forKey: UserDefaultsKeys.pinToScreen, defaultValue: true),
             pinToDesktop: defaults.bool(forKey: UserDefaultsKeys.pinToDesktop),
-            excludeMenuBar: defaults.bool(forKey: UserDefaultsKeys.excludeMenuBar)
+            excludeMenuBar: defaults.bool(forKey: UserDefaultsKeys.excludeMenuBar),
+            blackMenuBar: defaults.bool(forKey: UserDefaultsKeys.blackMenuBar)
         )
     }
 
@@ -159,9 +162,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var overlayScreenFrames: [CGDirectDisplayID: NSRect] = [:]
     var overlayExcludesMenuBar = false
+    var menuBarBackgroundWindows: [MenuBarBackgroundWindow] = []
     /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
     var glowWindows: [GamingGlowWindow] = []
     private var overlayGeneration = 0
+    private let missionControlMonitor = MissionControlMonitor()
     var settingsWindow: NSWindow?
     /// 初回起動セットアップ用ウィンドウ。settingsWindow とは別に保持しないと、
     /// 直後の setupSettingsWindow() で参照が上書きされ、閉じたときの処理ができなくなる。
@@ -233,13 +238,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var spaceReassertWorkItem: DispatchWorkItem?
 
     @objc private func activeSpaceDidChange(_ notification: Notification) {
+        refreshOverlayScreenGeometry(animated: true)
         // 遷移アニメーションの最中にウィンドウ操作をすると、逆に Space から外れて
         // 見えなくなることがある（フルスクリーン移行時など）。遷移が落ち着いてから、
         // 実際に画面へ載っていないウィンドウだけを再アタッチする。
         spaceReassertWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            self.refreshOverlayScreenGeometry()
+            self.refreshOverlayScreenGeometry(animated: true)
             self.reattachDetachedOverlays()
         }
         spaceReassertWorkItem = work
@@ -254,7 +260,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return }
         let onscreenIDs = Set(info.compactMap { $0[kCGWindowNumber as String] as? Int })
 
-        for window in windows where !onscreenIDs.contains(window.windowNumber) {
+        for window in windows where window.alphaValue > 0 && !onscreenIDs.contains(window.windowNumber) {
             // Screen-pinned windows already belong to the persistent overlay
             // Space. Never detach them or move them between Spaces on a switch.
             if !window.collectionBehavior.contains(.stationary) {
@@ -370,6 +376,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             style: configuration.cutoutStyle
         )
         
+        let fullScreenDisplays = DisplaySpaceState.fullScreenDisplayIDs()
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
             // このスクリーンのディスプレイIDを取得
@@ -380,10 +387,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 continue
             }
             
+            if configuration.blackMenuBar {
+                menuBarBackgroundWindows.append(MenuBarBackgroundWindow(screen: screen, displayID: displayID, isFullScreen: fullScreenDisplays.contains(displayID)))
+            }
+
             let frame = CornerGeometry.overlayFrame(
                 screenFrame: screen.frame,
                 visibleFrame: screen.visibleFrame,
-                excludeMenuBar: configuration.excludeMenuBar
+                excludeMenuBar: configuration.excludeMenuBar && !fullScreenDisplays.contains(displayID)
             )
 
             // Keep physical corner identity separate from the unflipped AppKit
@@ -453,6 +464,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
 
+        if (configuration.excludeMenuBar && !overlayWindows.isEmpty) || !menuBarBackgroundWindows.isEmpty {
+            missionControlMonitor.start { [weak self] displays in
+                guard let self else { return }
+                self.refreshOverlayScreenGeometry(animated: true)
+                self.applyMissionControlVisibility(displays)
+            }
+            applyMissionControlVisibility(missionControlMonitor.activeDisplayIDs, animated: false)
+        }
+
         // アプリがアクティブ（設定ウィンドウが開いている等）な状態で close→再作成すると、
         // ウィンドウがどの Space にもアタッチされず、存在するのに表示されない状態になることがある。
         // 単なる orderFrontRegardless の再実行では復帰しないため、ランループ一巡後に
@@ -481,6 +501,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func closeOverlayWindows() {
+        missionControlMonitor.stop()
         invalidatePendingOverlayPresentation()
 
         for window in overlayWindows {
@@ -489,6 +510,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.close()
         }
         overlayWindows.removeAll()
+
+        for window in menuBarBackgroundWindows {
+            window.orderOut(nil)
+            window.close()
+        }
+        menuBarBackgroundWindows.removeAll()
 
         for window in glowWindows {
             window.prepareForClose()

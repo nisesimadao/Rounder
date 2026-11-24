@@ -61,7 +61,7 @@ class ScreenMonitor: NSObject {
         // Rebuild only for actual display changes; visibleFrame changes update in place.
         let workItem = DispatchWorkItem { [weak self, weak appDelegate] in
             guard let self, self.isMonitoring else { return }
-            appDelegate?.refreshOverlayScreenGeometry()
+            appDelegate?.refreshOverlayScreenGeometry(animated: true)
         }
         pendingScreenChangeWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + ScreenMonitorConstants.screenChangeDelay, execute: workItem)

@@ -92,7 +92,9 @@ enum GamingGlowClock {
 final class GamingGlowWindow: NSWindow {
     var overlayDisplayID: CGDirectDisplayID?
     private let edge: ScreenEdge
+    var isTopEdge: Bool { edge == .top }
     private let reach: CGFloat
+    private var placementTargetFrame: NSRect?
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
@@ -127,7 +129,7 @@ final class GamingGlowWindow: NSWindow {
         orderFrontRegardless()
     }
 
-    func updatePlacement(in screenFrame: NSRect) {
+    func updatePlacement(in screenFrame: NSRect, animated: Bool = false) {
         let newFrame: NSRect
         switch edge {
         case .top: newFrame = NSRect(x: screenFrame.minX, y: screenFrame.maxY - reach, width: screenFrame.width, height: reach)
@@ -135,8 +137,18 @@ final class GamingGlowWindow: NSWindow {
         case .left: newFrame = NSRect(x: screenFrame.minX, y: screenFrame.minY, width: reach, height: screenFrame.height)
         case .right: newFrame = NSRect(x: screenFrame.maxX - reach, y: screenFrame.minY, width: reach, height: screenFrame.height)
         }
-        guard newFrame != frame else { return }
-        setFrame(newFrame, display: false)
+        guard newFrame != placementTargetFrame else { return }
+        placementTargetFrame = newFrame
+        if animated && collectionBehavior.contains(.stationary) && alphaValue > 0 &&
+            !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.25
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                animator().setFrame(newFrame, display: false)
+            }
+        } else {
+            setFrame(newFrame, display: false)
+        }
         contentView?.setFrameSize(newFrame.size)
         contentView?.needsLayout = true
     }

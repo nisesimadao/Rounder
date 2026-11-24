@@ -54,8 +54,15 @@ class CornerOverlayWindow: NSWindow {
     private let screenCorner: ScreenCorner
     /// 初期生成時の物理的な角座標。ライブ更新時は window.screen を参照せず、
     /// この点を固定したままウィンドウだけを伸縮する。
+    private var placementTargetFrame: NSRect?
     private var anchorPoint: CGPoint
     var overlayDisplayID: CGDirectDisplayID?
+    var isTopCorner: Bool {
+        switch screenCorner {
+        case .topLeft, .topRight: return true
+        case .bottomLeft, .bottomRight: return false
+        }
+    }
 
     override var canBecomeKey: Bool {
         return false
@@ -117,12 +124,23 @@ class CornerOverlayWindow: NSWindow {
         orderFrontRegardless()
     }
 
-    func updatePlacement(in screenFrame: NSRect) {
+    func updatePlacement(in screenFrame: NSRect, animated: Bool = false) {
         let origin = CornerGeometry.windowOrigin(in: screenFrame, corner: screenCorner, cornerSize: size)
         let newFrame = NSRect(origin: origin, size: frame.size)
-        guard newFrame != frame else { return }
+        guard newFrame != placementTargetFrame else { return }
+        placementTargetFrame = newFrame
         anchorPoint = CornerGeometry.anchorPoint(for: newFrame, corner: screenCorner)
-        setFrame(newFrame, display: false)
+        let shouldAnimate = animated && isTopCorner && collectionBehavior.contains(.stationary) &&
+            alphaValue > 0 && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if shouldAnimate {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.25
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                animator().setFrame(newFrame, display: false)
+            }
+        } else {
+            setFrame(newFrame, display: false)
+        }
     }
 
     /// Radius / shape だけを変更するときの軽量更新。
@@ -149,6 +167,7 @@ class CornerOverlayWindow: NSWindow {
 
         // display:false にして、古いView状態で途中描画されるのを避ける。
         // View側の状態更新後に needsDisplay で次の描画を要求する。
+        placementTargetFrame = newFrame
         setFrame(newFrame, display: false)
         (contentView as? CornerOverlayView)?.updateGeometry(
             radius: radius,

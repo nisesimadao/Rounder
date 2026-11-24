@@ -33,6 +33,8 @@ REQUIRED_KEYS = (
     "color_gray",
     "state_on",
     "state_off",
+    "black_menu_bar",
+    "black_menu_bar_description",
     "exclude_menu_bar",
     "exclude_menu_bar_description",
     "pin_to_screen",

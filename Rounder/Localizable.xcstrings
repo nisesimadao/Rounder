@@ -1,6 +1,40 @@
 {
   "sourceLanguage" : "ja",
   "strings" : {
+    "black_menu_bar_description" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paint the menu bar background black on the selected displays. macOS controls the text color based on your wallpaper; use a dark wallpaper if text becomes hard to read."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したディスプレイのメニューバー背景を黒くします。文字色は macOS が壁紙に合わせて決めます。文字が読みにくい場合は暗い壁紙を使ってください。"
+          }
+        }
+      }
+    },
+    "black_menu_bar" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black menu bar background"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メニューバーの背景を黒くする"
+          }
+        }
+      }
+    },
     "overlay_attachment_description" : {
       "extractionState": "manual",
       "localizations": {

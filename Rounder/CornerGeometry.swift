@@ -70,6 +70,15 @@ enum CornerGeometry {
         )
     }
 
+    /// The top reserved strip only; bottom and side Dock insets are unrelated.
+    /// Auto-hidden menu bars have no reserved strip and need no black overlay.
+    static func menuBarFrame(screenFrame: NSRect, visibleFrame: NSRect) -> NSRect? {
+        let height = min(max(screenFrame.maxY - visibleFrame.maxY, 0), screenFrame.height)
+        guard height > 0 else { return nil }
+        return NSRect(x: screenFrame.minX, y: screenFrame.maxY - height,
+                      width: screenFrame.width, height: height)
+    }
+
     /// Squircle uses a larger backing window so its diagonal depth visually
     /// matches the rounded style. This preserves the existing 1.8x rule.
     static func styleFactor(for style: CornerCutoutStyle) -> CGFloat {

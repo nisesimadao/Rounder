@@ -240,6 +240,14 @@ private func testMenuBarExclusion() throws {
                 let frame = CornerGeometry.overlayFrame(
                     screenFrame: screen, visibleFrame: visible, excludeMenuBar: true
                 )
+                let menuBar = CornerGeometry.menuBarFrame(screenFrame: screen, visibleFrame: visible)
+                if topInset == 0 {
+                    try expect(menuBar == nil, "Auto-hidden menu bar must not cover application content")
+                } else {
+                    try expect(menuBar == NSRect(x: screen.minX, y: screen.maxY - topInset,
+                                                 width: screen.width, height: topInset),
+                               "Black menu bar strip must ignore Dock insets")
+                }
                 try expectNear(frame.maxY, screen.maxY - topInset, "menu bar top edge")
                 try expectNear(frame.minY, screen.minY, "bottom Dock must not move bottom corners")
                 try expectNear(frame.minX, screen.minX, "side Dock must not move left corners")

@@ -150,6 +150,8 @@ struct AdvancedSettingsView: View {
     @State private var tempEnabled: Bool = true
     @AppStorage(UserDefaultsKeys.excludeMenuBar) private var savedExcludeMenuBar = false
     @State private var tempExcludeMenuBar = false
+    @AppStorage(UserDefaultsKeys.blackMenuBar) private var savedBlackMenuBar = false
+    @State private var tempBlackMenuBar = false
     @AppStorage(UserDefaultsKeys.pinToScreen) private var savedPinToScreen = true
     @AppStorage(UserDefaultsKeys.pinToDesktop) private var savedPinToDesktop = false
     @State private var tempPinToScreen = true
@@ -486,6 +488,11 @@ struct AdvancedSettingsView: View {
         Text("exclude_menu_bar_description")
             .font(.callout)
             .foregroundStyle(.secondary)
+        Toggle("black_menu_bar", isOn: $tempBlackMenuBar)
+            .onChange(of: tempBlackMenuBar) { markAsChanged() }
+        Text("black_menu_bar_description")
+            .font(.callout)
+            .foregroundStyle(.secondary)
     }
 
     @ViewBuilder private var displaysContent: some View {
@@ -667,7 +674,7 @@ struct AdvancedSettingsView: View {
         // モニター選択の変更をチェック（保存値の読み出しは savedSelectedDisplays() に一本化）
         let displaySelectionChanged = savedSelectedDisplays() != selectedDisplays
 
-        hasUnsavedChanges = tempPinToScreen != savedPinToScreen || tempPinToDesktop != savedPinToDesktop || tempExcludeMenuBar != savedExcludeMenuBar || radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
+        hasUnsavedChanges = tempBlackMenuBar != savedBlackMenuBar || tempPinToScreen != savedPinToScreen || tempPinToDesktop != savedPinToDesktop || tempExcludeMenuBar != savedExcludeMenuBar || radiusChanged || colorChanged || enabledChanged || gamingModeChanged || gamingSpeedChanged || glowIntensityChanged || bloomWidthChanged || cutoutStyleChanged || topLeftChanged || topRightChanged || bottomLeftChanged || bottomRightChanged || displaySelectionChanged
 
         // ウィンドウタイトルを更新
         AppDelegate.shared?.updateSettingsWindowTitle(hasUnsavedChanges: hasUnsavedChanges)
@@ -690,6 +697,7 @@ struct AdvancedSettingsView: View {
         savedCornerCutoutStyleRawValue = tempCornerCutoutStyle.rawValue
         savedPinToScreen = tempPinToScreen
         savedPinToDesktop = tempPinToDesktop
+        savedBlackMenuBar = tempBlackMenuBar
         savedExcludeMenuBar = tempExcludeMenuBar
         savedTopLeftEnabled = tempTopLeftEnabled
         savedTopRightEnabled = tempTopRightEnabled
@@ -718,6 +726,7 @@ struct AdvancedSettingsView: View {
         tempEnabled = isEnabled
         tempPinToScreen = savedPinToScreen
         tempPinToDesktop = savedPinToDesktop
+        tempBlackMenuBar = savedBlackMenuBar
         tempExcludeMenuBar = savedExcludeMenuBar
         tempTopLeftEnabled = savedTopLeftEnabled
         tempTopRightEnabled = savedTopRightEnabled
@@ -768,7 +777,8 @@ struct AdvancedSettingsView: View {
             selectedDisplayIDs: Array(selectedDisplays),
             pinToScreen: tempPinToScreen,
             pinToDesktop: tempPinToDesktop,
-            excludeMenuBar: tempExcludeMenuBar
+            excludeMenuBar: tempExcludeMenuBar,
+            blackMenuBar: tempBlackMenuBar
         )
     }
     
