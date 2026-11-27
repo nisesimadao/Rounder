@@ -6,7 +6,7 @@ import AppKit
 //   Rounder/AppDelegate+OverlayPlacement.swift Rounder/ScreenMonitor.swift \
 //   Rounder/NSScreen+DisplayInfo.swift Rounder/CornerGeometry.swift \
 //   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift \
-//   Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundView.swift \
+//   Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift \
 //   -o /tmp/rounder-placement-tests
 // /tmp/rounder-placement-tests
 
@@ -45,12 +45,12 @@ final class RecordingOverlay: NSWindow {
 final class AppDelegate {
     var overlayScreenFrames: [CGDirectDisplayID: NSRect] = [:]
     var overlayExcludesMenuBar = false
-    var gamingOverlayActive = false
     var temporaryScreenAttachments: [Int: (behavior: NSWindow.CollectionBehavior, level: NSWindow.Level)] = [:]
     var menuBarBackgroundWindows: [RecordingOverlay] = []
     var overlayWindows: [RecordingOverlay] = []
     var glowWindows: [RecordingOverlay] = []
     var rebuilds = 0
+    func refreshMenuBarBackgroundSpaces(fullScreenDisplays: Set<CGDirectDisplayID>) {}
     func recreateOverlayWindows() { rebuilds += 1 }
 }
 
@@ -96,41 +96,62 @@ struct OverlayPlacementTests {
         precondition(menuBar.menuBarRefreshes == 21, "Menu background must follow screen changes in place")
         precondition(corner.placements.count == 11, "Screen notification must refresh placement")
 
-        // Gaming mode pins desktop-attached windows to the screen only while a
-        // fullscreen Space is active, then restores their original attachment.
-        delegate.gamingOverlayActive = true
+        // Fullscreen attachment is independent of Gaming Mode. Repeat the
+        // round trip to catch stale saved levels or overlay-Space membership.
         let desktopBehavior = NSWindow.CollectionBehavior([.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle])
         let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) - 1)
-        for window in [corner, glow, menuBar] {
-            window.collectionBehavior = desktopBehavior
-            window.level = desktopLevel
+        for _ in 0..<2 {
+            for window in [corner, glow] {
+                window.collectionBehavior = desktopBehavior
+                window.level = desktopLevel
+            }
+
+            DisplaySpaceState.fullscreen = [displayID]
+            delegate.refreshOverlayScreenGeometry(animated: true)
+            precondition(corner.placements.last == screen.frame, "Fullscreen Space must anchor to the physical top edge")
+            precondition(corner.placementAnimations.last == true && glow.placementAnimations.last == true)
+            precondition(menuBar.menuBarFullscreen.last == true, "Black background must hide in fullscreen")
+            for window in [corner, glow] {
+                precondition(window.collectionBehavior.contains(.stationary), "Desktop overlays must pin to the screen in fullscreen")
+                precondition(window.collectionBehavior.contains(.ignoresCycle))
+                precondition(!window.collectionBehavior.contains(.transient))
+                precondition(window.level == .screenSaver, "Pinned overlays must rise above fullscreen windows")
+            }
+
+            DisplaySpaceState.fullscreen = []
+            delegate.refreshOverlayScreenGeometry(animated: true)
+            precondition(corner.placements.last == expected, "Normal Space must restore the menu-bar inset")
+            precondition(corner.placementAnimations.last == true)
+            for window in [corner, glow] {
+                precondition(window.collectionBehavior == desktopBehavior, "Leaving fullscreen must restore desktop attachment")
+                precondition(window.level == desktopLevel, "Leaving fullscreen must restore the original window level")
+            }
+            precondition(delegate.temporaryScreenAttachments.isEmpty, "Settled Space must clear temporary attachments")
+
         }
 
+        // Fullscreen promotion must also work with menu exclusion disabled,
+        // without moving existing physical-screen corners out of their Space.
+        let pinned = RecordingOverlay(displayID: displayID)
+        pinned.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        pinned.level = .screenSaver
+        delegate.overlayWindows.append(pinned)
+        delegate.overlayExcludesMenuBar = false
         DisplaySpaceState.fullscreen = [displayID]
-        delegate.refreshOverlayScreenGeometry(animated: true)
-        precondition(corner.placements.last == screen.frame, "Fullscreen Space must anchor to the physical top edge")
-        precondition(corner.placementAnimations.last == true && glow.placementAnimations.last == true)
-        precondition(menuBar.menuBarFullscreen.last == true, "Black background must hide in fullscreen")
-        for window in [corner, glow, menuBar] {
-            precondition(window.collectionBehavior.contains(.stationary), "Gaming overlays must pin to the screen in fullscreen")
-            precondition(window.collectionBehavior.contains(.ignoresCycle))
-            precondition(!window.collectionBehavior.contains(.transient))
-            precondition(window.level == .screenSaver, "Pinned overlays must rise above fullscreen windows")
-        }
-
+        delegate.refreshOverlayScreenGeometry()
+        precondition(corner.collectionBehavior.contains(.stationary))
+        precondition(delegate.temporaryScreenAttachments[pinned.windowNumber] == nil)
+        precondition(pinned.level == .screenSaver)
         DisplaySpaceState.fullscreen = []
-        delegate.refreshOverlayScreenGeometry(animated: true)
-        precondition(corner.placements.last == expected, "Normal Space must restore the menu-bar inset")
-        precondition(corner.placementAnimations.last == true)
-        for window in [corner, glow, menuBar] {
-            precondition(window.collectionBehavior == desktopBehavior, "Leaving fullscreen must restore desktop attachment")
-            precondition(window.level == desktopLevel, "Leaving fullscreen must restore the original window level")
-        }
-        precondition(delegate.temporaryScreenAttachments.isEmpty, "Settled Space must clear temporary attachments")
+        delegate.refreshOverlayScreenGeometry()
+        precondition(corner.collectionBehavior == desktopBehavior)
+        precondition(pinned.collectionBehavior.contains(.stationary))
+        precondition(pinned.level == .screenSaver)
+        pinned.close()
 
         delegate.overlayScreenFrames = [:]
         delegate.refreshOverlayScreenGeometry()
         precondition(delegate.rebuilds == 1, "Actual display changes must still rebuild")
-        print("PASS: repeated Space refreshes preserve windows; menu-bar exclusion updates corners and glow in place; screen notifications avoid unnecessary rebuilds; gaming fullscreen pins and restores overlays")
+        print("PASS: repeated Space refreshes preserve windows; menu-bar exclusion updates corners and glow in place; screen notifications avoid unnecessary rebuilds; normal fullscreen pins and restores overlays")
     }
 }

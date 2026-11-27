@@ -13,26 +13,25 @@ extension AppDelegate {
             return
         }
         let fullScreenDisplays = DisplaySpaceState.fullScreenDisplayIDs()
+        refreshMenuBarBackgroundSpaces(fullScreenDisplays: fullScreenDisplays)
         for screen in screens {
             guard let displayID = screen.displayID else { continue }
-            if gamingOverlayActive {
-                let windows: [NSWindow] = overlayWindows.filter { $0.overlayDisplayID == displayID } +
-                    glowWindows.filter { $0.overlayDisplayID == displayID } +
-                    menuBarBackgroundWindows.filter { $0.overlayDisplayID == displayID }
-                for window in windows {
-                    if fullScreenDisplays.contains(displayID) {
-                        guard !window.collectionBehavior.contains(.stationary) else { continue }
-                        temporaryScreenAttachments[window.windowNumber] = (window.collectionBehavior, window.level)
-                        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-                        if !(window is MenuBarBackgroundWindow) { window.level = .screenSaver }
-                        OverlaySpace.pin([window])
-                    } else if let original = temporaryScreenAttachments[window.windowNumber] {
-                        // Retry on the settled Space notification if WindowServer is not ready yet.
-                        if OverlaySpace.attachToCurrentDesktop([window], displayID: displayID) {
-                            window.collectionBehavior = original.behavior
-                            window.level = original.level
-                            temporaryScreenAttachments.removeValue(forKey: window.windowNumber)
-                        }
+            // Desktop corners must also survive fullscreen in normal mode.
+            let windows: [NSWindow] = overlayWindows.filter { $0.overlayDisplayID == displayID } +
+                glowWindows.filter { $0.overlayDisplayID == displayID }
+            for window in windows {
+                if fullScreenDisplays.contains(displayID) {
+                    guard !window.collectionBehavior.contains(.stationary) else { continue }
+                    temporaryScreenAttachments[window.windowNumber] = (window.collectionBehavior, window.level)
+                    window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+                    window.level = .screenSaver
+                    OverlaySpace.pin([window])
+                } else if let original = temporaryScreenAttachments[window.windowNumber] {
+                    // Retry on the settled Space notification if WindowServer is not ready yet.
+                    if OverlaySpace.attachToCurrentDesktop([window], displayID: displayID) {
+                        window.collectionBehavior = original.behavior
+                        window.level = original.level
+                        temporaryScreenAttachments.removeValue(forKey: window.windowNumber)
                     }
                 }
             }

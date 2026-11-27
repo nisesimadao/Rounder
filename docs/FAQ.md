@@ -26,7 +26,7 @@ macOS chooses the menu text color from the wallpaper. If labels are hard to read
 
 ## Can the menu bar use Gaming Mode?
 
-In the current source build, the menu bar strip shares the top corners' colors and the edge glow's speed and timing. There is no separate menu bar color control. Turning Gaming Mode off restores the black strip.
+In 2.4.1, the menu bar strip follows the top corners' color cycle and the edge glow's speed and timing. Bright colors are darkened on the strip to keep white labels readable. There is no separate menu bar color control. Turning Gaming Mode off restores the black strip.
 
 ## What happens in fullscreen and Mission Control?
 

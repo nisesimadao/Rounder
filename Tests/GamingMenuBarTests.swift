@@ -2,7 +2,7 @@ import AppKit
 import QuartzCore
 
 // xcrun swiftc Tests/GamingMenuBarTests.swift Rounder/MenuBarBackgroundWindow.swift \
-//   Rounder/MenuBarBackgroundView.swift Rounder/CornerGeometry.swift \
+//   Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift Rounder/CornerGeometry.swift \
 //   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift -o /tmp/rounder-gaming-menu-tests
 
 enum RounderAppConstants { static let cornerSizePadding: CGFloat = 0.01 }
@@ -48,7 +48,7 @@ struct GamingMenuBarTests {
         precondition(bandLayer.locations == glowLayer.locations && bandLayer.locations != oldLocations)
         precondition(bandLayer.animation(forKey: "rainbow")!.beginTime == bandAnimation.beginTime,
                      "Radius/shape changes must not restart the shared color cycle")
-        precondition(bar.ignoresMouseEvents && bar.level.rawValue == NSWindow.Level.statusBar.rawValue - 1)
+        precondition(bar.ignoresMouseEvents && bar.level.rawValue < CGWindowLevelForKey(.mainMenuWindow))
         bar.setGamingMode(false, speed: 2, cornerSize: 72)
         precondition(bar.contentView!.layer!.sublayers?.contains { $0 is CAGradientLayer } != true)
         precondition(bar.backgroundColor.isEqual(NSColor.black) && bar.windowNumber == number)

@@ -70,7 +70,7 @@ The menu panel contains enable/disable, radius, shape, quick colors, individual 
 
 <img src="docs/menu-panel.png" alt="Rounder menu-bar control panel" width="360" />
 
-In the current source build, Gaming Mode also colors the menu bar strip in sync with the top corners and edge glow. It uses the same speed control.
+In **2.4.1**, Gaming Mode also colors the menu bar strip in sync with the top corners and edge glow. Bright colors are darkened on the strip to keep white labels readable. It uses the same speed control.
 
 <p align="center">
   <img src="docs/assets/rounder-gaming-menu-bar.png" alt="Rounder Gaming Mode with menu-bar exclusion: rainbow edge glow and a matching menu bar strip" width="900" />

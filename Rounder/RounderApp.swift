@@ -162,7 +162,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayWindows: [CornerOverlayWindow] = []
     var overlayScreenFrames: [CGDirectDisplayID: NSRect] = [:]
     var overlayExcludesMenuBar = false
-    var gamingOverlayActive = false
+    let desktopTopCorners = DesktopTopCorners()
+    let fullscreenMenuCorners = FullscreenMenuCorners()
+    var desktopTopCornerWindows: [CornerOverlayWindow] { desktopTopCorners.windows }
     var temporaryScreenAttachments: [Int: (behavior: NSWindow.CollectionBehavior, level: NSWindow.Level)] = [:]
     var menuBarBackgroundWindows: [MenuBarBackgroundWindow] = []
     /// ゲーミングモードのふち発光ウィンドウ（1スクリーン1枚・GPU合成）
@@ -379,7 +381,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             style: configuration.cutoutStyle
         )
         
-        gamingOverlayActive = configuration.superGamingMode
         let fullScreenDisplays = DisplaySpaceState.fullScreenDisplayIDs()
         // 選択されたディスプレイのみにオーバーレイを作成
         for screen in screens {
@@ -392,11 +393,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             
             if configuration.blackMenuBar {
-                let background = MenuBarBackgroundWindow(screen: screen, displayID: displayID,
-                                                         isFullScreen: fullScreenDisplays.contains(displayID))
-                background.setGamingMode(configuration.superGamingMode, speed: configuration.gamingSpeed,
-                                         cornerSize: cornerSize)
-                menuBarBackgroundWindows.append(background)
+                let spaceIDs = DesktopSpaceMembership.spaceIDs(for: displayID) ?? []
+                let targets: [UInt64?] = spaceIDs.isEmpty ? [nil] : spaceIDs.map { $0 }
+                for spaceID in targets {
+                    let background = MenuBarBackgroundWindow(screen: screen, displayID: displayID,
+                        isFullScreen: fullScreenDisplays.contains(displayID), desktopSpaceID: spaceID)
+                    background.setGamingMode(configuration.superGamingMode, speed: configuration.gamingSpeed,
+                                             cornerSize: cornerSize)
+                    menuBarBackgroundWindows.append(background)
+                }
             }
 
             let frame = CornerGeometry.overlayFrame(
@@ -471,10 +476,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
 
+        let desktopCornerConfiguration: DesktopTopCorners.Configuration? = (configuration.pinToDesktop || configuration.pinToScreen) && configuration.excludeMenuBar
+            ? .init(radius: CGFloat(configuration.radius), style: configuration.cutoutStyle, color: configuration.color,
+                    gaming: configuration.superGamingMode, speed: configuration.gamingSpeed,
+                    topLeft: configuration.topLeftEnabled, topRight: configuration.topRightEnabled,
+                    displayIDs: Set(configuration.selectedDisplayIDs)) : nil
+        desktopTopCorners.configure(configuration.pinToDesktop ? desktopCornerConfiguration : nil, screens: screens, fullscreen: fullScreenDisplays)
+        fullscreenMenuCorners.configure(desktopCornerConfiguration, fullscreen: fullScreenDisplays)
         refreshOverlayScreenGeometry()
 
         if (configuration.excludeMenuBar && !overlayWindows.isEmpty) || !menuBarBackgroundWindows.isEmpty {
-            missionControlMonitor.start { [weak self] displays in
+            missionControlMonitor.start(onWindows: { [weak self] windows in
+                self?.fullscreenMenuCorners.observe(windows)
+            }) { [weak self] displays in
                 guard let self else { return }
                 self.refreshOverlayScreenGeometry(animated: true)
                 self.applyMissionControlVisibility(displays)
@@ -499,6 +513,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    func refreshMenuBarBackgroundSpaces(fullScreenDisplays: Set<CGDirectDisplayID>) {
+        desktopTopCorners.refresh(screens: NSScreen.screens, fullscreen: fullScreenDisplays)
+        fullscreenMenuCorners.setFullscreenDisplays(fullScreenDisplays)
+        menuBarBackgroundWindows = MenuBarBackgroundSpaces.reconcile(menuBarBackgroundWindows,
+            screens: NSScreen.screens, fullScreenDisplays: fullScreenDisplays)
+    }
+
+    func updateFullscreenMenuMissionControl(_ displays: Set<CGDirectDisplayID>) {
+        fullscreenMenuCorners.setMissionControlDisplays(displays)
+    }
+
     func recreateOverlayWindows() {
         createOverlayWindows()
     }
@@ -510,6 +535,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func closeOverlayWindows() {
+        fullscreenMenuCorners.close()
+        desktopTopCorners.close()
         missionControlMonitor.stop()
         invalidatePendingOverlayPresentation()
 

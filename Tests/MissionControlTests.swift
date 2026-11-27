@@ -29,8 +29,10 @@ final class TestBar {
     init(_ display: CGDirectDisplayID) { overlayDisplayID = display }
 }
 final class AppDelegate {
+    func updateFullscreenMenuMissionControl(_ displays: Set<CGDirectDisplayID>) {}
     var overlayExcludesMenuBar = true
     var overlayWindows: [TestOverlay] = []
+    var desktopTopCornerWindows: [TestOverlay] = []
     var glowWindows: [TestOverlay] = []
     var menuBarBackgroundWindows: [TestBar] = []
 }
