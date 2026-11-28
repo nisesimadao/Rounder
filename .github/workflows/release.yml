@@ -45,6 +45,9 @@ jobs:
             -o "$RUNNER_TEMP/preset-manager-tests"
           "$RUNNER_TEMP/preset-manager-tests"
 
+      - name: Test rendering without desktop interaction
+        run: bash Tests/run-offline-rendering-tests.sh
+
       - name: Test localization coverage
         run: |
           set -euo pipefail

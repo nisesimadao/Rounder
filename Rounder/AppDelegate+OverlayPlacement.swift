@@ -28,9 +28,8 @@ extension AppDelegate {
                     OverlaySpace.pin([window])
                 } else if let original = temporaryScreenAttachments[window.windowNumber] {
                     // Retry on the settled Space notification if WindowServer is not ready yet.
-                    if OverlaySpace.attachToCurrentDesktop([window], displayID: displayID) {
-                        window.collectionBehavior = original.behavior
-                        window.level = original.level
+                    if OverlayAttachmentRestoration.restore(window, behavior: original.behavior, level: original.level,
+                        move: { OverlaySpace.attachToCurrentDesktop([window], displayID: displayID) }) {
                         temporaryScreenAttachments.removeValue(forKey: window.windowNumber)
                     }
                 }

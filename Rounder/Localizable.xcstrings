@@ -7,13 +7,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Paint the menu bar background black on the selected displays. Gaming Mode syncs it with the corner colors. macOS controls the text color based on your wallpaper; use a dark wallpaper if text becomes hard to read."
+            "value": "Use the corner color for the menu bar background on the selected displays. Gaming Mode uses rainbow colors. macOS controls the text color based on your wallpaper; use a dark wallpaper if text becomes hard to read."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択したディスプレイのメニューバー背景を黒くします。ゲーミングモードでは角丸と同じ色で光ります。文字色は macOS が壁紙に合わせて決めます。文字が読みにくい場合は暗い壁紙を使ってください。"
+            "value": "選択したディスプレイのメニューバー背景を角丸と同じ色で塗ります。ゲーミングモードでは虹色に光ります。文字色は macOS が壁紙に合わせて決めます。文字が読みにくい場合は暗い壁紙を使ってください。"
           }
         }
       }
@@ -24,13 +24,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Black menu bar background"
+            "value": "Menu bar background"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "メニューバーの背景を黒くする"
+            "value": "メニューバーの背景を塗る"
           }
         }
       }

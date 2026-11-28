@@ -6,12 +6,10 @@ final class MissionControlMonitor {
     private var timer: Timer?
     private var hostPIDs: Set<pid_t> = []
     private var hostObserver: NSObjectProtocol?
-    private var onWindows: (([[String: Any]]) -> Void)?
     private var onChange: ((Set<CGDirectDisplayID>) -> Void)?
     private(set) var activeDisplayIDs: Set<CGDirectDisplayID> = []
 
-    func start(onWindows: (([[String: Any]]) -> Void)? = nil, onChange: @escaping (Set<CGDirectDisplayID>) -> Void) {
-        self.onWindows = onWindows
+    func start(onChange: @escaping (Set<CGDirectDisplayID>) -> Void) {
         self.onChange = onChange
         if timer == nil {
             refreshHostPIDs()
@@ -37,7 +35,6 @@ final class MissionControlMonitor {
         hostObserver = nil
         activeDisplayIDs = []
         onChange = nil
-        onWindows = nil
     }
 
     private func refreshHostPIDs() {
@@ -59,7 +56,6 @@ final class MissionControlMonitor {
             activeDisplayIDs = active
             onChange?(active)
         }
-        onWindows?(windows)
     }
 
     /// Layer-18 full-display shields are present for Mission Control/App Exposé.

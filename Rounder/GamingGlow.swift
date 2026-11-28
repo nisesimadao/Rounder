@@ -71,7 +71,10 @@ enum OverlaySpace {
         let ids = windows.filter { $0.windowNumber > 0 }.map { NSNumber(value: $0.windowNumber) }
         guard !ids.isEmpty else { return true }
         functions.addWindows(functions.main(), target.uint64Value, ids as CFArray, 0x7)
-        return true
+        typealias CopyWindowSpaces = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?
+        guard let copySymbol = dlsym(handle, "SLSCopySpacesForWindows"),
+              let actual = unsafeBitCast(copySymbol, to: CopyWindowSpaces.self)(functions.main(), 7, ids as CFArray)?.takeRetainedValue() as? [NSNumber] else { return false }
+        return Set(actual.map(\.uint64Value)) == [target.uint64Value]
     }
 
     /// 窓をオーバーレイ専用 Space へ移す。窓を作り直すたびに呼び直すこと。
@@ -152,7 +155,7 @@ enum GamingGlowClock {
             frames = (0...steps).map { gradientColors(baseHue: baseHue, phase: Double($0) / Double(steps)) }
             gradientFrameCache[baseHue] = frames
         }
-        let displayFrames = menuBar ? frames.map { $0.map(menuBarColor) } : frames
+        let displayFrames = menuBar ? frames.map { colors in colors.map { menuBarColor($0) } } : frames
         layer.colors = displayFrames.first
         let animation = CAKeyframeAnimation(keyPath: "colors")
         animation.values = displayFrames
@@ -231,7 +234,6 @@ final class GamingGlowWindow: NSWindow {
         } else {
             setFrame(newFrame, display: false)
         }
-        contentView?.setFrameSize(newFrame.size)
         contentView?.needsLayout = true
     }
 
@@ -259,6 +261,7 @@ final class GamingGlowEdgeView: NSView {
         self.cornerSize = cornerSize
         super.init(frame: CGRect(origin: .zero, size: size))
         wantsLayer = true
+        autoresizingMask = [.width, .height]
         setupLayer(size: size)
     }
 

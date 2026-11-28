@@ -1,7 +1,7 @@
 import AppKit
 
 // Run in a logged-in macOS UI session:
-// xcrun swiftc Tests/MenuBarBackgroundTests.swift Rounder/MenuBarBackgroundWindow.swift \
+// xcrun swiftc Tests/MenuBarBackgroundTests.swift Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundAppearance.swift \
 //   Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift Rounder/CornerGeometry.swift \
 //   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift -o /tmp/rounder-menu-background-tests
 // /tmp/rounder-menu-background-tests
@@ -69,6 +69,12 @@ struct MenuBarBackgroundTests {
             precondition(menuIndex < backgroundIndex,
                          "Raising the background must never cover a system-level menu surface")
         }
+        window.setCornerColor(.white)
+        precondition(window.backgroundColor.isEqual(NSColor.white))
+        window.setCornerColor(.red)
+        precondition(window.backgroundColor.isEqual(NSColor.red))
+        window.setGamingMode(false, speed: 1, cornerSize: 20)
+        precondition(window.backgroundColor.isEqual(NSColor.red))
         menu.close()
         window.close()
         print("PASS: Mission Control behavior, menu click-through, window level and placement")

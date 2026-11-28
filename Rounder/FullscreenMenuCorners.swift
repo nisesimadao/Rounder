@@ -10,6 +10,28 @@ final class FullscreenMenuCorners {
     private var windows: [CGDirectDisplayID: [CornerOverlayWindow]] = [:]
     var overlayWindows: [CornerOverlayWindow] { windows.values.flatMap { $0 } }
 
+    var requiresTracking: Bool {
+        guard let configuration, configuration.topLeft || configuration.topRight else { return false }
+        return !fullscreen.subtracting(missionControl).intersection(configuration.displayIDs).isEmpty
+    }
+
+    /// Query window metadata at display rate only near the menu, or until a
+    /// previously visible menu has finished hiding after the pointer leaves.
+    func shouldSampleMenu(at pointer: CGPoint, screens: [NSScreen] = NSScreen.screens) -> Bool {
+        guard requiresTracking, let configuration else { return false }
+        if overlayWindows.contains(where: { $0.alphaValue > 0 }) { return true }
+        return screens.contains { screen in
+            guard let id = screen.displayID, fullscreen.contains(id),
+                  !missionControl.contains(id), configuration.displayIDs.contains(id) else { return false }
+            return Self.pointerIsNearMenu(pointer, screenFrame: screen.frame)
+        }
+    }
+
+    static func pointerIsNearMenu(_ pointer: CGPoint, screenFrame: CGRect) -> Bool {
+        pointer.x >= screenFrame.minX && pointer.x <= screenFrame.maxX &&
+            pointer.y >= screenFrame.maxY - 100 && pointer.y <= screenFrame.maxY
+    }
+
     func configure(_ configuration: DesktopTopCorners.Configuration?, fullscreen: Set<CGDirectDisplayID>) {
         close()
         self.configuration = configuration

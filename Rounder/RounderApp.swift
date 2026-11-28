@@ -164,6 +164,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var overlayExcludesMenuBar = false
     let desktopTopCorners = DesktopTopCorners()
     let fullscreenMenuCorners = FullscreenMenuCorners()
+    let fullscreenMenuTracking = FullscreenMenuTracking()
     var desktopTopCornerWindows: [CornerOverlayWindow] { desktopTopCorners.windows }
     var temporaryScreenAttachments: [Int: (behavior: NSWindow.CollectionBehavior, level: NSWindow.Level)] = [:]
     var menuBarBackgroundWindows: [MenuBarBackgroundWindow] = []
@@ -398,6 +399,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 for spaceID in targets {
                     let background = MenuBarBackgroundWindow(screen: screen, displayID: displayID,
                         isFullScreen: fullScreenDisplays.contains(displayID), desktopSpaceID: spaceID)
+                    background.setCornerColor(configuration.color)
                     background.setGamingMode(configuration.superGamingMode, speed: configuration.gamingSpeed,
                                              cornerSize: cornerSize)
                     menuBarBackgroundWindows.append(background)
@@ -483,12 +485,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     displayIDs: Set(configuration.selectedDisplayIDs)) : nil
         desktopTopCorners.configure(configuration.pinToDesktop ? desktopCornerConfiguration : nil, screens: screens, fullscreen: fullScreenDisplays)
         fullscreenMenuCorners.configure(desktopCornerConfiguration, fullscreen: fullScreenDisplays)
+        fullscreenMenuTracking.shouldSample = { [weak self] in
+            self?.fullscreenMenuCorners.shouldSampleMenu(at: NSEvent.mouseLocation) ?? false
+        }
+        fullscreenMenuTracking.onSnapshot = { [weak self] snapshot in
+            self?.fullscreenMenuCorners.observe(snapshot)
+        }
         refreshOverlayScreenGeometry()
 
         if (configuration.excludeMenuBar && !overlayWindows.isEmpty) || !menuBarBackgroundWindows.isEmpty {
-            missionControlMonitor.start(onWindows: { [weak self] windows in
-                self?.fullscreenMenuCorners.observe(windows)
-            }) { [weak self] displays in
+            missionControlMonitor.start { [weak self] displays in
                 guard let self else { return }
                 self.refreshOverlayScreenGeometry(animated: true)
                 self.applyMissionControlVisibility(displays)
@@ -516,12 +522,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func refreshMenuBarBackgroundSpaces(fullScreenDisplays: Set<CGDirectDisplayID>) {
         desktopTopCorners.refresh(screens: NSScreen.screens, fullscreen: fullScreenDisplays)
         fullscreenMenuCorners.setFullscreenDisplays(fullScreenDisplays)
+        fullscreenMenuTracking.setEnabled(fullscreenMenuCorners.requiresTracking)
         menuBarBackgroundWindows = MenuBarBackgroundSpaces.reconcile(menuBarBackgroundWindows,
             screens: NSScreen.screens, fullScreenDisplays: fullScreenDisplays)
     }
 
     func updateFullscreenMenuMissionControl(_ displays: Set<CGDirectDisplayID>) {
         fullscreenMenuCorners.setMissionControlDisplays(displays)
+        fullscreenMenuTracking.setEnabled(fullscreenMenuCorners.requiresTracking)
     }
 
     func recreateOverlayWindows() {
@@ -535,6 +543,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func closeOverlayWindows() {
+        fullscreenMenuTracking.setEnabled(false)
         fullscreenMenuCorners.close()
         desktopTopCorners.close()
         missionControlMonitor.stop()

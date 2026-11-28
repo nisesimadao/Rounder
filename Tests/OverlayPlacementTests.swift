@@ -3,10 +3,10 @@ import AppKit
 // Compile the production placement and screen-monitor code with recording
 // windows so Space/screen notifications cannot silently reintroduce rebuilds.
 // xcrun swiftc Tests/OverlayPlacementTests.swift \
-//   Rounder/AppDelegate+OverlayPlacement.swift Rounder/ScreenMonitor.swift \
+//   Rounder/AppDelegate+OverlayPlacement.swift Rounder/OverlayAttachmentRestoration.swift Rounder/ScreenMonitor.swift \
 //   Rounder/NSScreen+DisplayInfo.swift Rounder/CornerGeometry.swift \
 //   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift \
-//   Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift \
+//   Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundAppearance.swift Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift \
 //   -o /tmp/rounder-placement-tests
 // /tmp/rounder-placement-tests
 

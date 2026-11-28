@@ -12,6 +12,7 @@ enum RounderAppConstants { static let cornerSizePadding: CGFloat = 0.01 }
         let ids = DesktopSpaceMembership.spaceIDs(for: displayID)!
         precondition(!ids.isEmpty)
         let first = MenuBarBackgroundWindow(screen: screen, displayID: displayID, desktopSpaceID: ids[0])
+        first.setCornerColor(.blue)
         first.setGamingMode(true, speed: 2, cornerSize: 40)
         var windows = MenuBarBackgroundSpaces.reconcile([first], screens: [screen], fullScreenDisplays: [])
         precondition(windows.count == ids.count)
@@ -23,6 +24,7 @@ enum RounderAppConstants { static let cornerSizePadding: CGFloat = 0.01 }
         let connection = unsafeBitCast(dlsym(handle, "SLSMainConnectionID"), to: Main.self)()
         let copy = unsafeBitCast(dlsym(handle, "SLSCopySpacesForWindows"), to: Copy.self)
         for window in windows {
+            precondition(window.backgroundColor.isEqual(NSColor.blue))
             let actual = copy(connection, 7, [NSNumber(value: window.windowNumber)] as CFArray)!.takeRetainedValue() as! [NSNumber]
             precondition(actual.map(\.uint64Value) == [window.desktopSpaceID!])
             let gradient = window.contentView!.layer!.sublayers!.compactMap { $0 as? CAGradientLayer }.first!

@@ -1,7 +1,7 @@
 import AppKit
 import QuartzCore
 
-// xcrun swiftc Tests/GamingMenuBarTests.swift Rounder/MenuBarBackgroundWindow.swift \
+// xcrun swiftc Tests/GamingMenuBarTests.swift Rounder/MenuBarBackgroundWindow.swift Rounder/MenuBarBackgroundAppearance.swift \
 //   Rounder/MenuBarBackgroundView.swift Rounder/DesktopSpaceMembership.swift Rounder/CornerGeometry.swift \
 //   Rounder/CornerOverlayWindow.swift Rounder/GamingGlow.swift -o /tmp/rounder-gaming-menu-tests
 

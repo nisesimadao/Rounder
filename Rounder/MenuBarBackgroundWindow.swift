@@ -1,10 +1,11 @@
 import AppKit
 
-/// A click-through black strip behind the system menu text/status items.
+/// A click-through strip behind the system menu text/status items.
 /// Approach adapted from mllle/macbook-notchless (MIT); see THIRD_PARTY_NOTICES.
 final class MenuBarBackgroundWindow: NSWindow {
     let overlayDisplayID: CGDirectDisplayID
     let desktopSpaceID: UInt64?
+    private var backgroundAppearance = MenuBarBackgroundAppearance()
     private var gamingEnabled = false
     private var gamingSpeed = 1.0
     private var gamingCornerSize: CGFloat = 0
@@ -41,8 +42,16 @@ final class MenuBarBackgroundWindow: NSWindow {
         updatePlacement(on: screen, isFullScreen: isFullScreen)
     }
 
+    func setCornerColor(_ color: NSColor) {
+        backgroundAppearance.cornerColor = color
+        backgroundColor = backgroundAppearance.backgroundColor
+        isOpaque = backgroundAppearance.isOpaque
+    }
+
     func setGamingMode(_ enabled: Bool, speed: Double, cornerSize: CGFloat) {
         gamingEnabled = enabled
+        backgroundAppearance.gaming = enabled
+        isOpaque = backgroundAppearance.isOpaque
         gamingSpeed = speed
         gamingCornerSize = cornerSize
         (contentView as? MenuBarBackgroundView)?.setGamingMode(enabled, speed: speed, cornerSize: cornerSize)
@@ -58,6 +67,7 @@ final class MenuBarBackgroundWindow: NSWindow {
                                              isFullScreen: isFullScreen, desktopSpaceID: spaceID)
         window.lastMenuBarFrame = lastMenuBarFrame
         window.alphaValue = alphaValue
+        window.setCornerColor(backgroundAppearance.cornerColor)
         window.setGamingMode(gamingEnabled, speed: gamingSpeed, cornerSize: gamingCornerSize)
         window.updatePlacement(on: screen, isFullScreen: isFullScreen)
         return window
